@@ -1,0 +1,15 @@
+package com.example.application.auth
+
+import java.time.Duration
+
+interface EmailVerificationRepository {
+    fun saveCode(email: String, code: String, ttl: Duration)
+
+    fun getCode(email: String): String?
+
+    fun markVerified(email: String)
+
+    fun isVerified(email: String): Boolean
+
+    fun deleteCode(email: String)
+}

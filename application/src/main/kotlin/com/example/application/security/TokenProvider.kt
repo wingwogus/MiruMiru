@@ -1,5 +1,6 @@
 package com.example.application.security
 
+import com.example.application.auth.AuthResult
 import io.jsonwebtoken.*
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
@@ -19,6 +20,7 @@ class TokenProvider(
             1000L * 60 * 60 * 24 * 7   // 7일
         private const val REFRESH_TOKEN_VALIDITY =
             1000L * 60 * 60 * 24 * 14 // 14일
+        private const val ROLE_CLAIM = "role"
     }
 
     private val key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secretKey))
@@ -26,11 +28,12 @@ class TokenProvider(
     /** -------------------------------
      *  AccessToken 생성 (userId만 저장)
      * -------------------------------- */
-    fun createAccessToken(userId: Long): String {
+    fun createAccessToken(userId: Long, role: String): String {
         val now = Date()
 
         return Jwts.builder()
             .setSubject(userId.toString())      // sub = userId
+            .claim(ROLE_CLAIM, role)
             .setIssuedAt(now)
             .setExpiration(Date(now.time + ACCESS_TOKEN_VALIDITY))
             .signWith(key, SignatureAlgorithm.HS512)
@@ -40,15 +43,25 @@ class TokenProvider(
     /** -------------------------------
      *  RefreshToken 생성
      * -------------------------------- */
-    fun createRefreshToken(): String {
+    fun createRefreshToken(userId: Long): String {
         val now = Date()
 
         return Jwts.builder()
+            .setSubject(userId.toString())
             .setIssuedAt(now)
             .setExpiration(Date(now.time + REFRESH_TOKEN_VALIDITY))
             .signWith(key, SignatureAlgorithm.HS512)
             .compact()
     }
+
+    fun generateToken(userId: Long, role: String): AuthResult.TokenPair {
+        return AuthResult.TokenPair(
+            accessToken = createAccessToken(userId, role),
+            refreshToken = createRefreshToken(userId)
+        )
+    }
+
+    fun getRefreshTokenValiditySeconds(): Long = REFRESH_TOKEN_VALIDITY / 1000
 
     /** -------------------------------
      *  JWT 유효성 검증
@@ -84,13 +97,16 @@ class TokenProvider(
         return parseClaims(token).subject.toLong()
     }
 
+    fun getRole(token: String): String? {
+        return parseClaims(token)[ROLE_CLAIM] as? String
+    }
+
     fun getAuthentication(token: String): Authentication {
         val userId = getUserId(token)
+        val role = getRole(token)
 
-        // 우리는 권한 정보를 JWT에 넣지 않으므로 기본 USER 권한만 부여
-        val authorities = listOf(SimpleGrantedAuthority("ROLE_USER"))
+        val authorities = role?.let { listOf(SimpleGrantedAuthority(it)) } ?: emptyList()
 
-        // principal: userId만 가지는 커스텀 principal
         val principal = userId.toString()
 
         return UsernamePasswordAuthenticationToken(

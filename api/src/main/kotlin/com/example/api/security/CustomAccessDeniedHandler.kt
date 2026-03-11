@@ -1,7 +1,7 @@
 package com.example.api.security
 
 
-import com.example.application.common.ApiResponse
+import com.example.api.common.ApiResponse
 import com.example.application.exception.ErrorCode
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse

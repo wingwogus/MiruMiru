@@ -12,8 +12,14 @@ class Member(
     val id: Long = 0L,
 
     @Column(nullable = false, unique = true)
-    val loginId: String,
+    val email: String,
 
     @Column(nullable = false)
-    val provider: String,
+    val password: String = "",
+
+    @Column(nullable = false, unique = true)
+    val nickname: String = "",
+
+    @Column(nullable = false)
+    val role: String = "ROLE_USER",
 )

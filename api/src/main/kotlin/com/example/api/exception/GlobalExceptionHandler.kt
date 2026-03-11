@@ -1,6 +1,6 @@
 package com.example.api.exception
 
-import com.example.application.common.ApiResponse
+import com.example.api.common.ApiResponse
 import com.example.application.common.LoggingUtil
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException

@@ -1,3 +1,3 @@
-rootProject.name = "example"
+rootProject.name = "marumaru"
 
 include("api", "application", "domain", "batch")

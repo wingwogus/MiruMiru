@@ -17,10 +17,10 @@ class MailService(
     private val emailSender: JavaMailSender,
     @Value("\${spring.mail.username}") private val fromAddress: String
 ) : EmailSender {
-    private val log = LoggerFactory.getLogger(this::class.java)
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun sendAuthCode(email: String, code: String) {
-        sendEmail(email, "Tribe 이메일 인증 번호", code)
+        sendEmail(email, "MaruMaru 이메일 인증 번호", code)
     }
 
     private fun sendEmail(toEmail: String, title: String, authCode: String) {
@@ -28,7 +28,7 @@ class MailService(
         try {
             emailSender.send(emailForm)
         } catch (e: RuntimeException) {
-            log.debug("MailService.sendEmail exception occur toEmail: {}, title: {}, text: {}", toEmail, title, authCode)
+            logger.debug("MailService.sendEmail exception occur toEmail: {}, title: {}, text: {}", toEmail, title, authCode)
             throw kotlin.IllegalStateException("이메일 전송 중 오류가 발생했습니다.", e)
         }
     }

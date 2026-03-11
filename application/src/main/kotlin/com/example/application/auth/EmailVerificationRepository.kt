@@ -7,9 +7,11 @@ interface EmailVerificationRepository {
 
     fun getCode(email: String): String?
 
-    fun markVerified(email: String)
+    fun markVerified(email: String, ttl: Duration)
 
     fun isVerified(email: String): Boolean
 
     fun deleteCode(email: String)
+
+    fun deleteVerified(email: String)
 }

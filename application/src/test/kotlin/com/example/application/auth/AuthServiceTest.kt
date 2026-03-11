@@ -20,6 +20,7 @@ class AuthServiceTest {
     private lateinit var tokenProvider: TokenProvider
     private lateinit var emailSender: FakeEmailSender
     private lateinit var emailVerificationRepository: FakeEmailVerificationRepository
+    private lateinit var nicknameVerificationRepository: FakeNicknameVerificationRepository
     private lateinit var refreshTokenRepository: FakeRefreshTokenRepository
     private lateinit var memberRepository: MemberRepository
     private lateinit var passwordEncoder: PasswordEncoder
@@ -30,6 +31,7 @@ class AuthServiceTest {
         tokenProvider = TokenProvider(TEST_SECRET)
         emailSender = FakeEmailSender()
         emailVerificationRepository = FakeEmailVerificationRepository()
+        nicknameVerificationRepository = FakeNicknameVerificationRepository()
         refreshTokenRepository = FakeRefreshTokenRepository()
         memberRepository = mock(MemberRepository::class.java)
         passwordEncoder = FakePasswordEncoder()
@@ -37,10 +39,12 @@ class AuthServiceTest {
             jwtTokenProvider = tokenProvider,
             emailSender = emailSender,
             emailVerificationRepository = emailVerificationRepository,
+            nicknameVerificationRepository = nicknameVerificationRepository,
             refreshTokenRepository = refreshTokenRepository,
             memberRepository = memberRepository,
             passwordEncoder = passwordEncoder,
-            authCodeExpirationMillis = 1_800_000L
+            authCodeExpirationMillis = 1_800_000L,
+            verifiedStateExpirationMillis = 1_800_000L
         )
     }
 
@@ -104,6 +108,65 @@ class AuthServiceTest {
         assertEquals(Duration.ofMillis(1_800_000L), emailVerificationRepository.lastSavedTtl)
     }
 
+    @Test
+    fun `login returns unauthorized when email does not exist`() {
+        `when`(memberRepository.findByEmail("missing@tokyo.ac.jp")).thenReturn(null)
+
+        val exception = assertThrows(BusinessException::class.java) {
+            authService.login(AuthCommand.Login("missing@tokyo.ac.jp", "raw-password"))
+        }
+
+        assertEquals(ErrorCode.UNAUTHORIZED, exception.errorCode)
+    }
+
+    @Test
+    fun `nickname verification stores verified state with ttl`() {
+        `when`(memberRepository.existsByNickname("maru")).thenReturn(false)
+
+        authService.checkDuplicatedNickname(AuthCommand.VerifyNickname("maru"))
+
+        assertEquals(true, nicknameVerificationRepository.isVerified("maru"))
+        assertEquals(Duration.ofMillis(1_800_000L), nicknameVerificationRepository.lastSavedTtl)
+    }
+
+    @Test
+    fun `signup requires nickname verification and clears verification state on success`() {
+        val request = AuthCommand.SignUp(
+            email = "user@tokyo.ac.jp",
+            password = "raw-password",
+            nickname = "maru"
+        )
+        emailVerificationRepository.saveCode(request.email, "123456", Duration.ofMillis(1_800_000L))
+        emailVerificationRepository.markVerified(request.email, Duration.ofMillis(1_800_000L))
+        nicknameVerificationRepository.markVerified(request.nickname, Duration.ofMillis(1_800_000L))
+        `when`(memberRepository.existsByEmail(request.email)).thenReturn(false)
+        `when`(memberRepository.existsByNickname(request.nickname)).thenReturn(false)
+        `when`(memberRepository.save(org.mockito.ArgumentMatchers.any(Member::class.java)))
+            .thenAnswer { it.arguments.first() }
+
+        authService.signUp(request)
+
+        assertEquals(false, emailVerificationRepository.isVerified(request.email))
+        assertEquals(null, emailVerificationRepository.getCode(request.email))
+        assertEquals(false, nicknameVerificationRepository.isVerified(request.nickname))
+    }
+
+    @Test
+    fun `signup fails when nickname verification state is missing`() {
+        val request = AuthCommand.SignUp(
+            email = "user@tokyo.ac.jp",
+            password = "raw-password",
+            nickname = "maru"
+        )
+        emailVerificationRepository.markVerified(request.email, Duration.ofMillis(1_800_000L))
+
+        val exception = assertThrows(BusinessException::class.java) {
+            authService.signUp(request)
+        }
+
+        assertEquals(ErrorCode.INVALID_INPUT, exception.errorCode)
+    }
+
     companion object {
         private const val TEST_SECRET =
             "t2oRk29vBQZWS8GEt4xr8AJznlPK0ipBKUwdyqe10SOGZB26vVBMjzqualdJsjcOY1wX9DOqJC9V1DFl58F0tQ=="
@@ -139,6 +202,7 @@ class AuthServiceTest {
         private val codes = mutableMapOf<String, String>()
         private val verified = mutableSetOf<String>()
         var lastSavedTtl: Duration? = null
+        var lastVerifiedTtl: Duration? = null
 
         override fun saveCode(email: String, code: String, ttl: Duration) {
             codes[email] = code
@@ -148,14 +212,35 @@ class AuthServiceTest {
 
         override fun getCode(email: String): String? = codes[email]
 
-        override fun markVerified(email: String) {
+        override fun markVerified(email: String, ttl: Duration) {
             verified.add(email)
+            lastVerifiedTtl = ttl
         }
 
         override fun isVerified(email: String): Boolean = verified.contains(email)
 
         override fun deleteCode(email: String) {
             codes.remove(email)
+        }
+
+        override fun deleteVerified(email: String) {
+            verified.remove(email)
+        }
+    }
+
+    private class FakeNicknameVerificationRepository : NicknameVerificationRepository {
+        private val verified = mutableSetOf<String>()
+        var lastSavedTtl: Duration? = null
+
+        override fun markVerified(nickname: String, ttl: Duration) {
+            verified.add(nickname)
+            lastSavedTtl = ttl
+        }
+
+        override fun isVerified(nickname: String): Boolean = verified.contains(nickname)
+
+        override fun delete(nickname: String) {
+            verified.remove(nickname)
         }
     }
 

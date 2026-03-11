@@ -24,8 +24,8 @@ class EmailVerificationRedisRepository(
         return redis.opsForValue().get(AUTH_CODE_PREFIX + email)
     }
 
-    override fun markVerified(email: String) {
-        redis.opsForValue().set(VERIFIED_PREFIX + email, "true")
+    override fun markVerified(email: String, ttl: Duration) {
+        redis.opsForValue().set(VERIFIED_PREFIX + email, "true", ttl)
     }
 
     override fun isVerified(email: String): Boolean {
@@ -34,5 +34,9 @@ class EmailVerificationRedisRepository(
 
     override fun deleteCode(email: String) {
         redis.delete(AUTH_CODE_PREFIX + email)
+    }
+
+    override fun deleteVerified(email: String) {
+        redis.delete(VERIFIED_PREFIX + email)
     }
 }

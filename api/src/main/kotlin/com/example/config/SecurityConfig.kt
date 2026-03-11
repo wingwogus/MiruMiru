@@ -3,18 +3,14 @@ package com.example.config
 import com.example.api.security.CustomAccessDeniedHandler
 import com.example.api.security.CustomAuthenticationEntryPoint
 import com.example.api.security.JwtAuthenticationFilter
-import com.example.api.security.OAuth2LoginSuccessHandler
-import com.example.application.security.CustomOAuth2UserService
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
-import org.springframework.security.core.userdetails.UserDetailsService
-import org.springframework.security.core.userdetails.UsernameNotFoundException
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
@@ -25,23 +21,11 @@ import org.springframework.web.cors.CorsConfiguration
 class SecurityConfig(
     private val accessDeniedHandler: CustomAccessDeniedHandler,
     private val authenticationEntryPoint: CustomAuthenticationEntryPoint,
-    private val jwtAuthenticationFilter: JwtAuthenticationFilter,
-    private val customOAuth2UserService: CustomOAuth2UserService,
-    private val oAuth2LoginSuccessHandler: OAuth2LoginSuccessHandler
+    private val jwtAuthenticationFilter: JwtAuthenticationFilter
 ) {
 
-
     @Bean
-    fun userDetailsService(): UserDetailsService {
-        return UserDetailsService { _ ->
-            throw UsernameNotFoundException("Not using UserDetailsService in JWT authentication")
-        }
-    }
-
-    @Bean
-    fun authenticationManager(authConfig: AuthenticationConfiguration): AuthenticationManager {
-        return authConfig.authenticationManager
-    }
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
 
     companion object {
@@ -86,14 +70,6 @@ class SecurityConfig(
                     .requestMatchers(*PUBLIC_ENDPOINTS.toTypedArray())
                     .permitAll()
                     .anyRequest().authenticated()
-            }
-
-            .oauth2Login { oauth2 ->
-                oauth2
-                    .userInfoEndpoint { userInfo ->
-                        userInfo.userService(customOAuth2UserService)
-                    }
-                    .successHandler(oAuth2LoginSuccessHandler)
             }
 
             .addFilterBefore(

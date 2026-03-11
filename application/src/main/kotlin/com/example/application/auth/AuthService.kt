@@ -22,11 +22,14 @@ class AuthService(
     private val jwtTokenProvider: TokenProvider,
     private val emailSender: EmailSender,
     private val emailVerificationRepository: EmailVerificationRepository,
+    private val nicknameVerificationRepository: NicknameVerificationRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val memberRepository: MemberRepository,
     private val passwordEncoder: PasswordEncoder,
     @Value("\${spring.mail.auth-code-expiration-millis}")
-    private val authCodeExpirationMillis: Long
+    private val authCodeExpirationMillis: Long,
+    @Value("\${spring.mail.verified-state-expiration-millis:\${spring.mail.auth-code-expiration-millis}}")
+    private val verifiedStateExpirationMillis: Long
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -36,7 +39,7 @@ class AuthService(
 
     fun login(request: AuthCommand.Login): AuthResult.TokenPair {
         val member = memberRepository.findByEmail(request.email)
-            ?: throw BusinessException(ErrorCode.USER_NOT_FOUND)
+            ?: throw BusinessException(ErrorCode.UNAUTHORIZED)
 
         if (!passwordEncoder.matches(request.password, member.password)) {
             throw BusinessException(ErrorCode.UNAUTHORIZED)
@@ -75,8 +78,16 @@ class AuthService(
             throw BusinessException(ErrorCode.EMAIL_NOT_VERIFIED)
         }
 
+        if (!nicknameVerificationRepository.isVerified(request.nickname)) {
+            throw BusinessException(ErrorCode.INVALID_INPUT)
+        }
+
         if (memberRepository.existsByEmail(request.email)) {
             throw BusinessException(ErrorCode.ALREADY_SIGNED_EMAIL)
+        }
+
+        if (memberRepository.existsByNickname(request.nickname)) {
+            throw BusinessException(ErrorCode.DUPLICATE_NICKNAME)
         }
 
         val member = Member(
@@ -86,6 +97,9 @@ class AuthService(
             role = USER_ROLE
         )
         memberRepository.save(member)
+        emailVerificationRepository.deleteCode(request.email)
+        emailVerificationRepository.deleteVerified(request.email)
+        nicknameVerificationRepository.delete(request.nickname)
         logger.info("User signed up successfully. Email: hashcode {}", request.email.hashCode())
     }
 
@@ -112,6 +126,10 @@ class AuthService(
         if (memberRepository.existsByNickname(request.nickname)) {
             throw BusinessException(ErrorCode.DUPLICATE_NICKNAME)
         }
+        nicknameVerificationRepository.markVerified(
+            request.nickname,
+            Duration.ofMillis(verifiedStateExpirationMillis)
+        )
     }
 
     fun verifiedCode(request: AuthCommand.VerifyEmailCode) {
@@ -124,7 +142,10 @@ class AuthService(
             throw BusinessException(ErrorCode.AUTH_CODE_MISMATCH)
         }
 
-        emailVerificationRepository.markVerified(email)
+        emailVerificationRepository.markVerified(
+            email,
+            Duration.ofMillis(verifiedStateExpirationMillis)
+        )
         emailVerificationRepository.deleteCode(email)
         logger.info("Email verified successfully for Email hashcode: {}", email.hashCode())
     }

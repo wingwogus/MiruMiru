@@ -1,0 +1,23 @@
+# --- IntelliJ / IDE 관련 ---
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+/shelf/
+/workspace.xml
+/httpRequests/
+/dataSources/
+/dataSources.local.xml
+
+# --- Gradle / Backend 관련 ---
+.gradle/
+build/
+bin/
+!gradle/wrapper/gradle-wrapper.jar
+
+# --- OS / 기타 ---
+.DS_Store
+Thumbs.db
+.kotlin/
+.vscode/

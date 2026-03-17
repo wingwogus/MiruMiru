@@ -20,6 +20,7 @@ enum class ErrorCode(
     ALREADY_SIGNED_EMAIL("AUTH_008", "error.already_signed_email", 409),
     ALREADY_LOGGED_OUT("AUTH_009", "error.already_logged_out", 400),
     UNREGISTERED_UNIVERSITY("AUTH_010", "error.unregistered_university", 400),
+    INVALID_MAJOR_SELECTION("AUTH_011", "error.invalid_major_selection", 400),
     UNAUTHORIZED("AUTH_001", "error.unauthorized", 401),
     FORBIDDEN("AUTH_002", "error.forbidden", 403),
 

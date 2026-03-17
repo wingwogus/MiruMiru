@@ -16,4 +16,20 @@ object AuthResponses {
             }
         }
     }
+
+    data class MajorOptionResponse(
+        val majorId: Long,
+        val code: String,
+        val name: String
+    ) {
+        companion object {
+            fun from(result: AuthResult.MajorOption): MajorOptionResponse {
+                return MajorOptionResponse(
+                    majorId = result.majorId,
+                    code = result.code,
+                    name = result.name
+                )
+            }
+        }
+    }
 }

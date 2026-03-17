@@ -6,12 +6,14 @@ import com.example.application.redis.RefreshTokenRepository
 import com.example.application.security.TokenProvider
 import com.example.domain.member.Member
 import com.example.domain.member.MemberRepository
+import com.example.domain.university.UniversityRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
+import java.util.Locale
 import kotlin.collections.joinToString
 import kotlin.jvm.javaClass
 import kotlin.random.Random
@@ -25,6 +27,7 @@ class AuthService(
     private val nicknameVerificationRepository: NicknameVerificationRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val memberRepository: MemberRepository,
+    private val universityRepository: UniversityRepository,
     private val passwordEncoder: PasswordEncoder,
     @Value("\${spring.mail.auth-code-expiration-millis}")
     private val authCodeExpirationMillis: Long,
@@ -90,7 +93,11 @@ class AuthService(
             throw BusinessException(ErrorCode.DUPLICATE_NICKNAME)
         }
 
+        val university = universityRepository.findByEmailDomain(extractEmailDomain(request.email))
+            ?: throw BusinessException(ErrorCode.UNREGISTERED_UNIVERSITY)
+
         val member = Member(
+            university = university,
             email = request.email,
             password = passwordEncoder.encode(request.password),
             nickname = request.nickname,
@@ -160,5 +167,9 @@ class AuthService(
         return (1..6).joinToString("") {
             Random.nextInt(0, 10).toString()
         }
+    }
+
+    private fun extractEmailDomain(email: String): String {
+        return email.substringAfter('@').trim().lowercase(Locale.ROOT)
     }
 }

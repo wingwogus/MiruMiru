@@ -19,6 +19,7 @@ enum class ErrorCode(
     AUTH_CODE_MISMATCH("AUTH_007", "error.auth_code_mismatch", 400),
     ALREADY_SIGNED_EMAIL("AUTH_008", "error.already_signed_email", 409),
     ALREADY_LOGGED_OUT("AUTH_009", "error.already_logged_out", 400),
+    UNREGISTERED_UNIVERSITY("AUTH_010", "error.unregistered_university", 400),
     UNAUTHORIZED("AUTH_001", "error.unauthorized", 401),
     FORBIDDEN("AUTH_002", "error.forbidden", 403),
 

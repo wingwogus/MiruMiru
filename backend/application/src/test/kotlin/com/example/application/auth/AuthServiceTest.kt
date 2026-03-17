@@ -6,11 +6,15 @@ import com.example.application.redis.RefreshTokenRepository
 import com.example.application.security.TokenProvider
 import com.example.domain.member.Member
 import com.example.domain.member.MemberRepository
+import com.example.domain.university.University
+import com.example.domain.university.UniversityRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.springframework.security.crypto.password.PasswordEncoder
 import java.time.Duration
@@ -23,6 +27,7 @@ class AuthServiceTest {
     private lateinit var nicknameVerificationRepository: FakeNicknameVerificationRepository
     private lateinit var refreshTokenRepository: FakeRefreshTokenRepository
     private lateinit var memberRepository: MemberRepository
+    private lateinit var universityRepository: UniversityRepository
     private lateinit var passwordEncoder: PasswordEncoder
     private lateinit var authService: AuthService
 
@@ -34,6 +39,7 @@ class AuthServiceTest {
         nicknameVerificationRepository = FakeNicknameVerificationRepository()
         refreshTokenRepository = FakeRefreshTokenRepository()
         memberRepository = mock(MemberRepository::class.java)
+        universityRepository = mock(UniversityRepository::class.java)
         passwordEncoder = FakePasswordEncoder()
         authService = AuthService(
             jwtTokenProvider = tokenProvider,
@@ -42,6 +48,7 @@ class AuthServiceTest {
             nicknameVerificationRepository = nicknameVerificationRepository,
             refreshTokenRepository = refreshTokenRepository,
             memberRepository = memberRepository,
+            universityRepository = universityRepository,
             passwordEncoder = passwordEncoder,
             authCodeExpirationMillis = 1_800_000L,
             verifiedStateExpirationMillis = 1_800_000L
@@ -141,11 +148,15 @@ class AuthServiceTest {
         nicknameVerificationRepository.markVerified(request.nickname, Duration.ofMillis(1_800_000L))
         `when`(memberRepository.existsByEmail(request.email)).thenReturn(false)
         `when`(memberRepository.existsByNickname(request.nickname)).thenReturn(false)
+        `when`(universityRepository.findByEmailDomain("tokyo.ac.jp")).thenReturn(university())
         `when`(memberRepository.save(org.mockito.ArgumentMatchers.any(Member::class.java)))
             .thenAnswer { it.arguments.first() }
 
         authService.signUp(request)
 
+        val memberCaptor = ArgumentCaptor.forClass(Member::class.java)
+        verify(memberRepository).save(memberCaptor.capture())
+        assertEquals("tokyo.ac.jp", memberCaptor.value.university.emailDomain)
         assertEquals(false, emailVerificationRepository.isVerified(request.email))
         assertEquals(null, emailVerificationRepository.getCode(request.email))
         assertEquals(false, nicknameVerificationRepository.isVerified(request.nickname))
@@ -167,6 +178,26 @@ class AuthServiceTest {
         assertEquals(ErrorCode.INVALID_INPUT, exception.errorCode)
     }
 
+    @Test
+    fun `signup fails when university is not registered`() {
+        val request = AuthCommand.SignUp(
+            email = "user@kyoto.ac.jp",
+            password = "raw-password",
+            nickname = "maru"
+        )
+        emailVerificationRepository.markVerified(request.email, Duration.ofMillis(1_800_000L))
+        nicknameVerificationRepository.markVerified(request.nickname, Duration.ofMillis(1_800_000L))
+        `when`(memberRepository.existsByEmail(request.email)).thenReturn(false)
+        `when`(memberRepository.existsByNickname(request.nickname)).thenReturn(false)
+        `when`(universityRepository.findByEmailDomain("kyoto.ac.jp")).thenReturn(null)
+
+        val exception = assertThrows(BusinessException::class.java) {
+            authService.signUp(request)
+        }
+
+        assertEquals(ErrorCode.UNREGISTERED_UNIVERSITY, exception.errorCode)
+    }
+
     companion object {
         private const val TEST_SECRET =
             "t2oRk29vBQZWS8GEt4xr8AJznlPK0ipBKUwdyqe10SOGZB26vVBMjzqualdJsjcOY1wX9DOqJC9V1DFl58F0tQ=="
@@ -180,10 +211,23 @@ class AuthServiceTest {
         ): Member {
             return Member(
                 id = id,
+                university = university(),
                 email = email,
                 password = password,
                 nickname = nickname,
                 role = role
+            )
+        }
+
+        private fun university(
+            id: Long = 1L,
+            name: String = "The University of Tokyo",
+            emailDomain: String = "tokyo.ac.jp"
+        ): University {
+            return University(
+                id = id,
+                name = name,
+                emailDomain = emailDomain
             )
         }
     }

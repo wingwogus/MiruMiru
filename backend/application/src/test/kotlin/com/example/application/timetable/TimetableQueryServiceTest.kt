@@ -121,6 +121,22 @@ class TimetableQueryServiceTest {
         assertEquals("MONDAY", result.lectures.single().schedules.single().dayOfWeek)
     }
 
+    @Test
+    fun `get my timetable returns empty lectures when timetable does not exist`() {
+        val university = university()
+        val member = member(university)
+        val semester = semester(university = university)
+
+        `when`(memberRepository.findById(member.id)).thenReturn(Optional.of(member))
+        `when`(semesterRepository.findByIdAndUniversityId(semester.id, university.id)).thenReturn(semester)
+        `when`(timetableRepository.findByMemberIdAndSemesterId(member.id, semester.id)).thenReturn(null)
+
+        val result = timetableQueryService.getMyTimetable(member.id.toString(), semester.id)
+
+        assertEquals(null, result.timetableId)
+        assertEquals(emptyList<String>(), result.lectures.map { it.code })
+    }
+
     private fun university(): University {
         return University(id = 1L, name = "The University of Tokyo", emailDomain = "tokyo.ac.jp")
     }

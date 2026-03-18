@@ -78,7 +78,7 @@ object TimetableResponses {
     }
 
     data class TimetableDetail(
-        val timetableId: Long,
+        val timetableId: Long?,
         val semester: SemesterItem,
         val lectures: List<LectureItem>
     ) {

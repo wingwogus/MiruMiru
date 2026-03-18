@@ -59,6 +59,9 @@ class TimetablePersistenceIntegrationTest(
         val generalLecture = lectureRepository.findBySemesterIdAndCode(semester.id, "MATH201")
         assertNotNull(generalLecture)
         assertEquals(null, generalLecture!!.major)
+        val conflictLecture = lectureRepository.findBySemesterIdAndCode(semester.id, "PHYS301")
+        assertNotNull(conflictLecture)
+        assertEquals(null, conflictLecture!!.major)
 
         val lectureSchedule = lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(
             lectureId = lecture.id,
@@ -71,6 +74,22 @@ class TimetablePersistenceIntegrationTest(
         val timetable = timetableRepository.findByMemberIdAndSemesterId(member.id, semester.id)
         assertNotNull(timetable)
         assertEquals(true, timetableLectureRepository.existsByTimetableIdAndLectureId(timetable!!.id, lecture.id))
+        assertEquals(true, timetableLectureRepository.existsByTimetableIdAndLectureId(timetable.id, generalLecture.id))
+        assertEquals(false, timetableLectureRepository.existsByTimetableIdAndLectureId(timetable.id, conflictLecture.id))
+    }
+
+    @Test
+    fun `local bootstrap keeps second user without timetable for empty-state tests`() {
+        val member = memberRepository.findByEmail("empty@tokyo.ac.jp")
+        assertNotNull(member)
+
+        val semester = semesterRepository.findByUniversityIdAndAcademicYearAndTerm(
+            universityId = member!!.university.id,
+            academicYear = 2026,
+            term = SemesterTerm.SPRING
+        )
+        assertNotNull(semester)
+        assertEquals(null, timetableRepository.findByMemberIdAndSemesterId(member.id, semester!!.id))
     }
 
     @Test

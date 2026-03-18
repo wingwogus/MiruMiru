@@ -53,13 +53,14 @@ class TimetableQueryService(
         val member = findMember(userId)
         val semester = findSemester(member, semesterId)
         val timetable = timetableRepository.findByMemberIdAndSemesterId(member.id, semester.id)
-            ?: throw BusinessException(ErrorCode.RESOURCE_NOT_FOUND)
-        val timetableLectures = timetableLectureRepository.findAllByTimetableId(timetable.id)
-            .map { it.lecture }
-            .sortedBy { it.code }
+        val timetableLectures = timetable?.let {
+            timetableLectureRepository.findAllByTimetableId(it.id)
+                .map { timetableLecture -> timetableLecture.lecture }
+                .sortedBy { lecture -> lecture.code }
+        }.orEmpty()
 
         return TimetableQueryResult.TimetableDetail(
-            timetableId = timetable.id,
+            timetableId = timetable?.id,
             semester = TimetableQueryResult.SemesterSummary(
                 id = semester.id,
                 academicYear = semester.academicYear,
@@ -84,6 +85,10 @@ class TimetableQueryService(
     }
 
     private fun mapLectureItems(lectures: List<Lecture>): List<TimetableQueryResult.LectureItem> {
+        if (lectures.isEmpty()) {
+            return emptyList()
+        }
+
         val lectureIds = lectures.map { it.id }
         val schedulesByLectureId = lectureScheduleRepository.findAllByLectureIdIn(lectureIds)
             .groupBy { it.lecture.id }

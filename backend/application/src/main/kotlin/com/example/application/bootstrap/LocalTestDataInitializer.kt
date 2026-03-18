@@ -47,6 +47,7 @@ class LocalTestDataInitializer(
             seed.code to findOrCreateMajor(university, seed)
         }
         val member = findOrCreateMember(university, majorsByCode.getValue(TEST_MEMBER_MAJOR_CODE))
+        findOrCreateMember(university, majorsByCode.getValue(EMPTY_MEMBER_MAJOR_CODE), EMPTY_MEMBER_EMAIL, EMPTY_MEMBER_NICKNAME)
         val semester = findOrCreateSemester(university)
         val lectures = LECTURE_SEEDS.map { seed ->
             findOrCreateLecture(semester, majorsByCode[seed.majorCode], seed)
@@ -59,7 +60,7 @@ class LocalTestDataInitializer(
         }
 
         val timetable = findOrCreateTimetable(member, semester)
-        lectures.forEach { lecture ->
+        lectures.filter { INITIAL_TIMETABLE_LECTURE_CODES.contains(it.code) }.forEach { lecture ->
             linkLectureToTimetable(timetable, lecture)
         }
     }
@@ -85,8 +86,13 @@ class LocalTestDataInitializer(
             )
     }
 
-    private fun findOrCreateMember(university: University, major: Major): Member {
-        val existingMember = memberRepository.findByEmail(TEST_MEMBER_EMAIL)
+    private fun findOrCreateMember(
+        university: University,
+        major: Major,
+        email: String = TEST_MEMBER_EMAIL,
+        nickname: String = TEST_MEMBER_NICKNAME
+    ): Member {
+        val existingMember = memberRepository.findByEmail(email)
         if (existingMember != null) {
             require(existingMember.university.id == university.id) {
                 "Test member must belong to the seeded university."
@@ -101,9 +107,9 @@ class LocalTestDataInitializer(
             Member(
                 university = university,
                 major = major,
-                email = TEST_MEMBER_EMAIL,
+                email = email,
                 password = passwordEncoder.encode(TEST_MEMBER_PASSWORD),
-                nickname = TEST_MEMBER_NICKNAME,
+                nickname = nickname,
                 role = TEST_MEMBER_ROLE
             )
         )
@@ -196,8 +202,12 @@ class LocalTestDataInitializer(
         private const val TEST_MEMBER_NICKNAME = "test-user"
         private const val TEST_MEMBER_ROLE = "ROLE_USER"
         private const val TEST_MEMBER_MAJOR_CODE = "CS"
+        private const val EMPTY_MEMBER_EMAIL = "empty@tokyo.ac.jp"
+        private const val EMPTY_MEMBER_NICKNAME = "empty-user"
+        private const val EMPTY_MEMBER_MAJOR_CODE = "MATH"
         private const val SEED_ACADEMIC_YEAR = 2026
         private val SEED_TERM = SemesterTerm.SPRING
+        private val INITIAL_TIMETABLE_LECTURE_CODES = setOf("CS101", "MATH201")
 
         private val MAJOR_SEEDS = listOf(
             MajorSeed(
@@ -244,6 +254,21 @@ class LocalTestDataInitializer(
                         startTime = LocalTime.of(13, 0),
                         endTime = LocalTime.of(14, 30),
                         location = "Science Building 202"
+                    )
+                )
+            ),
+            LectureSeed(
+                code = "PHYS301",
+                name = "Classical Mechanics",
+                professor = "Prof. Tanaka",
+                credit = 3,
+                majorCode = null,
+                schedules = listOf(
+                    LectureScheduleSeed(
+                        dayOfWeek = DayOfWeek.MONDAY,
+                        startTime = LocalTime.of(10, 0),
+                        endTime = LocalTime.of(11, 0),
+                        location = "Physics Hall 303"
                     )
                 )
             )

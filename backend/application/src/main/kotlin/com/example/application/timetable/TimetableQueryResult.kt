@@ -31,7 +31,7 @@ object TimetableQueryResult {
     )
 
     data class TimetableDetail(
-        val timetableId: Long,
+        val timetableId: Long?,
         val semester: SemesterSummary,
         val lectures: List<LectureItem>
     )

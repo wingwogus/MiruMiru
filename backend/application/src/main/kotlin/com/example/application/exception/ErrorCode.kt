@@ -23,5 +23,11 @@ enum class ErrorCode(
     INVALID_MAJOR_SELECTION("AUTH_011", "error.invalid_major_selection", 400),
     UNAUTHORIZED("AUTH_001", "error.unauthorized", 401),
     FORBIDDEN("AUTH_002", "error.forbidden", 403),
+    TIMETABLE_NOT_FOUND("TIMETABLE_001", "error.timetable_not_found", 404),
+    TIMETABLE_LECTURE_DUPLICATE("TIMETABLE_002", "error.timetable_lecture_duplicate", 409),
+    LECTURE_NOT_IN_MEMBER_UNIVERSITY("TIMETABLE_003", "error.lecture_not_in_member_university", 400),
+    LECTURE_NOT_IN_SEMESTER("TIMETABLE_004", "error.lecture_not_in_semester", 400),
+    TIMETABLE_LECTURE_NOT_FOUND("TIMETABLE_005", "error.timetable_lecture_not_found", 404),
+    TIMETABLE_LECTURE_CONFLICT("TIMETABLE_006", "error.timetable_lecture_conflict", 409),
 
 }

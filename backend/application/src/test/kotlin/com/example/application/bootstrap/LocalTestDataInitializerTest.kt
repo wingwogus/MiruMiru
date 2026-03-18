@@ -66,14 +66,22 @@ class LocalTestDataInitializerTest {
             password = "encoded-password",
             nickname = "test-user"
         )
-        val semester = Semester(
+        val emptyMember = Member(
             id = 3L,
+            university = university,
+            major = mathematics,
+            email = "empty@tokyo.ac.jp",
+            password = "encoded-password",
+            nickname = "empty-user"
+        )
+        val semester = Semester(
+            id = 4L,
             university = university,
             academicYear = 2026,
             term = SemesterTerm.SPRING
         )
         val cs101 = Lecture(
-            id = 4L,
+            id = 5L,
             semester = semester,
             major = computerScience,
             code = "CS101",
@@ -82,7 +90,7 @@ class LocalTestDataInitializerTest {
             credit = 3
         )
         val math201 = Lecture(
-            id = 5L,
+            id = 6L,
             semester = semester,
             major = null,
             code = "MATH201",
@@ -90,8 +98,17 @@ class LocalTestDataInitializerTest {
             professor = "Prof. Sato",
             credit = 2
         )
+        val phys301 = Lecture(
+            id = 7L,
+            semester = semester,
+            major = null,
+            code = "PHYS301",
+            name = "Classical Mechanics",
+            professor = "Prof. Tanaka",
+            credit = 3
+        )
         val timetable = Timetable(
-            id = 6L,
+            id = 8L,
             member = member,
             semester = semester
         )
@@ -104,32 +121,37 @@ class LocalTestDataInitializerTest {
             .thenReturn(computerScience)
             .thenReturn(mathematics)
         `when`(memberRepository.findByEmail("test@tokyo.ac.jp")).thenReturn(null)
+        `when`(memberRepository.findByEmail("empty@tokyo.ac.jp")).thenReturn(null)
         `when`(passwordEncoder.encode("password123!")).thenReturn("encoded-password")
-        `when`(memberRepository.save(any(Member::class.java))).thenReturn(member)
+        `when`(memberRepository.save(any(Member::class.java)))
+            .thenReturn(member)
+            .thenReturn(emptyMember)
         `when`(semesterRepository.findByUniversityIdAndAcademicYearAndTerm(1L, 2026, SemesterTerm.SPRING))
             .thenReturn(null)
         `when`(semesterRepository.save(any(Semester::class.java))).thenReturn(semester)
-        `when`(lectureRepository.findBySemesterIdAndCode(3L, "CS101")).thenReturn(null)
-        `when`(lectureRepository.findBySemesterIdAndCode(3L, "MATH201")).thenReturn(null)
+        `when`(lectureRepository.findBySemesterIdAndCode(4L, "CS101")).thenReturn(null)
+        `when`(lectureRepository.findBySemesterIdAndCode(4L, "MATH201")).thenReturn(null)
+        `when`(lectureRepository.findBySemesterIdAndCode(4L, "PHYS301")).thenReturn(null)
         `when`(lectureRepository.save(any(Lecture::class.java)))
             .thenReturn(cs101)
             .thenReturn(math201)
+            .thenReturn(phys301)
         stubMissingScheduleLookups()
         `when`(lectureScheduleRepository.save(any(LectureSchedule::class.java)))
             .thenAnswer { it.arguments.first() }
-        `when`(timetableRepository.findByMemberIdAndSemesterId(2L, 3L)).thenReturn(null)
+        `when`(timetableRepository.findByMemberIdAndSemesterId(2L, 4L)).thenReturn(null)
         `when`(timetableRepository.save(any(Timetable::class.java))).thenReturn(timetable)
-        `when`(timetableLectureRepository.existsByTimetableIdAndLectureId(6L, 4L)).thenReturn(false)
-        `when`(timetableLectureRepository.existsByTimetableIdAndLectureId(6L, 5L)).thenReturn(false)
+        `when`(timetableLectureRepository.existsByTimetableIdAndLectureId(8L, 5L)).thenReturn(false)
+        `when`(timetableLectureRepository.existsByTimetableIdAndLectureId(8L, 6L)).thenReturn(false)
 
         initializer.run(DefaultApplicationArguments(*emptyArray<String>()))
 
         verify(universityRepository).save(any(University::class.java))
         verify(majorRepository, times(2)).save(any(Major::class.java))
-        verify(memberRepository).save(any(Member::class.java))
+        verify(memberRepository, times(2)).save(any(Member::class.java))
         verify(semesterRepository).save(any(Semester::class.java))
-        verify(lectureRepository, times(2)).save(any(Lecture::class.java))
-        verify(lectureScheduleRepository, times(3)).save(any(LectureSchedule::class.java))
+        verify(lectureRepository, times(3)).save(any(Lecture::class.java))
+        verify(lectureScheduleRepository, times(4)).save(any(LectureSchedule::class.java))
         verify(timetableRepository).save(any(Timetable::class.java))
         verify(timetableLectureRepository, times(2)).save(any(TimetableLecture::class.java))
 
@@ -153,14 +175,22 @@ class LocalTestDataInitializerTest {
             password = "encoded-password",
             nickname = "test-user"
         )
-        val semester = Semester(
+        val emptyMember = Member(
             id = 3L,
+            university = university,
+            major = mathematics,
+            email = "empty@tokyo.ac.jp",
+            password = "encoded-password",
+            nickname = "empty-user"
+        )
+        val semester = Semester(
+            id = 4L,
             university = university,
             academicYear = 2026,
             term = SemesterTerm.SPRING
         )
         val cs101 = Lecture(
-            id = 4L,
+            id = 5L,
             semester = semester,
             major = computerScience,
             code = "CS101",
@@ -169,7 +199,7 @@ class LocalTestDataInitializerTest {
             credit = 3
         )
         val math201 = Lecture(
-            id = 5L,
+            id = 6L,
             semester = semester,
             major = null,
             code = "MATH201",
@@ -177,8 +207,17 @@ class LocalTestDataInitializerTest {
             professor = "Prof. Sato",
             credit = 2
         )
+        val phys301 = Lecture(
+            id = 7L,
+            semester = semester,
+            major = null,
+            code = "PHYS301",
+            name = "Classical Mechanics",
+            professor = "Prof. Tanaka",
+            credit = 3
+        )
         val timetable = Timetable(
-            id = 6L,
+            id = 8L,
             member = member,
             semester = semester
         )
@@ -187,14 +226,16 @@ class LocalTestDataInitializerTest {
         `when`(majorRepository.findByUniversityIdAndCode(1L, "CS")).thenReturn(computerScience)
         `when`(majorRepository.findByUniversityIdAndCode(1L, "MATH")).thenReturn(mathematics)
         `when`(memberRepository.findByEmail("test@tokyo.ac.jp")).thenReturn(member)
+        `when`(memberRepository.findByEmail("empty@tokyo.ac.jp")).thenReturn(emptyMember)
         `when`(semesterRepository.findByUniversityIdAndAcademicYearAndTerm(1L, 2026, SemesterTerm.SPRING))
             .thenReturn(semester)
-        `when`(lectureRepository.findBySemesterIdAndCode(3L, "CS101")).thenReturn(cs101)
-        `when`(lectureRepository.findBySemesterIdAndCode(3L, "MATH201")).thenReturn(math201)
-        stubExistingScheduleLookups(cs101, math201)
-        `when`(timetableRepository.findByMemberIdAndSemesterId(2L, 3L)).thenReturn(timetable)
-        `when`(timetableLectureRepository.existsByTimetableIdAndLectureId(6L, 4L)).thenReturn(true)
-        `when`(timetableLectureRepository.existsByTimetableIdAndLectureId(6L, 5L)).thenReturn(true)
+        `when`(lectureRepository.findBySemesterIdAndCode(4L, "CS101")).thenReturn(cs101)
+        `when`(lectureRepository.findBySemesterIdAndCode(4L, "MATH201")).thenReturn(math201)
+        `when`(lectureRepository.findBySemesterIdAndCode(4L, "PHYS301")).thenReturn(phys301)
+        stubExistingScheduleLookups(cs101, math201, phys301)
+        `when`(timetableRepository.findByMemberIdAndSemesterId(2L, 4L)).thenReturn(timetable)
+        `when`(timetableLectureRepository.existsByTimetableIdAndLectureId(8L, 5L)).thenReturn(true)
+        `when`(timetableLectureRepository.existsByTimetableIdAndLectureId(8L, 6L)).thenReturn(true)
 
         initializer.run(DefaultApplicationArguments(*emptyArray<String>()))
 
@@ -211,7 +252,7 @@ class LocalTestDataInitializerTest {
     private fun stubMissingScheduleLookups() {
         `when`(
             lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(
-                4L,
+                5L,
                 DayOfWeek.MONDAY,
                 LocalTime.of(9, 0),
                 LocalTime.of(10, 30)
@@ -219,7 +260,7 @@ class LocalTestDataInitializerTest {
         ).thenReturn(null)
         `when`(
             lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(
-                4L,
+                5L,
                 DayOfWeek.WEDNESDAY,
                 LocalTime.of(9, 0),
                 LocalTime.of(10, 30)
@@ -227,18 +268,26 @@ class LocalTestDataInitializerTest {
         ).thenReturn(null)
         `when`(
             lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(
-                5L,
+                6L,
                 DayOfWeek.TUESDAY,
                 LocalTime.of(13, 0),
                 LocalTime.of(14, 30)
             )
         ).thenReturn(null)
-    }
-
-    private fun stubExistingScheduleLookups(cs101: Lecture, math201: Lecture) {
         `when`(
             lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(
-                4L,
+                7L,
+                DayOfWeek.MONDAY,
+                LocalTime.of(10, 0),
+                LocalTime.of(11, 0)
+            )
+        ).thenReturn(null)
+    }
+
+    private fun stubExistingScheduleLookups(cs101: Lecture, math201: Lecture, phys301: Lecture) {
+        `when`(
+            lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(
+                5L,
                 DayOfWeek.MONDAY,
                 LocalTime.of(9, 0),
                 LocalTime.of(10, 30)
@@ -255,7 +304,7 @@ class LocalTestDataInitializerTest {
         )
         `when`(
             lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(
-                4L,
+                5L,
                 DayOfWeek.WEDNESDAY,
                 LocalTime.of(9, 0),
                 LocalTime.of(10, 30)
@@ -272,7 +321,7 @@ class LocalTestDataInitializerTest {
         )
         `when`(
             lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(
-                5L,
+                6L,
                 DayOfWeek.TUESDAY,
                 LocalTime.of(13, 0),
                 LocalTime.of(14, 30)
@@ -285,6 +334,23 @@ class LocalTestDataInitializerTest {
                 startTime = LocalTime.of(13, 0),
                 endTime = LocalTime.of(14, 30),
                 location = "Science Building 202"
+            )
+        )
+        `when`(
+            lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(
+                7L,
+                DayOfWeek.MONDAY,
+                LocalTime.of(10, 0),
+                LocalTime.of(11, 0)
+            )
+        ).thenReturn(
+            LectureSchedule(
+                id = 10L,
+                lecture = phys301,
+                dayOfWeek = DayOfWeek.MONDAY,
+                startTime = LocalTime.of(10, 0),
+                endTime = LocalTime.of(11, 0),
+                location = "Physics Hall 303"
             )
         )
     }

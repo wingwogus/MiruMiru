@@ -20,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
+import java.time.DayOfWeek
 
 @SpringBootTest(
     classes = [ApiApplication::class],
@@ -70,6 +71,16 @@ class TimetablePersistenceIntegrationTest(
             endTime = java.time.LocalTime.of(10, 30)
         )
         assertNotNull(lectureSchedule)
+
+        val dayCounts = lectureScheduleRepository.findAllByLectureIdIn(
+            lectureRepository.findAllBySemesterIdOrderByCodeAsc(semester.id).map(Lecture::id)
+        ).groupingBy { it.dayOfWeek }
+            .eachCount()
+        assertEquals(2, dayCounts[DayOfWeek.MONDAY])
+        assertEquals(2, dayCounts[DayOfWeek.TUESDAY])
+        assertEquals(2, dayCounts[DayOfWeek.WEDNESDAY])
+        assertEquals(2, dayCounts[DayOfWeek.THURSDAY])
+        assertEquals(2, dayCounts[DayOfWeek.FRIDAY])
 
         val timetable = timetableRepository.findByMemberIdAndSemesterId(member.id, semester.id)
         assertNotNull(timetable)

@@ -271,6 +271,96 @@ class LocalTestDataInitializer(
                         location = "Physics Hall 303"
                     )
                 )
+            ),
+            LectureSeed(
+                code = "HIST110",
+                name = "World History",
+                professor = "Prof. Nakamura",
+                credit = 2,
+                majorCode = null,
+                schedules = listOf(
+                    LectureScheduleSeed(
+                        dayOfWeek = DayOfWeek.TUESDAY,
+                        startTime = LocalTime.of(9, 0),
+                        endTime = LocalTime.of(10, 30),
+                        location = "Humanities Hall 105"
+                    )
+                )
+            ),
+            LectureSeed(
+                code = "CHEM105",
+                name = "General Chemistry",
+                professor = "Prof. Suzuki",
+                credit = 3,
+                majorCode = null,
+                schedules = listOf(
+                    LectureScheduleSeed(
+                        dayOfWeek = DayOfWeek.WEDNESDAY,
+                        startTime = LocalTime.of(14, 0),
+                        endTime = LocalTime.of(15, 30),
+                        location = "Science Building 110"
+                    )
+                )
+            ),
+            LectureSeed(
+                code = "ECON210",
+                name = "Microeconomics",
+                professor = "Prof. Kobayashi",
+                credit = 2,
+                majorCode = null,
+                schedules = listOf(
+                    LectureScheduleSeed(
+                        dayOfWeek = DayOfWeek.THURSDAY,
+                        startTime = LocalTime.of(10, 0),
+                        endTime = LocalTime.of(11, 30),
+                        location = "Social Sciences 204"
+                    )
+                )
+            ),
+            LectureSeed(
+                code = "ENG220",
+                name = "Academic English",
+                professor = "Prof. Wilson",
+                credit = 2,
+                majorCode = null,
+                schedules = listOf(
+                    LectureScheduleSeed(
+                        dayOfWeek = DayOfWeek.THURSDAY,
+                        startTime = LocalTime.of(13, 0),
+                        endTime = LocalTime.of(14, 30),
+                        location = "Language Center 301"
+                    )
+                )
+            ),
+            LectureSeed(
+                code = "STAT230",
+                name = "Statistics Fundamentals",
+                professor = "Prof. Yamamoto",
+                credit = 2,
+                majorCode = "MATH",
+                schedules = listOf(
+                    LectureScheduleSeed(
+                        dayOfWeek = DayOfWeek.FRIDAY,
+                        startTime = LocalTime.of(9, 0),
+                        endTime = LocalTime.of(10, 30),
+                        location = "Science Building 305"
+                    )
+                )
+            ),
+            LectureSeed(
+                code = "ART150",
+                name = "Visual Arts Appreciation",
+                professor = "Prof. Lee",
+                credit = 2,
+                majorCode = null,
+                schedules = listOf(
+                    LectureScheduleSeed(
+                        dayOfWeek = DayOfWeek.FRIDAY,
+                        startTime = LocalTime.of(11, 0),
+                        endTime = LocalTime.of(12, 30),
+                        location = "Arts Hall 201"
+                    )
+                )
             )
         )
     }

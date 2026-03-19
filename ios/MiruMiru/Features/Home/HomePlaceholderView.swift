@@ -197,16 +197,17 @@ private struct HomeAvatar: View {
         ZStack(alignment: .bottomTrailing) {
             Circle()
                 .stroke(AuthPalette.primaryStart, lineWidth: 2)
-                .frame(width: 58, height: 58)
-
-            Circle()
-                .fill(Color(red: 0.98, green: 0.90, blue: 0.82))
-                .frame(width: 48, height: 48)
-                .overlay {
-                    Text(initials)
-                        .font(AppFont.bold(18, relativeTo: .headline))
-                        .foregroundStyle(Color(red: 0.16, green: 0.19, blue: 0.24))
+                .background {
+                    Circle()
+                        .fill(Color(red: 0.98, green: 0.90, blue: 0.82))
+                        .padding(5)
+                        .overlay {
+                            Text(initials)
+                                .font(AppFont.bold(18, relativeTo: .headline))
+                                .foregroundStyle(Color(red: 0.16, green: 0.19, blue: 0.24))
+                        }
                 }
+                .frame(width: 58, height: 58)
 
             Circle()
                 .fill(Color(red: 0.29, green: 0.84, blue: 0.46))
@@ -258,7 +259,20 @@ private struct HomeClassCard: View {
 
     private static let minimumCardHeight: CGFloat = 122
 
+    private var accentColor: Color {
+        switch row.badge {
+        case .now:
+            return AuthPalette.primaryStart
+        case .next:
+            return Color(red: 0.71, green: 0.78, blue: 0.90)
+        case nil:
+            return Color(red: 0.82, green: 0.87, blue: 0.95)
+        }
+    }
+
     var body: some View {
+        let cardShape = RoundedRectangle(cornerRadius: 26, style: .continuous)
+
         HStack(alignment: .top, spacing: 18) {
             ZStack {
                 Rectangle()
@@ -283,54 +297,80 @@ private struct HomeClassCard: View {
             }
             .frame(width: 76, height: cardHeight, alignment: .center)
 
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .center, spacing: 10) {
-                    if let badge = row.badge {
-                        Text(badge.rawValue)
-                            .font(AppFont.bold(12, relativeTo: .caption))
-                            .foregroundStyle(AuthPalette.primaryStart)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(
-                                Capsule()
-                                    .fill(AuthPalette.primaryStart.opacity(0.10))
-                            )
-                    }
-
-                    Spacer()
-
-                    Text(row.location)
-                        .font(AppFont.medium(14, relativeTo: .subheadline))
-                        .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.66))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.82)
-                }
-                .frame(minHeight: 28)
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(row.title)
-                        .font(AppFont.bold(20, relativeTo: .headline))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text(row.professor)
-                        .font(AppFont.medium(17, relativeTo: .body))
-                        .foregroundStyle(Color(red: 0.56, green: 0.62, blue: 0.72))
-                }
-            }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 16)
+            Color.clear
             .frame(minHeight: Self.minimumCardHeight, alignment: .top)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                RoundedRectangle(cornerRadius: 26, style: .continuous)
-                    .fill(Color.white)
-                    .shadow(color: Color.black.opacity(0.04), radius: 14, y: 7)
+                ZStack(alignment: .leading) {
+                    cardShape
+                        .fill(accentColor.opacity(0.95))
+
+                    cardShape
+                        .fill(Color.white)
+                        .padding(.leading, 4)
+                        .overlay {
+                            LinearGradient(
+                                colors: [
+                                    accentColor.opacity(0.10),
+                                    accentColor.opacity(0.03),
+                                    .clear
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                            .clipShape(cardShape)
+                            .padding(.leading, 4)
+                        }
+                }
             )
             .overlay(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 26, style: .continuous)
-                    .fill(row.badge == .now ? AuthPalette.primaryStart : Color.clear)
-                    .frame(width: 4)
+                HStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(alignment: .center, spacing: 10) {
+                            if let badge = row.badge {
+                                Text(badge.rawValue)
+                                    .font(AppFont.bold(12, relativeTo: .caption))
+                                    .foregroundStyle(AuthPalette.primaryStart)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        Capsule()
+                                            .fill(AuthPalette.primaryStart.opacity(0.10))
+                                    )
+                            }
+
+                            Spacer()
+
+                            Text(row.location)
+                                .font(AppFont.medium(14, relativeTo: .subheadline))
+                                .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.66))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.82)
+                        }
+                        .frame(minHeight: 28)
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(row.title)
+                                .font(AppFont.bold(20, relativeTo: .headline))
+                                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            Text(row.professor)
+                                .font(AppFont.medium(17, relativeTo: .body))
+                                .foregroundStyle(Color(red: 0.56, green: 0.62, blue: 0.72))
+                        }
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 16)
+                    .padding(.leading, 4)
+
+                    Spacer(minLength: 0)
+                }
+            }
+            .overlay {
+                cardShape
+                    .stroke(Color.white.opacity(0.6), lineWidth: 0.8)
+                    .padding(.leading, 4)
             }
             .background {
                 GeometryReader { proxy in

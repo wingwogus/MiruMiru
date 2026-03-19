@@ -412,28 +412,46 @@ private struct TimetableLectureBlock: View {
         let palette = TimetablePalette.token(for: block.accentIndex)
         let cardShape = RoundedRectangle(cornerRadius: 12, style: .continuous)
 
-        HStack(spacing: 0) {
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                .fill(palette.accent)
-                .frame(width: 4)
+        ZStack(alignment: .leading) {
+            cardShape
+                .fill(palette.accent.opacity(0.95))
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(block.title)
-                    .font(AppFont.bold(12, relativeTo: .subheadline))
-                    .foregroundStyle(palette.title)
-                    .lineLimit(3)
+            cardShape
+                .fill(palette.fill)
+                .overlay {
+                    LinearGradient(
+                        colors: [
+                            palette.accent.opacity(0.10),
+                            palette.accent.opacity(0.03),
+                            .clear
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .clipShape(cardShape)
+                }
+                .padding(.leading, 4)
+                .overlay(alignment: .leading) {
+                    HStack(spacing: 0) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(block.title)
+                                .font(AppFont.bold(12, relativeTo: .subheadline))
+                                .foregroundStyle(palette.title)
+                                .lineLimit(3)
 
-                Text(block.location)
-                    .font(AppFont.medium(10, relativeTo: .caption2))
-                    .foregroundStyle(Color(red: 0.38, green: 0.46, blue: 0.59))
-                    .lineLimit(2)
-            }
-            .padding(.horizontal, 9)
-            .padding(.vertical, 8)
+                            Text(block.location)
+                                .font(AppFont.medium(10, relativeTo: .caption2))
+                                .foregroundStyle(Color(red: 0.38, green: 0.46, blue: 0.59))
+                                .lineLimit(2)
+                        }
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 8)
 
-            Spacer(minLength: 0)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.leading, 3)
+                }
         }
-        .background(cardShape.fill(palette.fill))
         .contentShape(Rectangle())
     }
 }
@@ -606,39 +624,60 @@ private struct TimetableDetailScheduleCard: View {
     var body: some View {
         let cardShape = RoundedRectangle(cornerRadius: 24, style: .continuous)
 
-        VStack(alignment: .leading, spacing: 14) {
-            Image(systemName: "calendar")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(AuthPalette.primaryStart)
+        ZStack(alignment: .leading) {
+            cardShape
+                .fill(AuthPalette.primaryStart.opacity(0.95))
 
-            Text("Schedule")
-                .font(AppFont.bold(13, relativeTo: .caption))
-                .foregroundStyle(AuthPalette.primaryStart)
-                .textCase(.uppercase)
-
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(Array(lecture.orderedSchedules.enumerated()), id: \.offset) { _, schedule in
-                    Text("\(weekdayTitle(schedule.dayOfWeek)) \(schedule.startTime) - \(schedule.endTime)")
-                        .font(AppFont.bold(17, relativeTo: .headline))
-                        .foregroundStyle(AuthPalette.primaryStart)
-                        .fixedSize(horizontal: false, vertical: true)
+            cardShape
+                .fill(Color(red: 0.95, green: 0.97, blue: 1.0))
+                .padding(.leading, 4)
+                .overlay {
+                    LinearGradient(
+                        colors: [
+                            AuthPalette.primaryStart.opacity(0.10),
+                            AuthPalette.primaryStart.opacity(0.03),
+                            .clear
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .clipShape(cardShape)
+                    .padding(.leading, 4)
                 }
+
+            HStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 14) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(AuthPalette.primaryStart)
+
+                    Text("Schedule")
+                        .font(AppFont.bold(13, relativeTo: .caption))
+                        .foregroundStyle(AuthPalette.primaryStart)
+                        .textCase(.uppercase)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(Array(lecture.orderedSchedules.enumerated()), id: \.offset) { _, schedule in
+                            Text("\(weekdayTitle(schedule.dayOfWeek)) \(schedule.startTime) - \(schedule.endTime)")
+                                .font(AppFont.bold(17, relativeTo: .headline))
+                                .foregroundStyle(AuthPalette.primaryStart)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 20)
+                .padding(.leading, 4)
+
+                Spacer(minLength: 0)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 18)
-        .padding(.vertical, 20)
-        .background(
+        .overlay {
             cardShape
-                .fill(Color(red: 0.95, green: 0.97, blue: 1.0))
-                .overlay(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(AuthPalette.primaryStart)
-                        .frame(width: 4)
-                        .padding(.vertical, 20)
-                        .padding(.leading, 1)
-                }
-        )
+                .stroke(Color.white.opacity(0.6), lineWidth: 0.8)
+                .padding(.leading, 4)
+        }
     }
 }
 
@@ -651,35 +690,56 @@ private struct TimetableDetailMetricCard: View {
     var body: some View {
         let cardShape = RoundedRectangle(cornerRadius: 24, style: .continuous)
 
-        VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: iconName)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(accent)
+        ZStack(alignment: .leading) {
+            cardShape
+                .fill(accent.opacity(0.95))
 
-            Text(title)
-                .font(AppFont.bold(12, relativeTo: .caption))
-                .foregroundStyle(Color(red: 0.47, green: 0.55, blue: 0.66))
-                .textCase(.uppercase)
-
-            Text(value)
-                .font(AppFont.bold(16, relativeTo: .headline))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
-        .padding(.horizontal, 18)
-        .padding(.vertical, 18)
-        .background(
             cardShape
                 .fill(Color(red: 0.95, green: 0.97, blue: 1.0))
-                .overlay(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(accent)
-                        .frame(width: 3)
-                        .padding(.vertical, 16)
-                        .padding(.leading, 1)
+                .padding(.leading, 4)
+                .overlay {
+                    LinearGradient(
+                        colors: [
+                            accent.opacity(0.10),
+                            accent.opacity(0.03),
+                            .clear
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .clipShape(cardShape)
+                    .padding(.leading, 4)
                 }
-        )
+
+            HStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Image(systemName: iconName)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(accent)
+
+                    Text(title)
+                        .font(AppFont.bold(12, relativeTo: .caption))
+                        .foregroundStyle(Color(red: 0.47, green: 0.55, blue: 0.66))
+                        .textCase(.uppercase)
+
+                    Text(value)
+                        .font(AppFont.bold(16, relativeTo: .headline))
+                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 18)
+                .padding(.leading, 4)
+
+                Spacer(minLength: 0)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
+        .overlay {
+            cardShape
+                .stroke(Color.white.opacity(0.6), lineWidth: 0.8)
+                .padding(.leading, 4)
+        }
     }
 }
 

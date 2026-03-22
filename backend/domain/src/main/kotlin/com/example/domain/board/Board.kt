@@ -1,5 +1,6 @@
 package com.example.domain.board
 
+import com.example.domain.common.AuditableEntity
 import com.example.domain.university.University
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -43,3 +44,6 @@ class Board(
     @Column(name = "is_anonymous_allowed", nullable = false)
     val isAnonymousAllowed: Boolean
 )
+    val isAnonymousAllowed: Boolean = false,
+) : AuditableEntity()
+

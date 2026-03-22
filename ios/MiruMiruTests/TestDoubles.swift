@@ -98,6 +98,7 @@ final class MockHomeClient: HomeClientProtocol, @unchecked Sendable {
     var profileResult: Result<HomeMemberProfile, Error> = .failure(HomeClientError.unexpected)
     var semestersResult: Result<[HomeSemester], Error> = .failure(HomeClientError.unexpected)
     var timetableResult: Result<HomeTimetable, Error> = .failure(HomeClientError.unexpected)
+    var hotPostsResult: Result<[HotPostSummary], Error> = .success([])
     private(set) var requestedSemesterId: Int64?
 
     func fetchProfile() async throws -> HomeMemberProfile {
@@ -111,6 +112,10 @@ final class MockHomeClient: HomeClientProtocol, @unchecked Sendable {
     func fetchTimetable(semesterId: Int64) async throws -> HomeTimetable {
         requestedSemesterId = semesterId
         return try timetableResult.get()
+    }
+
+    func fetchHotPosts() async throws -> [HotPostSummary] {
+        try hotPostsResult.get()
     }
 }
 

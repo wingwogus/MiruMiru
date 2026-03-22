@@ -9,6 +9,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -68,12 +69,20 @@ class AuthController(
             AuthCommand.SignUp(
                 email = request.email,
                 password = request.password,
-                nickname = request.nickname
+                nickname = request.nickname,
+                majorId = request.majorId!!
             )
         )
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(ApiResponse.empty(Unit))
+    }
+
+    @GetMapping("/majors")
+    fun getMajors(@Valid @ModelAttribute request: AuthRequests.MajorListRequest): ResponseEntity<ApiResponse<List<AuthResponses.MajorOptionResponse>>> {
+        val response = authService.getAvailableMajors(request.email)
+            .map(AuthResponses.MajorOptionResponse::from)
+        return ResponseEntity.ok(ApiResponse.ok(response))
     }
 
     @PostMapping("/logout")

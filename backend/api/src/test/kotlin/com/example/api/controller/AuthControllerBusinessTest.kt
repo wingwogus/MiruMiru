@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.mock
 import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -37,11 +38,25 @@ class AuthControllerBusinessTest {
     fun `signup returns business error when university is not registered`() {
         doThrow(BusinessException(ErrorCode.UNREGISTERED_UNIVERSITY))
             .`when`(authService)
-            .signUp(AuthCommand.SignUp("user@kyoto.ac.jp", "password123", "maru"))
+            .signUp(AuthCommand.SignUp("user@kyoto.ac.jp", "password123", "maru", 1L))
 
         val response = mockMvc.post("/api/v1/auth/signup") {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"email":"user@kyoto.ac.jp","password":"password123","nickname":"maru"}"""
+            content = """{"email":"user@kyoto.ac.jp","password":"password123","nickname":"maru","majorId":1}"""
+        }.andReturn().response
+
+        assertEquals(400, response.status)
+        assertTrue(response.contentAsString.contains(ErrorCode.UNREGISTERED_UNIVERSITY.code))
+    }
+
+    @Test
+    fun `get majors returns business error when university is not registered`() {
+        doThrow(BusinessException(ErrorCode.UNREGISTERED_UNIVERSITY))
+            .`when`(authService)
+            .getAvailableMajors("user@kyoto.ac.jp")
+
+        val response = mockMvc.get("/api/v1/auth/majors") {
+            param("email", "user@kyoto.ac.jp")
         }.andReturn().response
 
         assertEquals(400, response.status)

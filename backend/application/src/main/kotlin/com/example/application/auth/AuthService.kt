@@ -4,6 +4,7 @@ import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
 import com.example.application.redis.RefreshTokenRepository
 import com.example.application.security.TokenProvider
+import com.example.domain.major.MajorRepository
 import com.example.domain.member.Member
 import com.example.domain.member.MemberRepository
 import com.example.domain.university.UniversityRepository
@@ -27,6 +28,7 @@ class AuthService(
     private val nicknameVerificationRepository: NicknameVerificationRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val memberRepository: MemberRepository,
+    private val majorRepository: MajorRepository,
     private val universityRepository: UniversityRepository,
     private val passwordEncoder: PasswordEncoder,
     @Value("\${spring.mail.auth-code-expiration-millis}")
@@ -38,6 +40,20 @@ class AuthService(
 
     companion object {
         private const val USER_ROLE = "ROLE_USER"
+    }
+
+    fun getAvailableMajors(email: String): List<AuthResult.MajorOption> {
+        val university = universityRepository.findByEmailDomain(extractEmailDomain(email))
+            ?: throw BusinessException(ErrorCode.UNREGISTERED_UNIVERSITY)
+
+        return majorRepository.findAllByUniversityIdOrderByNameAsc(university.id)
+            .map { major ->
+                AuthResult.MajorOption(
+                    majorId = major.id,
+                    code = major.code,
+                    name = major.name
+                )
+            }
     }
 
     fun login(request: AuthCommand.Login): AuthResult.TokenPair {
@@ -95,9 +111,12 @@ class AuthService(
 
         val university = universityRepository.findByEmailDomain(extractEmailDomain(request.email))
             ?: throw BusinessException(ErrorCode.UNREGISTERED_UNIVERSITY)
+        val major = majorRepository.findByIdAndUniversityId(request.majorId, university.id)
+            ?: throw BusinessException(ErrorCode.INVALID_MAJOR_SELECTION)
 
         val member = Member(
             university = university,
+            major = major,
             email = request.email,
             password = passwordEncoder.encode(request.password),
             nickname = request.nickname,

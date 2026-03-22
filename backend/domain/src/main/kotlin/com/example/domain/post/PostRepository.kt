@@ -25,4 +25,5 @@ interface PostRepository : JpaRepository<Post, Long> {
 
     fun findByBoardIdAndTitle(boardId: Long, title: String): Post?
     fun findAllByMemberId(memberId: Long): List<Post>
+    fun findByTitle(title: String): Post?
 }

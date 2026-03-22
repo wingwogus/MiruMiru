@@ -1,0 +1,1347 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MiruMiru Chat Duo Test</title>
+    <style>
+      :root {
+        --bg: #eef2f7;
+        --surface: #ffffff;
+        --line: #e4e8ef;
+        --text: #222b3a;
+        --sub: #7c8698;
+        --primary: #1f6bff;
+        --primary-soft: #eaf1ff;
+        --mine: #1f6bff;
+        --other: #ffffff;
+        --danger: #c62828;
+        --good: #1b8f3f;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 18px;
+        font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, sans-serif;
+        background: radial-gradient(circle at top, #f7f9fc 0%, var(--bg) 55%);
+        color: var(--text);
+      }
+      h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.2px; }
+      .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+      .hint { color: var(--sub); font-size: 12px; margin-bottom: 14px; }
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 12px;
+      }
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(120px, auto));
+        align-items: end;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .field { display: flex; flex-direction: column; gap: 4px; }
+      .field label { font-size: 12px; color: var(--sub); }
+      input[type="text"], input[type="password"], input[type="number"] {
+        height: 38px;
+        border: 1px solid #d3dbe8;
+        border-radius: 12px;
+        padding: 0 12px;
+        font-size: 14px;
+        min-width: 120px;
+        background: #fff;
+        color: var(--text);
+      }
+      input::placeholder { color: #a1aabc; }
+      button {
+        height: 38px;
+        border: 1px solid var(--primary);
+        background: var(--primary);
+        color: #fff;
+        border-radius: 12px;
+        padding: 0 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: #fff;
+        color: #2c3a51;
+        border-color: #cad4e3;
+      }
+      button:disabled { opacity: 0.55; cursor: not-allowed; }
+      .duo {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .user {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 8px 26px rgba(23, 36, 69, 0.08);
+      }
+      .user-head {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f9fbff;
+        font-weight: 800;
+      }
+      .status { font-size: 12px; color: var(--sub); }
+      .status b { color: var(--text); }
+      .auth {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+        display: grid;
+        grid-template-columns: 1fr 1fr auto auto auto;
+        gap: 8px;
+        align-items: end;
+      }
+      .token {
+        padding: 0 12px 10px;
+        border-bottom: 1px solid var(--line);
+        font-size: 12px;
+        color: var(--sub);
+      }
+      .token code {
+        background: #f2f5fb;
+        border: 1px solid #e1e6ef;
+        border-radius: 8px;
+        padding: 2px 6px;
+      }
+      .workspace {
+        min-height: 560px;
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+      }
+      .nav-rail {
+        display: none;
+      }
+      .nav-logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.14);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 15px;
+      }
+      .nav-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255,255,255,0.9);
+        background: transparent;
+        border: 1px solid transparent;
+        font-size: 14px;
+      }
+      .nav-btn.active {
+        background: rgba(255,255,255,0.17);
+        border-color: rgba(255,255,255,0.28);
+      }
+      .rooms {
+        border-right: 1px solid var(--line);
+        background: #fbfcff;
+        display: flex;
+        flex-direction: column;
+      }
+      .rooms-top {
+        padding: 10px 10px 8px;
+        border-bottom: 1px solid var(--line);
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 6px;
+      }
+      .rooms-search {
+        height: 36px;
+        border: 1px solid #dbe3f0;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-size: 13px;
+        background: #f3f6fb;
+      }
+      .room-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        overflow: auto;
+        max-height: 504px;
+      }
+      .room-item {
+        padding: 11px 10px;
+        border-bottom: 1px solid #edf1f7;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .room-item:hover { background: #f1f6ff; }
+      .room-item.active { background: var(--primary-soft); }
+      .room-top {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+      }
+      .room-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #2b77ff 0%, #59a8ff 100%);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .room-title {
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .room-time {
+        font-size: 11px;
+        color: var(--sub);
+      }
+      .badge {
+        min-width: 20px;
+        padding: 0 6px;
+        height: 20px;
+        border-radius: 999px;
+        background: #ef4444;
+        color: #fff;
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .room-sub {
+        margin: 5px 0 0 42px;
+        font-size: 12px;
+        color: var(--sub);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .chat {
+        display: flex;
+        flex-direction: column;
+        background: #f3f4f8;
+      }
+      .chat-head {
+        height: 62px;
+        padding: 8px 12px;
+        border-bottom: 1px solid #e5e7eb;
+        background: #fff;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+      }
+      .chat-icon-btn {
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: transparent;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        line-height: 1;
+        padding: 0;
+      }
+      .chat-profile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .chat-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        background: #e5e7eb;
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .chat-title-wrap {
+        min-width: 0;
+      }
+      .chat-head-main {
+        font-size: 16px;
+        font-weight: 800;
+        color: #111827;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .chat-read {
+        margin-top: 2px;
+        font-size: 12px;
+        color: #22a34a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .chat-menu {
+        color: #374151;
+        font-size: 21px;
+        line-height: 1;
+      }
+      .messages {
+        flex: 1;
+        overflow: auto;
+        padding: 14px 12px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: #f3f4f8;
+      }
+      .date-chip {
+        align-self: center;
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: #ffffff;
+        border: 1px solid #eaedf3;
+        color: #99a3b3;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .bubble-wrap {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+      }
+      .bubble-wrap.mine { justify-content: flex-end; }
+      .bubble-wrap.other { justify-content: flex-start; }
+      .bubble-wrap.system { justify-content: center; }
+      .bubble-stack {
+        max-width: 82%;
+        display: flex;
+        flex-direction: column;
+      }
+      .bubble-wrap.mine .bubble-stack { align-items: flex-end; }
+      .bubble-wrap.other .bubble-stack { align-items: flex-start; }
+      .mini-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        background: #dfe3e9;
+        color: #6b7280;
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 18px;
+        flex-shrink: 0;
+      }
+      .bubble {
+        border-radius: 16px;
+        padding: 12px 14px;
+        font-size: 16px;
+        line-height: 1.45;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+      }
+      .bubble.mine {
+        background: #4f46e5;
+        color: #fff;
+        border-radius: 16px 16px 6px 16px;
+      }
+      .bubble.other {
+        background: #eceef1;
+        color: #111827;
+        border-radius: 16px 16px 16px 6px;
+      }
+      .bubble.system {
+        background: rgba(255,255,255,0.78);
+        color: #5e6b7f;
+        font-size: 12px;
+      }
+      .bubble-meta {
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        color: #9ca3af;
+      }
+      .bubble-meta.mine { justify-content: flex-end; }
+      .bubble-meta.other { justify-content: flex-start; margin-left: 2px; }
+      .bubble-meta.system { justify-content: center; }
+      .bubble-check {
+        color: #2563eb;
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1;
+      }
+      .composer {
+        border-top: 1px solid #e5e7eb;
+        background: #fff;
+        padding: 10px 10px 12px;
+        display: grid;
+        grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+        gap: 8px;
+        align-items: center;
+      }
+      .composer input {
+        min-width: 0;
+        border-radius: 999px;
+        border-color: #d7dce5;
+        height: 42px;
+        font-size: 15px;
+      }
+      .composer-plus {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        background: transparent;
+        color: #9ca3af;
+        border: none;
+        font-size: 28px;
+        line-height: 0.9;
+        padding: 0;
+      }
+      .composer-anon {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: #4338ca;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .composer-anon-check {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        background: #4f46e5;
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+      }
+      .composer-send {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        border: none;
+        padding: 0;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .hidden-read {
+        display: none;
+      }
+      .debug { margin-top: 14px; }
+      .debug summary {
+        cursor: pointer;
+        font-weight: 700;
+        color: #334155;
+      }
+      .log {
+        margin-top: 8px;
+        height: 180px;
+        overflow: auto;
+        background: #0c1324;
+        color: #d6e1ff;
+        border: 1px solid #1d2a5a;
+        border-radius: 12px;
+        padding: 10px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+      .good { color: var(--good); }
+      .bad { color: var(--danger); }
+      @media (max-width: 1400px) {
+        .controls { grid-template-columns: repeat(3, minmax(140px, 1fr)); }
+        .workspace { grid-template-columns: 240px minmax(0, 1fr); }
+      }
+      @media (max-width: 1180px) {
+        .duo { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 760px) {
+        body { padding: 10px; }
+        .auth { grid-template-columns: 1fr 1fr auto auto auto; }
+        .workspace {
+          grid-template-columns: 1fr;
+          min-height: 700px;
+        }
+        .nav-rail { display: none; }
+        .rooms { border-right: 0; border-bottom: 1px solid var(--line); max-height: 260px; }
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="top">
+      <h1>MiruMiru Chat Duo Test</h1>
+    </div>
+
+    <div class="hint">
+      로컬 시드: <code>test@tokyo.ac.jp / password123!</code>, <code>test2@tokyo.ac.jp / password123!</code>, post title <code>[LOCAL] Chat Seed Post</code> ·
+      글 작성자가 방을 만들 땐 <code>partnerMemberId</code>가 필요합니다(비워두면 반대 패널 유저 id 자동 사용).
+    </div>
+
+    <div class="panel controls">
+      <div class="field">
+        <label>postId</label>
+        <input id="postId" type="number" value="1" />
+      </div>
+      <div class="field">
+        <label>partnerMemberId (옵션)</label>
+        <input id="partnerMemberId" type="number" placeholder="예: 1" />
+      </div>
+      <div class="field">
+        <label>requesterIsAnonymous</label>
+        <input id="requesterIsAnonymous" type="checkbox" />
+      </div>
+      <button id="createAsA">A로 방 만들기</button>
+      <button id="createAsB" class="secondary">B로 방 만들기</button>
+      <button id="refreshAll" class="secondary">양쪽 방 목록 새로고침</button>
+    </div>
+
+    <section class="duo">
+      <article class="user" id="user_a">
+        <div class="user-head">
+          <div>유저 A 화면</div>
+          <div class="status"><b id="a_status">offline</b> · id <span id="a_me">-</span></div>
+        </div>
+
+        <div class="auth">
+          <div class="field">
+            <label>Email</label>
+            <input id="a_email" type="text" value="test@tokyo.ac.jp" />
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input id="a_pw" type="password" value="password123!" />
+          </div>
+          <button id="a_login">Login</button>
+          <button id="a_connect" class="secondary" disabled>Connect</button>
+          <button id="a_disconnect" class="secondary" disabled>Off</button>
+        </div>
+
+        <div class="token">token: <code id="a_token">-</code></div>
+
+        <div class="workspace">
+          <aside class="nav-rail">
+            <div class="nav-logo">💬</div>
+            <div class="nav-btn active">💬</div>
+            <div class="nav-btn">📋</div>
+            <div class="nav-btn">⚙️</div>
+          </aside>
+          <div class="rooms">
+            <div class="rooms-top">
+              <input class="rooms-search" type="text" placeholder="Search" />
+              <button id="a_rooms_refresh" class="secondary">방 목록</button>
+            </div>
+            <ul id="a_rooms" class="room-list"></ul>
+          </div>
+
+          <div class="chat">
+            <div class="chat-head">
+              <button class="chat-icon-btn" type="button" aria-label="뒤로">‹</button>
+              <div class="chat-profile">
+                <div class="chat-avatar">?</div>
+                <div class="chat-title-wrap">
+                  <div class="chat-head-main"><span id="a_room_title">Anonymous</span></div>
+                  <div class="chat-read" id="a_room_read">Online</div>
+                </div>
+              </div>
+              <div class="chat-menu">⋮</div>
+            </div>
+            <div id="a_messages" class="messages"></div>
+            <div class="composer">
+              <button class="composer-plus" type="button" aria-label="추가">＋</button>
+              <div class="composer-anon"><span class="composer-anon-check">✓</span>ANON</div>
+              <input id="a_msg_input" type="text" placeholder="Write a message..." />
+              <button id="a_send" class="composer-send" disabled aria-label="전송">➤</button>
+              <button id="a_read" class="secondary hidden-read" disabled>읽음</button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="user" id="user_b">
+        <div class="user-head">
+          <div>유저 B 화면</div>
+          <div class="status"><b id="b_status">offline</b> · id <span id="b_me">-</span></div>
+        </div>
+
+        <div class="auth">
+          <div class="field">
+            <label>Email</label>
+            <input id="b_email" type="text" value="test2@tokyo.ac.jp" />
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input id="b_pw" type="password" value="password123!" />
+          </div>
+          <button id="b_login">Login</button>
+          <button id="b_connect" class="secondary" disabled>Connect</button>
+          <button id="b_disconnect" class="secondary" disabled>Off</button>
+        </div>
+
+        <div class="token">token: <code id="b_token">-</code></div>
+
+        <div class="workspace">
+          <aside class="nav-rail">
+            <div class="nav-logo">💬</div>
+            <div class="nav-btn active">💬</div>
+            <div class="nav-btn">📋</div>
+            <div class="nav-btn">⚙️</div>
+          </aside>
+          <div class="rooms">
+            <div class="rooms-top">
+              <input class="rooms-search" type="text" placeholder="Search" />
+              <button id="b_rooms_refresh" class="secondary">방 목록</button>
+            </div>
+            <ul id="b_rooms" class="room-list"></ul>
+          </div>
+
+          <div class="chat">
+            <div class="chat-head">
+              <button class="chat-icon-btn" type="button" aria-label="뒤로">‹</button>
+              <div class="chat-profile">
+                <div class="chat-avatar">?</div>
+                <div class="chat-title-wrap">
+                  <div class="chat-head-main"><span id="b_room_title">Anonymous</span></div>
+                  <div class="chat-read" id="b_room_read">Online</div>
+                </div>
+              </div>
+              <div class="chat-menu">⋮</div>
+            </div>
+            <div id="b_messages" class="messages"></div>
+            <div class="composer">
+              <button class="composer-plus" type="button" aria-label="추가">＋</button>
+              <div class="composer-anon"><span class="composer-anon-check">✓</span>ANON</div>
+              <input id="b_msg_input" type="text" placeholder="Write a message..." />
+              <button id="b_send" class="composer-send" disabled aria-label="전송">➤</button>
+              <button id="b_read" class="secondary hidden-read" disabled>읽음</button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel debug">
+      <details>
+        <summary>Debug Log</summary>
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:8px;">
+          <button id="clear_log" class="secondary">Clear</button>
+        </div>
+        <div id="log" class="log"></div>
+      </details>
+    </section>
+
+    <script>
+      const baseUrl = window.location.origin;
+
+      function el(id) { return document.getElementById(id); }
+      function now() { return new Date().toISOString().replace('T', ' ').replace('Z', ''); }
+
+      function logLine(message, type = '') {
+        const line = document.createElement('div');
+        line.textContent = `[${now()}] ${message}`;
+        if (type) line.className = type;
+        const node = el('log');
+        node.appendChild(line);
+        node.scrollTop = node.scrollHeight;
+      }
+
+      function safeJson(text) {
+        try { return JSON.parse(text); } catch { return null; }
+      }
+
+      function decodeJwtSubject(token) {
+        try {
+          const payload = token.split('.')[1];
+          if (!payload) return null;
+          const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+          const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+          const decoded = atob(padded);
+          const data = JSON.parse(decoded);
+          return data?.sub ? Number(data.sub) : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function toNullablePositiveId(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number) || number <= 0) return null;
+        return number;
+      }
+
+      function normalizeRoom(raw) {
+        return {
+          ...raw,
+          roomId: Number(raw.roomId),
+          postId: Number(raw.postId),
+          postTitle: raw.postTitle || '',
+          otherMemberId: Number(raw.otherMemberId),
+          unreadCount: Number(raw.unreadCount || 0),
+          lastMessageId: toNullablePositiveId(raw.lastMessageId),
+          myLastReadMessageId: toNullablePositiveId(raw.myLastReadMessageId),
+          otherLastReadMessageId: toNullablePositiveId(raw.otherLastReadMessageId),
+        };
+      }
+
+      function formatRelativeTime(dateLike) {
+        if (!dateLike) return '';
+        const date = new Date(dateLike);
+        if (Number.isNaN(date.getTime())) return '';
+        const minutes = Math.floor((Date.now() - date.getTime()) / 60000);
+        if (minutes < 1) return '방금';
+        if (minutes < 60) return `${minutes}분 전`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}시간 전`;
+        const days = Math.floor(hours / 24);
+        return `${days}일 전`;
+      }
+
+      function formatMessageTime(dateLike) {
+        if (!dateLike) return '';
+        const date = new Date(dateLike);
+        if (Number.isNaN(date.getTime())) return '';
+        return new Intl.DateTimeFormat('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        }).format(date);
+      }
+
+      async function api(path, { method = 'GET', token, body } = {}) {
+        const response = await fetch(baseUrl + path, {
+          method,
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...(body ? { 'Content-Type': 'application/json' } : {}),
+          },
+          body: body ? JSON.stringify(body) : undefined,
+        });
+
+        const text = await response.text();
+        const json = safeJson(text) ?? text;
+
+        if (!response.ok) {
+          logLine(`${method} ${path} failed (${response.status})`, 'bad');
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return json;
+      }
+
+      function createUserState(prefix, label) {
+        return {
+          prefix,
+          label,
+          token: null,
+          memberId: null,
+          client: null,
+          connected: false,
+          rooms: [],
+          selectedRoomId: null,
+          messagesByRoom: {},
+          roomSubscription: null,
+          unreadSubscription: null,
+          refreshTimer: null,
+          lastSentAt: 0,
+          lastSentContent: '',
+          isSending: false,
+        };
+      }
+
+      const users = {
+        a: createUserState('a', 'A'),
+        b: createUserState('b', 'B'),
+      };
+
+      function setStatus(user, text) {
+        el(`${user.prefix}_status`).textContent = text;
+        refreshPresenceLabels();
+      }
+
+      function getPeerUser(user) {
+        return user.prefix === 'a' ? users.b : users.a;
+      }
+
+      function getPeerPresence(user) {
+        const peer = getPeerUser(user);
+        if (!peer) return 'Offline';
+        return peer.connected ? 'Online' : 'Offline';
+      }
+
+      function anonymousLabel(memberId) {
+        const value = Number(memberId);
+        if (!Number.isFinite(value) || value <= 0) return '익명1';
+        return `익명${value}`;
+      }
+
+      function refreshPresenceLabels() {
+        if (!users?.a || !users?.b) return;
+        setRoomTitle(users.a);
+        setRoomTitle(users.b);
+      }
+
+      function updateButtons(user) {
+        el(`${user.prefix}_connect`).disabled = !user.token || user.connected;
+        el(`${user.prefix}_disconnect`).disabled = !user.connected;
+
+        const selected = !!user.selectedRoomId;
+        el(`${user.prefix}_send`).disabled = !user.connected || !selected;
+        el(`${user.prefix}_read`).disabled = !user.connected || !selected;
+      }
+
+      function queueRefreshRooms(user) {
+        if (user.refreshTimer) clearTimeout(user.refreshTimer);
+        user.refreshTimer = setTimeout(() => fetchRooms(user).catch(() => {}), 250);
+      }
+
+      function getSelectedRoom(user) {
+        return user.rooms.find((room) => room.roomId === user.selectedRoomId) || null;
+      }
+
+      function getRoom(user, roomId) {
+        return user.rooms.find((room) => room.roomId === Number(roomId)) || null;
+      }
+
+      function updateRoomState(user, roomId, patch) {
+        const room = getRoom(user, roomId);
+        if (!room) return;
+
+        if (patch.unreadCount !== undefined) {
+          room.unreadCount = Math.max(0, Number(patch.unreadCount || 0));
+        }
+
+        if (patch.myLastReadMessageId !== undefined) {
+          const value = toNullablePositiveId(patch.myLastReadMessageId);
+          if (value) {
+            room.myLastReadMessageId = Math.max(room.myLastReadMessageId || 0, value);
+          }
+        }
+
+        if (patch.otherLastReadMessageId !== undefined) {
+          const value = toNullablePositiveId(patch.otherLastReadMessageId);
+          if (value) {
+            room.otherLastReadMessageId = Math.max(room.otherLastReadMessageId || 0, value);
+          }
+        }
+      }
+
+      function renderRooms(user) {
+        const list = el(`${user.prefix}_rooms`);
+        list.innerHTML = '';
+
+        if (!user.rooms.length) {
+          const empty = document.createElement('li');
+          empty.className = 'room-item';
+          empty.textContent = '방이 없습니다. 먼저 방을 생성해 주세요.';
+          list.appendChild(empty);
+          return;
+        }
+
+        user.rooms.forEach((room) => {
+          const item = document.createElement('li');
+          item.className = `room-item${room.roomId === user.selectedRoomId ? ' active' : ''}`;
+          item.onclick = () => selectRoom(user, room.roomId);
+
+          const top = document.createElement('div');
+          top.className = 'room-top';
+
+          const avatar = document.createElement('div');
+          avatar.className = 'room-avatar';
+          avatar.textContent = anonymousLabel(room.otherMemberId).replace('익명', '');
+
+          const title = document.createElement('div');
+          title.className = 'room-title';
+          title.textContent = room.postTitle || `게시글 #${room.postId}`;
+
+          const right = document.createElement('div');
+          const unreadCount = Number(room.unreadCount || 0);
+          const timeText = formatRelativeTime(room.lastMessageCreatedAt);
+          if (unreadCount > 0) {
+            right.innerHTML = `<span class="badge">${unreadCount}</span>`;
+          } else {
+            right.className = 'room-time';
+            right.textContent = timeText;
+          }
+
+          const sub = document.createElement('div');
+          sub.className = 'room-sub';
+          const preview = room.lastMessageContent || '최근 메시지 없음';
+          sub.textContent = preview;
+
+          top.appendChild(avatar);
+          top.appendChild(title);
+          top.appendChild(right);
+          item.appendChild(top);
+          item.appendChild(sub);
+          list.appendChild(item);
+        });
+      }
+
+      function appendBubble(user, kind, text, options = {}) {
+        const node = el(`${user.prefix}_messages`);
+        const wrap = document.createElement('div');
+        wrap.className = `bubble-wrap ${kind}`;
+
+        if (options.showAvatar) {
+          const avatarNode = document.createElement('div');
+          avatarNode.className = 'mini-avatar';
+          avatarNode.textContent = '?';
+          wrap.appendChild(avatarNode);
+        }
+
+        const stack = document.createElement('div');
+        stack.className = 'bubble-stack';
+
+        const bubble = document.createElement('div');
+        bubble.className = `bubble ${kind}`;
+        bubble.textContent = text;
+
+        stack.appendChild(bubble);
+
+        const shouldRenderMeta = !!options.metaLabel || !!options.readMark;
+        if (shouldRenderMeta) {
+          const metaNode = document.createElement('div');
+          metaNode.className = `bubble-meta ${kind}`;
+
+          if (options.metaLabel) {
+            const timeNode = document.createElement('span');
+            timeNode.textContent = options.metaLabel;
+            metaNode.appendChild(timeNode);
+          }
+
+          if (options.readMark) {
+            const checkNode = document.createElement('span');
+            checkNode.className = 'bubble-check';
+            checkNode.textContent = '✓';
+            metaNode.appendChild(checkNode);
+          }
+
+          stack.appendChild(metaNode);
+        }
+
+        wrap.appendChild(stack);
+        node.appendChild(wrap);
+        node.scrollTop = node.scrollHeight;
+      }
+
+      function appendDateChip(user, label = 'Today') {
+        const node = el(`${user.prefix}_messages`);
+        const chip = document.createElement('div');
+        chip.className = 'date-chip';
+        chip.textContent = label;
+        node.appendChild(chip);
+      }
+
+      function renderMessages(user) {
+        const node = el(`${user.prefix}_messages`);
+        node.innerHTML = '';
+
+        if (!user.selectedRoomId) {
+          appendBubble(user, 'system', '왼쪽 방 목록에서 채팅방을 선택해 주세요.');
+          return;
+        }
+
+        const messages = user.messagesByRoom[user.selectedRoomId] || [];
+        if (!messages.length) {
+          appendBubble(user, 'system', '아직 메시지가 없습니다. 첫 메시지를 보내보세요.');
+          return;
+        }
+
+        appendDateChip(user, 'Today');
+
+        const room = getSelectedRoom(user);
+        const otherRead = Number(room?.otherLastReadMessageId || 0);
+        const lastReadMineMessageId = messages.reduce((acc, message) => {
+          const mine = Number(message.senderId) === Number(user.memberId);
+          if (!mine) return acc;
+          if (Number(message.id) <= otherRead) return Math.max(acc, Number(message.id));
+          return acc;
+        }, 0);
+
+        messages.forEach((message) => {
+          const mine = Number(message.senderId) === Number(user.memberId);
+          const kind = mine ? 'mine' : 'other';
+          const readMark = mine && Number(message.id) === lastReadMineMessageId;
+          appendBubble(user, kind, message.content, {
+            metaLabel: formatMessageTime(message.createdAt),
+            readMark,
+            showAvatar: !mine,
+          });
+        });
+      }
+
+      function setRoomTitle(user) {
+        const room = getSelectedRoom(user);
+        const title = el(`${user.prefix}_room_title`);
+        const readState = el(`${user.prefix}_room_read`);
+        const presence = getPeerPresence(user);
+        readState.style.color = presence === 'Online' ? '#22a34a' : '#9ca3af';
+
+        if (!room) {
+          title.textContent = '채팅방 선택';
+          readState.textContent = presence;
+          return;
+        }
+
+        title.textContent = room.postTitle || `게시글 #${room.postId}`;
+        readState.textContent = `${anonymousLabel(room.otherMemberId)} · ${presence}`;
+      }
+
+      async function fetchRooms(user) {
+        if (!user.token) return;
+        const json = await api('/api/v1/message-rooms?limit=50', { token: user.token });
+        user.rooms = Array.isArray(json?.data) ? json.data.map(normalizeRoom) : [];
+
+        if (user.selectedRoomId && !user.rooms.some((room) => room.roomId === user.selectedRoomId)) {
+          user.selectedRoomId = null;
+        }
+
+        renderRooms(user);
+        setRoomTitle(user);
+        updateButtons(user);
+      }
+
+      async function loadMessages(user, roomId) {
+        if (!user.token) return;
+        const json = await api(`/api/v1/message-rooms/${roomId}/messages?limit=100`, { token: user.token });
+        const messages = json?.data?.messages || [];
+        messages.sort((a, b) => Number(a.id) - Number(b.id));
+        user.messagesByRoom[roomId] = messages;
+
+        updateRoomState(user, roomId, {
+          myLastReadMessageId: json?.data?.requesterLastReadMessageId,
+          otherLastReadMessageId: json?.data?.otherLastReadMessageId,
+        });
+
+        renderRooms(user);
+        setRoomTitle(user);
+        renderMessages(user);
+      }
+
+      function subscribeRoom(user, roomId) {
+        if (!user.client || !user.connected) return;
+
+        if (user.roomSubscription) {
+          user.roomSubscription.unsubscribe();
+          user.roomSubscription = null;
+        }
+
+        user.roomSubscription = user.client.subscribe(`/sub/chat/rooms/${roomId}`, (frame) => {
+          const event = safeJson(frame.body);
+          if (!event) return;
+
+          if (event.type === 'MESSAGE' && event.message) {
+            const room = Number(event.roomId);
+            const list = user.messagesByRoom[room] || [];
+            const incoming = {
+              id: Number(event.message.messageId),
+              senderId: Number(event.message.senderId),
+              content: event.message.content,
+              createdAt: event.message.createdAt || new Date().toISOString(),
+            };
+            list.push(incoming);
+            user.messagesByRoom[room] = list;
+
+            if (user.selectedRoomId === room) {
+              if (incoming.senderId !== Number(user.memberId)) {
+                updateRoomState(user, room, { unreadCount: 0 });
+              }
+              renderMessages(user);
+              setRoomTitle(user);
+
+              if (incoming.senderId !== Number(user.memberId)) {
+                markRead(user, { roomId: room, silent: true, reason: 'auto-live' });
+              }
+            }
+
+            queueRefreshRooms(user);
+            logLine(`${user.label} recv MESSAGE room=${room} msgId=${incoming.id}`);
+            return;
+          }
+
+          if (event.type === 'READ' && event.read) {
+            const room = Number(event.roomId);
+            const readerId = Number(event.read.readerId);
+            const lastReadMessageId = Number(event.read.lastReadMessageId);
+
+            if (readerId === Number(user.memberId)) {
+              updateRoomState(user, room, {
+                myLastReadMessageId: lastReadMessageId,
+                unreadCount: 0,
+              });
+            } else {
+              updateRoomState(user, room, {
+                otherLastReadMessageId: lastReadMessageId,
+              });
+            }
+
+            if (user.selectedRoomId === room) {
+              renderMessages(user);
+            }
+
+            renderRooms(user);
+            setRoomTitle(user);
+            queueRefreshRooms(user);
+            logLine(`${user.label} recv READ room=${event.roomId} reader=${readerId} last=${lastReadMessageId}`);
+          }
+        });
+      }
+
+      function subscribeUnread(user) {
+        if (!user.client || !user.connected) return;
+
+        if (user.unreadSubscription) {
+          user.unreadSubscription.unsubscribe();
+          user.unreadSubscription = null;
+        }
+
+        user.unreadSubscription = user.client.subscribe('/user/queue/unread', (frame) => {
+          const event = safeJson(frame.body);
+          if (!event || event.type !== 'UNREAD_COUNT' || !event.unread) return;
+
+          const roomId = Number(event.roomId);
+          const unreadCount = Number(event.unread.unreadCount);
+          updateRoomState(user, roomId, { unreadCount });
+
+          renderRooms(user);
+          setRoomTitle(user);
+          logLine(`${user.label} recv UNREAD_COUNT room=${roomId} count=${unreadCount}`);
+        });
+      }
+
+      async function login(user) {
+        const email = el(`${user.prefix}_email`).value.trim();
+        const password = el(`${user.prefix}_pw`).value;
+
+        const json = await api('/api/v1/auth/login', {
+          method: 'POST',
+          body: { email, password },
+        });
+
+        const token = json?.data?.accessToken;
+        if (!token) throw new Error('No accessToken');
+
+        user.token = token;
+        user.memberId = decodeJwtSubject(token);
+
+        if (!user.memberId) {
+          const meText = await api('/api/v1/test/me', { token });
+          const matched = String(meText).match(/(\d+)$/);
+          user.memberId = matched ? Number(matched[1]) : null;
+        }
+
+        el(`${user.prefix}_token`).textContent = `${token.slice(0, 22)}...`;
+        el(`${user.prefix}_me`).textContent = user.memberId ?? '-';
+        setStatus(user, 'logged-in');
+        updateButtons(user);
+
+        await fetchRooms(user);
+        logLine(`${user.label} login success (id=${user.memberId})`, 'good');
+      }
+
+      function connect(user) {
+        if (!user.token || user.connected) return;
+
+        const client = new StompJs.Client({
+          webSocketFactory: () => new SockJS(baseUrl + '/ws'),
+          connectHeaders: { Authorization: `Bearer ${user.token}` },
+          reconnectDelay: 2000,
+          heartbeatIncoming: 10000,
+          heartbeatOutgoing: 10000,
+          debug: () => {},
+          onConnect: () => {
+            user.connected = true;
+            setStatus(user, 'connected');
+            subscribeUnread(user);
+            if (user.selectedRoomId) subscribeRoom(user, user.selectedRoomId);
+            updateButtons(user);
+            logLine(`${user.label} STOMP connected`, 'good');
+          },
+          onStompError: (frame) => {
+            logLine(`${user.label} STOMP ERROR ${frame.headers['message'] || ''}`, 'bad');
+          },
+          onWebSocketClose: () => {
+            user.connected = false;
+            setStatus(user, 'offline');
+            updateButtons(user);
+          },
+        });
+
+        user.client = client;
+        client.activate();
+        setStatus(user, 'connecting...');
+      }
+
+      function disconnect(user) {
+        if (!user.client) return;
+
+        if (user.roomSubscription) user.roomSubscription.unsubscribe();
+        if (user.unreadSubscription) user.unreadSubscription.unsubscribe();
+
+        user.roomSubscription = null;
+        user.unreadSubscription = null;
+
+        user.client.deactivate();
+        user.client = null;
+        user.connected = false;
+        setStatus(user, 'offline');
+        updateButtons(user);
+      }
+
+      async function selectRoom(user, roomId) {
+        user.selectedRoomId = Number(roomId);
+        renderRooms(user);
+        setRoomTitle(user);
+        if (user.connected) subscribeRoom(user, user.selectedRoomId);
+        await loadMessages(user, user.selectedRoomId);
+        markRead(user, { roomId: user.selectedRoomId, silent: true, reason: 'auto-enter' });
+        updateButtons(user);
+      }
+
+      function sendMessage(user) {
+        if (!user.connected || !user.client || !user.selectedRoomId) return;
+        if (user.isSending) return;
+
+        const input = el(`${user.prefix}_msg_input`);
+        const content = input.value.trim();
+        if (!content) return;
+
+        const nowMillis = Date.now();
+        if (content === user.lastSentContent && nowMillis - user.lastSentAt < 350) {
+          return;
+        }
+
+        user.isSending = true;
+        user.client.publish({
+          destination: `/pub/chat/rooms/${user.selectedRoomId}/send`,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ content }),
+        });
+
+        user.lastSentAt = nowMillis;
+        user.lastSentContent = content;
+        input.value = '';
+        setTimeout(() => { user.isSending = false; }, 80);
+        logLine(`${user.label} send room=${user.selectedRoomId}`, 'good');
+      }
+
+      function markRead(user, options = {}) {
+        const roomId = Number(options.roomId ?? user.selectedRoomId);
+        if (!user.connected || !user.client || !roomId) return false;
+
+        const list = user.messagesByRoom[roomId] || [];
+        if (!list.length) return false;
+
+        const last = list[list.length - 1];
+        const room = getRoom(user, roomId);
+        const myLastRead = Number(room?.myLastReadMessageId || 0);
+
+        if (Number(last.id) <= myLastRead) return false;
+
+        user.client.publish({
+          destination: `/pub/chat/rooms/${roomId}/read`,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ lastReadMessageId: Number(last.id) }),
+        });
+
+        updateRoomState(user, roomId, {
+          myLastReadMessageId: Number(last.id),
+          unreadCount: 0,
+        });
+
+        if (user.selectedRoomId === roomId) {
+          renderMessages(user);
+        }
+        renderRooms(user);
+        setRoomTitle(user);
+
+        if (!options.silent) {
+          logLine(`${user.label} markRead room=${roomId} id=${last.id}`, 'good');
+        }
+        return true;
+      }
+
+      async function createRoomBy(user) {
+        if (!user.token) throw new Error(`${user.label} 먼저 로그인 필요`);
+
+        const postId = Number(el('postId').value);
+        const requesterIsAnonymous = !!el('requesterIsAnonymous').checked;
+        const manualPartnerMemberId = toNullablePositiveId(el('partnerMemberId').value);
+        const fallbackPartnerMemberId = user.prefix === 'a' ? users.b.memberId : users.a.memberId;
+        const partnerMemberId = manualPartnerMemberId || toNullablePositiveId(fallbackPartnerMemberId);
+
+        const json = await api('/api/v1/message-rooms', {
+          method: 'POST',
+          token: user.token,
+          body: { postId, requesterIsAnonymous, partnerMemberId },
+        });
+
+        const roomId = Number(json?.data?.roomId);
+        await fetchRooms(users.a);
+        await fetchRooms(users.b);
+
+        if (roomId) {
+          await selectRoom(user, roomId);
+        }
+
+        logLine(`${user.label} created room ${roomId}`, 'good');
+      }
+
+      function bindUser(user) {
+        el(`${user.prefix}_login`).onclick = () => login(user).catch((error) => logLine(`${user.label} login failed: ${error.message}`, 'bad'));
+        el(`${user.prefix}_connect`).onclick = () => connect(user);
+        el(`${user.prefix}_disconnect`).onclick = () => disconnect(user);
+        el(`${user.prefix}_rooms_refresh`).onclick = () => fetchRooms(user).catch((error) => logLine(`${user.label} rooms failed: ${error.message}`, 'bad'));
+        el(`${user.prefix}_send`).onclick = () => sendMessage(user);
+        el(`${user.prefix}_read`).onclick = () => markRead(user);
+
+        el(`${user.prefix}_msg_input`).addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter') return;
+          event.preventDefault();
+          if (event.isComposing || event.keyCode === 229) return;
+          if (event.repeat) return;
+          sendMessage(user);
+        });
+      }
+
+      bindUser(users.a);
+      bindUser(users.b);
+
+      el('createAsA').onclick = () => createRoomBy(users.a).catch((error) => logLine(`A room create failed: ${error.message}`, 'bad'));
+      el('createAsB').onclick = () => createRoomBy(users.b).catch((error) => logLine(`B room create failed: ${error.message}`, 'bad'));
+      el('refreshAll').onclick = () => Promise.all([fetchRooms(users.a), fetchRooms(users.b)]).catch(() => {});
+      el('clear_log').onclick = () => { el('log').textContent = ''; };
+
+      refreshPresenceLabels();
+      logLine('Ready. A/B 로그인 -> Connect -> 방 선택 -> 메시지 전송.', 'good');
+    </script>
+  </body>
+</html>

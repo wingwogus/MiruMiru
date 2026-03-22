@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":application"))
     implementation("org.springframework.boot:spring-boot-starter-batch")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
 }

@@ -132,6 +132,15 @@ struct PreviewHomeClient: HomeClientProtocol {
             )
         }
     }
+
+    func fetchHotPosts() async throws -> [HotPostSummary] {
+        switch scenario {
+        case .networkFailure:
+            throw HomeClientError.network
+        default:
+            return PreviewBoardsData.hotPosts
+        }
+    }
 }
 
 struct PreviewTimetableClient: TimetableClientProtocol {
@@ -190,6 +199,260 @@ struct PreviewTimetableClient: TimetableClientProtocol {
     }
 
     func removeLecture(semesterId: Int64, lectureId: Int64) async throws {}
+}
+
+struct PreviewBoardsClient: BoardsClientProtocol {
+    enum Scenario {
+        case loaded
+        case empty
+        case networkFailure
+    }
+
+    let scenario: Scenario
+
+    func fetchBoards() async throws -> [BoardSummary] {
+        switch scenario {
+        case .empty:
+            return []
+        case .networkFailure:
+            throw BoardsClientError.network
+        case .loaded:
+            return PreviewBoardsData.boards
+        }
+    }
+
+    func fetchHotPosts() async throws -> [HotPostSummary] {
+        switch scenario {
+        case .empty:
+            return []
+        case .networkFailure:
+            throw BoardsClientError.network
+        case .loaded:
+            return PreviewBoardsData.hotPosts
+        }
+    }
+
+    func fetchBoardPosts(boardId: Int64) async throws -> [BoardPostSummary] {
+        if scenario == .networkFailure {
+            throw BoardsClientError.network
+        }
+        return PreviewBoardsData.boardPosts[boardId] ?? []
+    }
+
+    func fetchPostDetail(postId: Int64) async throws -> PostDetailContent {
+        if scenario == .networkFailure {
+            throw BoardsClientError.network
+        }
+        return PreviewBoardsData.postDetails[postId] ?? PreviewBoardsData.defaultPostDetail
+    }
+
+    func createPost(boardId: Int64, input: CreatePostInput) async throws -> Int64 {
+        if scenario == .networkFailure {
+            throw BoardsClientError.network
+        }
+        return 99001
+    }
+
+    func likePost(postId: Int64) async throws {
+        if scenario == .networkFailure {
+            throw BoardsClientError.network
+        }
+    }
+
+    func unlikePost(postId: Int64) async throws {
+        if scenario == .networkFailure {
+            throw BoardsClientError.network
+        }
+    }
+
+    func createComment(postId: Int64, input: CreateCommentInput) async throws -> Int64 {
+        if scenario == .networkFailure {
+            throw BoardsClientError.network
+        }
+        return 88001
+    }
+
+    func deleteComment(commentId: Int64) async throws {
+        if scenario == .networkFailure {
+            throw BoardsClientError.network
+        }
+    }
+
+    func deletePost(postId: Int64) async throws {
+        if scenario == .networkFailure {
+            throw BoardsClientError.network
+        }
+    }
+}
+
+enum PreviewBoardsData {
+    static let generalBoard = BoardSummary(
+        id: 101,
+        code: "general",
+        name: "University Notices",
+        isAnonymousAllowed: false
+    )
+
+    static let freeBoard = BoardSummary(
+        id: 102,
+        code: "free",
+        name: "Free Board",
+        isAnonymousAllowed: true
+    )
+
+    static let clubBoard = BoardSummary(
+        id: 103,
+        code: "club",
+        name: "Club Recruitment",
+        isAnonymousAllowed: false
+    )
+
+    static let boards = [
+        generalBoard,
+        freeBoard,
+        clubBoard
+    ]
+
+    static let hotPosts = [
+        HotPostSummary(
+            id: 2001,
+            boardId: freeBoard.id,
+            boardCode: freeBoard.code,
+            boardName: freeBoard.name,
+            title: "Does anyone know the scope for next week's Econ exam?",
+            authorDisplayName: "Anonymous 1",
+            isAnonymous: true,
+            likeCount: 42,
+            commentCount: 15,
+            createdAt: "2026-03-22T20:50:00"
+        ),
+        HotPostSummary(
+            id: 2002,
+            boardId: generalBoard.id,
+            boardCode: generalBoard.code,
+            boardName: generalBoard.name,
+            title: "Has anyone tried the new ramen at the cafeteria?",
+            authorDisplayName: "Kenta Tanaka",
+            isAnonymous: false,
+            likeCount: 18,
+            commentCount: 6,
+            createdAt: "2026-03-22T20:28:00"
+        )
+    ]
+
+    static let boardPosts: [Int64: [BoardPostSummary]] = [
+        freeBoard.id: [
+            BoardPostSummary(
+                id: 2001,
+                title: "Anyone want to study together for the midterms?",
+                authorDisplayName: "Anonymous",
+                isAnonymous: true,
+                likeCount: 12,
+                commentCount: 4,
+                createdAt: "2026-03-22T20:58:00"
+            ),
+            BoardPostSummary(
+                id: 2003,
+                title: "Looking for lunch buddies around Engineering Hall",
+                authorDisplayName: "Anonymous 2",
+                isAnonymous: true,
+                likeCount: 7,
+                commentCount: 3,
+                createdAt: "2026-03-22T18:25:00"
+            )
+        ],
+        generalBoard.id: [
+            BoardPostSummary(
+                id: 2002,
+                title: "Library opening hours changed for exam week",
+                authorDisplayName: "Student Affairs",
+                isAnonymous: false,
+                likeCount: 9,
+                commentCount: 1,
+                createdAt: "2026-03-22T19:40:00"
+            )
+        ]
+    ]
+
+    static let defaultPostDetail = PostDetailContent(
+        postId: 2001,
+        boardId: freeBoard.id,
+        boardCode: freeBoard.code,
+        boardName: freeBoard.name,
+        title: "Anyone want to study together for the midterms?",
+        content: "I'm looking for a group to study advanced calculus. We can meet at the central library or a cafe near campus.",
+        authorDisplayName: "Anonymous",
+        isAnonymous: true,
+        isMine: false,
+        isLikedByMe: false,
+        likeCount: 12,
+        commentCount: 4,
+        comments: [],
+        images: [],
+        createdAt: "2026-03-22T20:58:00",
+        updatedAt: "2026-03-22T20:58:00"
+    )
+
+    static let postDetails: [Int64: PostDetailContent] = [
+        2001: PostDetailContent(
+            postId: 2001,
+            boardId: freeBoard.id,
+            boardCode: freeBoard.code,
+            boardName: freeBoard.name,
+            title: "Anyone want to study together for the midterms?",
+            content: "I'm looking for a group to study advanced calculus. We can meet at the central library or a cafe near campus. I'm struggling a bit with the vector fields section and would love to collaborate.",
+            authorDisplayName: "Anonymous",
+            isAnonymous: true,
+            isMine: false,
+            isLikedByMe: false,
+            likeCount: 12,
+            commentCount: 4,
+            comments: [
+                PostCommentItem(
+                    commentId: 1,
+                    parentId: nil,
+                    content: "I'm interested! Are you thinking of meeting this Friday?",
+                    authorDisplayName: "Anonymous 1",
+                    isAnonymous: true,
+                    isMine: false,
+                    isDeleted: false,
+                    createdAt: "2026-03-22T21:01:00",
+                    children: [
+                        PostCommentItem(
+                            commentId: 2,
+                            parentId: 1,
+                            content: "Friday afternoon works for me! Around 3 PM?",
+                            authorDisplayName: "Author",
+                            isAnonymous: true,
+                            isMine: false,
+                            isDeleted: false,
+                            createdAt: "2026-03-22T21:02:00",
+                            children: []
+                        )
+                    ]
+                ),
+                PostCommentItem(
+                    commentId: 3,
+                    parentId: nil,
+                    content: "Calculus is killing me too... count me in please!",
+                    authorDisplayName: "Anonymous 2",
+                    isAnonymous: true,
+                    isMine: false,
+                    isDeleted: false,
+                    createdAt: "2026-03-22T21:04:00",
+                    children: []
+                )
+            ],
+            images: [
+                PostImageSummary(
+                    imageUrl: "https://example.com/images/study-group.png",
+                    displayOrder: 0
+                )
+            ],
+            createdAt: "2026-03-22T20:58:00",
+            updatedAt: "2026-03-22T20:58:00"
+        )
+    ]
 }
 
 enum PreviewHomeData {

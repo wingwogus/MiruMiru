@@ -23,7 +23,17 @@ class TokenProvider(
         private const val ROLE_CLAIM = "role"
     }
 
-    private val key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secretKey))
+    private val decodedSecretKey = Base64.getDecoder().decode(secretKey)
+
+    init {
+        // HS512 requires key size >= 512 bits (64 bytes)
+        require(decodedSecretKey.size >= 64) {
+            "jwt.secret is too short for HS512: ${decodedSecretKey.size * 8} bits. " +
+                "Set JWT_SECRET to a Base64 value that decodes to 64+ bytes (e.g. `openssl rand -base64 64`)."
+        }
+    }
+
+    private val key = Keys.hmacShaKeyFor(decodedSecretKey)
 
     /** -------------------------------
      *  AccessToken 생성 (userId만 저장)

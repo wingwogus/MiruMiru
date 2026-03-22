@@ -4,25 +4,33 @@ spring:
       on-profile: local
 
   datasource:
-    url: jdbc:h2:mem:testdb
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    url: jdbc:postgresql://localhost:5432/mirumiru?currentSchema=${POSTGRES_SCHEMA:public}
+    username: ${POSTGRES_USER:monikhyun}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      schema: ${POSTGRES_SCHEMA:public}
 
   jpa:
     hibernate:
       ddl-auto: create
     properties:
       hibernate:
+        default_schema: ${POSTGRES_SCHEMA:public}
         format_sql: true
         show_sql: true
     open-in-view: false
 
+  data:
+    redis:
+      repositories:
+        enabled: false
+
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -38,9 +46,9 @@ spring:
 
 # Base64 인코딩된 dummy key. (실서버에서는 secret을 프로필마다 override)
 jwt:
-  secret: t2oRk29vBQZWS8GEt4xr8AJznlPK0ipBKUwdyqe10SOGZB26vVBMjzqualdJsjcOY1wX9DOqJC9V1DFl58F0tQ==
+  # HS512 requires >= 512-bit (64 bytes) key after Base64 decoding
+  secret: o99Rv7wh67IKXLrmu2E8N8JgZqoIrouYsr7INeLsdanDWvy65l510MgI824fyensnGLsSJ7yVBntVB9AbcW10g==
 
 redis:
   host: localhost
   port: 6379
-

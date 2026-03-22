@@ -15,6 +15,7 @@ dependencies {
     implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.4"))
     testImplementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.4"))
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.boot:spring-boot-starter-mail")

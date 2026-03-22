@@ -1,0 +1,53 @@
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  datasource:
+    url: jdbc:postgresql://postgres:5432/${POSTGRES_DB:mirumiru}?currentSchema=${POSTGRES_SCHEMA:public}
+    username: ${POSTGRES_USER:monikhyun}
+    password: ${POSTGRES_PASSWORD:miru}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      schema: ${POSTGRES_SCHEMA:public}
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        default_schema: ${POSTGRES_SCHEMA:public}
+        format_sql: true
+        show_sql: true
+    open-in-view: false
+
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+    auth-code-expiration-millis: 1800000
+    verified-state-expiration-millis: 1800000
+
+jwt:
+  # HS512 requires >= 512-bit (64 bytes) key after Base64 decoding
+  secret: ${JWT_SECRET:o99Rv7wh67IKXLrmu2E8N8JgZqoIrouYsr7INeLsdanDWvy65l510MgI824fyensnGLsSJ7yVBntVB9AbcW10g==}
+
+redis:
+  host: ${REDIS_HOST:redis}
+  port: ${REDIS_PORT:6379}

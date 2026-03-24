@@ -4,17 +4,23 @@ struct AppRoot: View {
     @ObservedObject var session: AppSession
     private let homeClient: HomeClientProtocol
     private let timetableClient: TimetableClientProtocol
+    private let boardsClient: BoardsClientProtocol
+    private let courseReviewsClient: CourseReviewsClientProtocol
     @State private var authRoute: AuthRoute = .login
     @State private var loginPrefillEmail = ""
 
     init(
         session: AppSession,
         homeClient: HomeClientProtocol,
-        timetableClient: TimetableClientProtocol
+        timetableClient: TimetableClientProtocol,
+        boardsClient: BoardsClientProtocol,
+        courseReviewsClient: CourseReviewsClientProtocol
     ) {
         self.session = session
         self.homeClient = homeClient
         self.timetableClient = timetableClient
+        self.boardsClient = boardsClient
+        self.courseReviewsClient = courseReviewsClient
     }
 
     var body: some View {
@@ -28,7 +34,9 @@ struct AppRoot: View {
                 AuthenticatedAppShell(
                     session: session,
                     homeClient: homeClient,
-                    timetableClient: timetableClient
+                    timetableClient: timetableClient,
+                    boardsClient: boardsClient,
+                    courseReviewsClient: courseReviewsClient
                 )
             }
         }
@@ -102,14 +110,18 @@ struct AppRoot_Previews: PreviewProvider {
             AppRoot(
                 session: PreviewFactory.makeSession(state: .unauthenticated),
                 homeClient: PreviewHomeClient.loaded(),
-                timetableClient: PreviewTimetableClient.loaded()
+                timetableClient: PreviewTimetableClient.loaded(),
+                boardsClient: PreviewBoardsClient(scenario: .loaded),
+                courseReviewsClient: PreviewCourseReviewsClient.loaded()
             )
             .previewDisplayName("AppRoot Login")
 
             AppRoot(
                 session: PreviewFactory.makeSession(state: .authenticated),
                 homeClient: PreviewHomeClient.loaded(),
-                timetableClient: PreviewTimetableClient.loaded()
+                timetableClient: PreviewTimetableClient.loaded(),
+                boardsClient: PreviewBoardsClient(scenario: .loaded),
+                courseReviewsClient: PreviewCourseReviewsClient.loaded()
             )
             .previewDisplayName("AppRoot Home")
         }

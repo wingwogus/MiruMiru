@@ -40,17 +40,21 @@ final class HomeViewModel: ObservableObject {
         state = .loading
 
         do {
-            async let profileTask = client.fetchProfile()
-            async let semestersTask = client.fetchSemesters()
+            let profileTask = Task { try await client.fetchProfile() }
+            let semestersTask = Task { try await client.fetchSemesters() }
+            let hotPostsTask = Task { try await client.fetchHotPosts() }
 
-            let (profile, semesters) = try await (profileTask, semestersTask)
+            let profile = try await profileTask.value
+            let semesters = try await semestersTask.value
+            let trendingPosts = try await resolveTrendingPosts(from: hotPostsTask)
 
             guard let semester = semesters.first else {
                 state = .empty(
                     HomeEmptyContent(
                         profile: profile,
                         semesterTitle: nil,
-                        state: .noSemester
+                        state: .noSemester,
+                        trendingPosts: trendingPosts
                     )
                 )
                 return
@@ -63,7 +67,8 @@ final class HomeViewModel: ObservableObject {
                     HomeEmptyContent(
                         profile: profile,
                         semesterTitle: semester.titleText,
-                        state: .noTimetable
+                        state: .noTimetable,
+                        trendingPosts: trendingPosts
                     )
                 )
                 return
@@ -80,7 +85,8 @@ final class HomeViewModel: ObservableObject {
                     HomeEmptyContent(
                         profile: profile,
                         semesterTitle: semester.titleText,
-                        state: .noClassesToday
+                        state: .noClassesToday,
+                        trendingPosts: trendingPosts
                     )
                 )
                 return
@@ -90,13 +96,29 @@ final class HomeViewModel: ObservableObject {
                 HomeLoadedContent(
                     profile: profile,
                     semesterTitle: semester.titleText,
-                    todayClasses: todayClasses
+                    todayClasses: todayClasses,
+                    trendingPosts: trendingPosts
                 )
             )
         } catch let error as HomeClientError {
             state = .failed(Self.map(error))
         } catch {
             state = .failed(.unexpected)
+        }
+    }
+
+    private func resolveTrendingPosts(
+        from task: Task<[HotPostSummary], Error>
+    ) async throws -> [HotPostSummary] {
+        do {
+            return try await task.value
+        } catch let error as HomeClientError {
+            if error == .invalidSession {
+                throw error
+            }
+            return []
+        } catch {
+            return []
         }
     }
 

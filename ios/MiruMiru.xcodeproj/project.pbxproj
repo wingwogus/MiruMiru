@@ -48,6 +48,12 @@
 		B00000000000000000000058 /* TimetableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000066 /* TimetableView.swift */; };
 		B00000000000000000000059 /* TimetableAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000067 /* TimetableAPIClientTests.swift */; };
 		B0000000000000000000005A /* TimetableViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000068 /* TimetableViewModelTests.swift */; };
+		B00000000000000000000069 /* CourseReviewsFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000006A /* CourseReviewsFeature.swift */; };
+		B00000000000000000000071 /* CourseReviewsAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000072 /* CourseReviewsAPIClientTests.swift */; };
+		B00000000000000000000073 /* CourseReviewsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000074 /* CourseReviewsViewModelTests.swift */; };
+		B00000000000000000000075 /* BoardsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000078 /* BoardsModels.swift */; };
+		B00000000000000000000076 /* BoardsAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000079 /* BoardsAPIClient.swift */; };
+		B00000000000000000000077 /* BoardsFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000007A /* BoardsFeature.swift */; };
 		B0000000000000000000001E /* AuthPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000040 /* AuthPalette.swift */; };
 		B0000000000000000000001F /* AuthRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000041 /* AuthRoute.swift */; };
 		B00000000000000000000018 /* Pretendard-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000038 /* Pretendard-Regular.otf */; };
@@ -131,6 +137,12 @@
 		B00000000000000000000066 /* TimetableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Timetable/TimetableView.swift; sourceTree = "<group>"; };
 		B00000000000000000000067 /* TimetableAPIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimetableAPIClientTests.swift; sourceTree = "<group>"; };
 		B00000000000000000000068 /* TimetableViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimetableViewModelTests.swift; sourceTree = "<group>"; };
+		B0000000000000000000006A /* CourseReviewsFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseReviews/CourseReviewsFeature.swift; sourceTree = "<group>"; };
+		B00000000000000000000072 /* CourseReviewsAPIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseReviewsAPIClientTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000074 /* CourseReviewsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseReviewsViewModelTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000078 /* BoardsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boards/BoardsModels.swift; sourceTree = "<group>"; };
+		B00000000000000000000079 /* BoardsAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boards/BoardsAPIClient.swift; sourceTree = "<group>"; };
+		B0000000000000000000007A /* BoardsFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boards/BoardsFeature.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -200,6 +212,10 @@
 				B00000000000000000000064 /* TimetableAPIClient.swift */,
 				B00000000000000000000065 /* TimetableViewModel.swift */,
 				B00000000000000000000066 /* TimetableView.swift */,
+				B00000000000000000000078 /* BoardsModels.swift */,
+				B00000000000000000000079 /* BoardsAPIClient.swift */,
+				B0000000000000000000007A /* BoardsFeature.swift */,
+				B0000000000000000000006A /* CourseReviewsFeature.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -246,6 +262,8 @@
 				B00000000000000000000053 /* HomeViewModelTests.swift */,
 				B00000000000000000000067 /* TimetableAPIClientTests.swift */,
 				B00000000000000000000068 /* TimetableViewModelTests.swift */,
+				B00000000000000000000072 /* CourseReviewsAPIClientTests.swift */,
+				B00000000000000000000074 /* CourseReviewsViewModelTests.swift */,
 			);
 			path = MiruMiruTests;
 			sourceTree = "<group>";
@@ -434,6 +452,10 @@
 				B00000000000000000000056 /* TimetableAPIClient.swift in Sources */,
 				B00000000000000000000057 /* TimetableViewModel.swift in Sources */,
 				B00000000000000000000058 /* TimetableView.swift in Sources */,
+				B00000000000000000000075 /* BoardsModels.swift in Sources */,
+				B00000000000000000000076 /* BoardsAPIClient.swift in Sources */,
+				B00000000000000000000077 /* BoardsFeature.swift in Sources */,
+				B00000000000000000000069 /* CourseReviewsFeature.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -451,6 +473,8 @@
 				B0000000000000000000004D /* HomeViewModelTests.swift in Sources */,
 				B00000000000000000000059 /* TimetableAPIClientTests.swift in Sources */,
 				B0000000000000000000005A /* TimetableViewModelTests.swift in Sources */,
+				B00000000000000000000071 /* CourseReviewsAPIClientTests.swift in Sources */,
+				B00000000000000000000073 /* CourseReviewsViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

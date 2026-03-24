@@ -121,12 +121,14 @@ struct HomeLoadedContent: Equatable {
     let profile: HomeMemberProfile
     let semesterTitle: String
     let todayClasses: [TodayClassRow]
+    let trendingPosts: [HotPostSummary]
 }
 
 struct HomeEmptyContent: Equatable {
     let profile: HomeMemberProfile
     let semesterTitle: String?
     let state: HomeEmptyState
+    let trendingPosts: [HotPostSummary]
 }
 
 enum HomeFailure: Error, Equatable {
@@ -163,4 +165,5 @@ protocol HomeClientProtocol: Sendable {
     func fetchProfile() async throws -> HomeMemberProfile
     func fetchSemesters() async throws -> [HomeSemester]
     func fetchTimetable(semesterId: Int64) async throws -> HomeTimetable
+    func fetchHotPosts() async throws -> [HotPostSummary]
 }

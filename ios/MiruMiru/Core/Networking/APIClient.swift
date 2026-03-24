@@ -3,6 +3,7 @@ import Foundation
 enum HTTPMethod: String {
     case get = "GET"
     case post = "POST"
+    case put = "PUT"
     case delete = "DELETE"
 }
 
@@ -64,6 +65,8 @@ final class APIClient {
             return (data, httpResponse)
         } catch let error as APIClientError {
             throw error
+        } catch is CancellationError {
+            throw CancellationError()
         } catch let error as URLError {
             throw APIClientError.transport(error)
         } catch {

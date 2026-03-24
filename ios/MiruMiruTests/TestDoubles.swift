@@ -98,6 +98,7 @@ final class MockHomeClient: HomeClientProtocol, @unchecked Sendable {
     var profileResult: Result<HomeMemberProfile, Error> = .failure(HomeClientError.unexpected)
     var semestersResult: Result<[HomeSemester], Error> = .failure(HomeClientError.unexpected)
     var timetableResult: Result<HomeTimetable, Error> = .failure(HomeClientError.unexpected)
+    var hotPostsResult: Result<[HotPostSummary], Error> = .success([])
     private(set) var requestedSemesterId: Int64?
 
     func fetchProfile() async throws -> HomeMemberProfile {
@@ -111,6 +112,10 @@ final class MockHomeClient: HomeClientProtocol, @unchecked Sendable {
     func fetchTimetable(semesterId: Int64) async throws -> HomeTimetable {
         requestedSemesterId = semesterId
         return try timetableResult.get()
+    }
+
+    func fetchHotPosts() async throws -> [HotPostSummary] {
+        try hotPostsResult.get()
     }
 }
 
@@ -153,6 +158,63 @@ final class MockTimetableClient: TimetableClientProtocol, @unchecked Sendable {
     func removeLecture(semesterId: Int64, lectureId: Int64) async throws {
         removedPayloads.append((semesterId, lectureId))
         try removeLectureResult.get()
+    }
+}
+
+final class MockCourseReviewsClient: CourseReviewsClientProtocol, @unchecked Sendable {
+    var feedResult: Result<CourseReviewFeedPage, Error> = .failure(CourseReviewsClientError.unexpected)
+    var targetSearchResult: Result<CourseReviewTargetPage, Error> = .failure(CourseReviewsClientError.unexpected)
+    var detailResult: Result<CourseReviewPage, Error> = .failure(CourseReviewsClientError.unexpected)
+    var myReviewResult: Result<CourseReviewEntry, Error> = .failure(CourseReviewsClientError.reviewNotFound)
+    var createResult: Result<Int64, Error> = .success(1)
+    var updateResult: Result<Int64, Error> = .success(1)
+    var deleteResult: Result<Void, Error> = .success(())
+
+    private(set) var requestedFeedPage: Int?
+    private(set) var requestedQuery: String?
+    private(set) var requestedDetailTargetId: Int64?
+    private(set) var requestedMyReviewTargetId: Int64?
+    private(set) var createdTargetId: Int64?
+    private(set) var createdPayload: CourseReviewUpsertRequest?
+    private(set) var updatedTargetId: Int64?
+    private(set) var updatedPayload: CourseReviewUpsertRequest?
+    private(set) var deletedTargetId: Int64?
+
+    func fetchReviewFeed(page: Int, size: Int) async throws -> CourseReviewFeedPage {
+        requestedFeedPage = page
+        return try feedResult.get()
+    }
+
+    func fetchReviewTargets(query: String, page: Int, size: Int) async throws -> CourseReviewTargetPage {
+        requestedQuery = query
+        return try targetSearchResult.get()
+    }
+
+    func fetchTargetReviews(targetId: Int64, page: Int, size: Int) async throws -> CourseReviewPage {
+        requestedDetailTargetId = targetId
+        return try detailResult.get()
+    }
+
+    func fetchMyReview(targetId: Int64) async throws -> CourseReviewEntry {
+        requestedMyReviewTargetId = targetId
+        return try myReviewResult.get()
+    }
+
+    func createReview(targetId: Int64, request: CourseReviewUpsertRequest) async throws -> Int64 {
+        createdTargetId = targetId
+        createdPayload = request
+        return try createResult.get()
+    }
+
+    func updateMyReview(targetId: Int64, request: CourseReviewUpsertRequest) async throws -> Int64 {
+        updatedTargetId = targetId
+        updatedPayload = request
+        return try updateResult.get()
+    }
+
+    func deleteMyReview(targetId: Int64) async throws {
+        deletedTargetId = targetId
+        try deleteResult.get()
     }
 }
 

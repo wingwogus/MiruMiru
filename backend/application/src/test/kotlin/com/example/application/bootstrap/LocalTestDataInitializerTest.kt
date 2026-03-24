@@ -4,6 +4,10 @@ import com.example.domain.board.Board
 import com.example.domain.board.BoardRepository
 import com.example.domain.comment.Comment
 import com.example.domain.comment.CommentRepository
+import com.example.domain.course.Course
+import com.example.domain.course.CourseRepository
+import com.example.domain.course.CourseReview
+import com.example.domain.course.CourseReviewRepository
 import com.example.domain.lecture.Lecture
 import com.example.domain.lecture.LectureRepository
 import com.example.domain.lecture.LectureSchedule
@@ -52,6 +56,8 @@ class LocalTestDataInitializerTest {
     private val commentRepository = mock(CommentRepository::class.java)
     private val postImageRepository = mock(PostImageRepository::class.java)
     private val semesterRepository = mock(SemesterRepository::class.java)
+    private val courseRepository = mock(CourseRepository::class.java)
+    private val courseReviewRepository = mock(CourseReviewRepository::class.java)
     private val lectureRepository = mock(LectureRepository::class.java)
     private val lectureScheduleRepository = mock(LectureScheduleRepository::class.java)
     private val timetableRepository = mock(TimetableRepository::class.java)
@@ -68,6 +74,8 @@ class LocalTestDataInitializerTest {
         commentRepository = commentRepository,
         postImageRepository = postImageRepository,
         semesterRepository = semesterRepository,
+        courseRepository = courseRepository,
+        courseReviewRepository = courseReviewRepository,
         lectureRepository = lectureRepository,
         lectureScheduleRepository = lectureScheduleRepository,
         timetableRepository = timetableRepository,
@@ -76,7 +84,7 @@ class LocalTestDataInitializerTest {
     )
 
     @Test
-    fun `creates missing seed graph including comments likes and anonymous mappings`() {
+    fun `creates missing seed graph including course reviews`() {
         val university = university()
         val computerScience = major(id = 10L, university = university, code = "CS", name = "Computer Science")
         val mathematics = major(id = 11L, university = university, code = "MATH", name = "Mathematics")
@@ -84,9 +92,11 @@ class LocalTestDataInitializerTest {
         val emptyMember = member(id = 3L, university = university, major = mathematics, email = "empty@tokyo.ac.jp", nickname = "empty-user")
         val generalBoard = board(id = 20L, university = university, code = "general", name = "General", isAnonymousAllowed = false)
         val freeBoard = board(id = 21L, university = university, code = "free", name = "Free Talk", isAnonymousAllowed = true)
-        val semester = semester(university)
-        val lectures = lectureSeeds(semester, computerScience, mathematics)
-        val timetable = Timetable(id = 40L, member = testMember, semester = semester)
+        val springSemester = semester(id = 4L, university = university, academicYear = 2026, term = SemesterTerm.SPRING)
+        val fallSemester = semester(id = 5L, university = university, academicYear = 2025, term = SemesterTerm.FALL)
+        val courses = courses(university)
+        val lectures = lectures(springSemester, fallSemester, computerScience, mathematics, courses)
+        val timetable = Timetable(id = 40L, member = testMember, semester = springSemester)
         val generalPost = post(id = 50L, board = generalBoard, member = testMember, title = "Welcome to MiruMiru", isAnonymous = false, likeCount = 0, commentCount = 0)
         val freePost = post(id = 51L, board = freeBoard, member = testMember, title = "Best lunch near campus?", isAnonymous = true, likeCount = 1, commentCount = 2)
         val rootComment = Comment(id = 70L, post = freePost, member = emptyMember, parent = null, content = "There is a cheap curry place behind the engineering building.", isAnonymous = true, isDeleted = false)
@@ -109,12 +119,43 @@ class LocalTestDataInitializerTest {
         `when`(boardRepository.save(any(Board::class.java))).thenReturn(generalBoard).thenReturn(freeBoard)
 
         `when`(semesterRepository.findByUniversityIdAndAcademicYearAndTerm(1L, 2026, SemesterTerm.SPRING)).thenReturn(null)
-        `when`(semesterRepository.save(any(Semester::class.java))).thenReturn(semester)
+        `when`(semesterRepository.findByUniversityIdAndAcademicYearAndTerm(1L, 2025, SemesterTerm.FALL)).thenReturn(null)
+        `when`(semesterRepository.save(any(Semester::class.java))).thenReturn(springSemester).thenReturn(fallSemester)
 
-        stubMissingLectureLookups(semester.id)
+        `when`(courseRepository.findByUniversityIdAndCode(1L, "CS101")).thenReturn(null).thenReturn(courses.getValue("CS101"))
+        `when`(courseRepository.findByUniversityIdAndCode(1L, "MATH201")).thenReturn(null)
+        `when`(courseRepository.findByUniversityIdAndCode(1L, "PHYS301")).thenReturn(null)
+        `when`(courseRepository.findByUniversityIdAndCode(1L, "HIST110")).thenReturn(null)
+        `when`(courseRepository.findByUniversityIdAndCode(1L, "CHEM105")).thenReturn(null)
+        `when`(courseRepository.findByUniversityIdAndCode(1L, "ECON210")).thenReturn(null)
+        `when`(courseRepository.findByUniversityIdAndCode(1L, "ENG220")).thenReturn(null)
+        `when`(courseRepository.findByUniversityIdAndCode(1L, "STAT230")).thenReturn(null)
+        `when`(courseRepository.findByUniversityIdAndCode(1L, "ART150")).thenReturn(null)
+        `when`(courseRepository.save(any(Course::class.java)))
+            .thenReturn(courses.getValue("CS101"))
+            .thenReturn(courses.getValue("MATH201"))
+            .thenReturn(courses.getValue("PHYS301"))
+            .thenReturn(courses.getValue("HIST110"))
+            .thenReturn(courses.getValue("CHEM105"))
+            .thenReturn(courses.getValue("ECON210"))
+            .thenReturn(courses.getValue("ENG220"))
+            .thenReturn(courses.getValue("STAT230"))
+            .thenReturn(courses.getValue("ART150"))
+
+        stubMissingLectureLookups(springSemester.id, fallSemester.id)
         `when`(lectureRepository.save(any(Lecture::class.java)))
-            .thenReturn(lectures[0]).thenReturn(lectures[1]).thenReturn(lectures[2]).thenReturn(lectures[3]).thenReturn(lectures[4])
-            .thenReturn(lectures[5]).thenReturn(lectures[6]).thenReturn(lectures[7]).thenReturn(lectures[8])
+            .thenReturn(
+                lectures.getValue("2026-SPRING-CS101"),
+                lectures.getValue("2026-SPRING-MATH201"),
+                lectures.getValue("2026-SPRING-PHYS301"),
+                lectures.getValue("2026-SPRING-HIST110"),
+                lectures.getValue("2026-SPRING-CHEM105"),
+                lectures.getValue("2026-SPRING-ECON210"),
+                lectures.getValue("2026-SPRING-ENG220"),
+                lectures.getValue("2026-SPRING-STAT230"),
+                lectures.getValue("2026-SPRING-ART150"),
+                lectures.getValue("2025-FALL-CS101")
+            )
         stubMissingScheduleLookups()
         `when`(lectureScheduleRepository.save(any(LectureSchedule::class.java))).thenAnswer { it.arguments.first() }
 
@@ -143,22 +184,28 @@ class LocalTestDataInitializerTest {
             .thenReturn(listOf(rootComment))
         `when`(commentRepository.save(any(Comment::class.java))).thenReturn(rootComment).thenReturn(childComment)
 
+        `when`(courseReviewRepository.findByCourseIdAndMemberId(courses.getValue("CS101").id, testMember.id)).thenReturn(null)
+        `when`(courseReviewRepository.findByCourseIdAndMemberId(courses.getValue("CS101").id, emptyMember.id)).thenReturn(null)
+        `when`(courseReviewRepository.save(any(CourseReview::class.java))).thenAnswer { it.arguments.first() }
+
         initializer.run(DefaultApplicationArguments())
 
         verify(universityRepository).save(any(University::class.java))
         verify(majorRepository, times(2)).save(any(Major::class.java))
         verify(memberRepository, times(2)).save(any(Member::class.java))
         verify(boardRepository, times(2)).save(any(Board::class.java))
+        verify(semesterRepository, times(2)).save(any(Semester::class.java))
+        verify(courseRepository, times(9)).save(any(Course::class.java))
+        verify(lectureRepository, times(10)).save(any(Lecture::class.java))
+        verify(lectureScheduleRepository, times(12)).save(any(LectureSchedule::class.java))
+        verify(timetableRepository).save(any(Timetable::class.java))
+        verify(timetableLectureRepository, times(2)).save(any(TimetableLecture::class.java))
         verify(postRepository, times(2)).save(any(Post::class.java))
         verify(postImageRepository).save(any(PostImage::class.java))
         verify(postAnonymousMappingRepository, times(2)).save(any(PostAnonymousMapping::class.java))
         verify(postLikeRepository).save(any(PostLike::class.java))
         verify(commentRepository, times(2)).save(any(Comment::class.java))
-        verify(semesterRepository).save(any(Semester::class.java))
-        verify(lectureRepository, times(9)).save(any(Lecture::class.java))
-        verify(lectureScheduleRepository, times(10)).save(any(LectureSchedule::class.java))
-        verify(timetableRepository).save(any(Timetable::class.java))
-        verify(timetableLectureRepository, times(2)).save(any(TimetableLecture::class.java))
+        verify(courseReviewRepository, times(2)).save(any(CourseReview::class.java))
     }
 
     @Test
@@ -170,9 +217,11 @@ class LocalTestDataInitializerTest {
         val emptyMember = member(id = 3L, university = university, major = mathematics, email = "empty@tokyo.ac.jp", nickname = "empty-user")
         val generalBoard = board(id = 20L, university = university, code = "general", name = "General", isAnonymousAllowed = false)
         val freeBoard = board(id = 21L, university = university, code = "free", name = "Free Talk", isAnonymousAllowed = true)
-        val semester = semester(university)
-        val lectures = lectureSeeds(semester, computerScience, mathematics)
-        val timetable = Timetable(id = 40L, member = testMember, semester = semester)
+        val springSemester = semester(id = 4L, university = university, academicYear = 2026, term = SemesterTerm.SPRING)
+        val fallSemester = semester(id = 5L, university = university, academicYear = 2025, term = SemesterTerm.FALL)
+        val courses = courses(university)
+        val lectures = lectures(springSemester, fallSemester, computerScience, mathematics, courses)
+        val timetable = Timetable(id = 40L, member = testMember, semester = springSemester)
         val generalPost = post(id = 50L, board = generalBoard, member = testMember, title = "Welcome to MiruMiru", isAnonymous = false, likeCount = 0, commentCount = 0)
         val freePost = post(id = 51L, board = freeBoard, member = testMember, title = "Best lunch near campus?", isAnonymous = true, likeCount = 1, commentCount = 2)
         val generalPostImage = PostImage(id = 60L, post = generalPost, imageUrl = "https://example.com/images/mirumiru-welcome.png", displayOrder = 0)
@@ -189,9 +238,11 @@ class LocalTestDataInitializerTest {
         `when`(memberRepository.findByEmail("empty@tokyo.ac.jp")).thenReturn(emptyMember)
         `when`(boardRepository.findByUniversityIdAndCode(1L, "general")).thenReturn(generalBoard)
         `when`(boardRepository.findByUniversityIdAndCode(1L, "free")).thenReturn(freeBoard)
-        `when`(semesterRepository.findByUniversityIdAndAcademicYearAndTerm(1L, 2026, SemesterTerm.SPRING)).thenReturn(semester)
+        `when`(semesterRepository.findByUniversityIdAndAcademicYearAndTerm(1L, 2026, SemesterTerm.SPRING)).thenReturn(springSemester)
+        `when`(semesterRepository.findByUniversityIdAndAcademicYearAndTerm(1L, 2025, SemesterTerm.FALL)).thenReturn(fallSemester)
 
-        stubExistingLectureLookups(semester.id, lectures)
+        stubExistingCourseLookups(courses)
+        stubExistingLectureLookups(springSemester.id, fallSemester.id, lectures)
         stubExistingScheduleLookups(lectures)
         `when`(timetableRepository.findByMemberIdAndSemesterId(2L, 4L)).thenReturn(timetable)
         `when`(timetableLectureRepository.existsByTimetableIdAndLectureId(40L, 5L)).thenReturn(true)
@@ -204,6 +255,10 @@ class LocalTestDataInitializerTest {
         `when`(postAnonymousMappingRepository.findByPostIdAndMemberId(51L, 3L)).thenReturn(freePostAnonForEmptyMember)
         `when`(postLikeRepository.findByPostIdAndMemberId(51L, 3L)).thenReturn(freePostLike)
         `when`(commentRepository.findAllByPostIdOrderByCreatedAtAsc(51L)).thenReturn(listOf(rootComment, childComment))
+        `when`(courseReviewRepository.findByCourseIdAndMemberId(courses.getValue("CS101").id, testMember.id))
+            .thenReturn(review(id = 80L, course = courses.getValue("CS101"), member = testMember, lecture = lectures.getValue("2025-FALL-CS101"), content = "seed one"))
+        `when`(courseReviewRepository.findByCourseIdAndMemberId(courses.getValue("CS101").id, emptyMember.id))
+            .thenReturn(review(id = 81L, course = courses.getValue("CS101"), member = emptyMember, lecture = lectures.getValue("2026-SPRING-CS101"), content = "seed two"))
 
         initializer.run(DefaultApplicationArguments())
 
@@ -211,16 +266,122 @@ class LocalTestDataInitializerTest {
         verify(majorRepository, never()).save(any(Major::class.java))
         verify(memberRepository, never()).save(any(Member::class.java))
         verify(boardRepository, never()).save(any(Board::class.java))
+        verify(semesterRepository, never()).save(any(Semester::class.java))
+        verify(courseRepository, never()).save(any(Course::class.java))
+        verify(lectureRepository, never()).save(any(Lecture::class.java))
+        verify(lectureScheduleRepository, never()).save(any(LectureSchedule::class.java))
+        verify(timetableRepository, never()).save(any(Timetable::class.java))
+        verify(timetableLectureRepository, never()).save(any(TimetableLecture::class.java))
         verify(postRepository, never()).save(any(Post::class.java))
         verify(postImageRepository, never()).save(any(PostImage::class.java))
         verify(postAnonymousMappingRepository, never()).save(any(PostAnonymousMapping::class.java))
         verify(postLikeRepository, never()).save(any(PostLike::class.java))
         verify(commentRepository, never()).save(any(Comment::class.java))
-        verify(semesterRepository, never()).save(any(Semester::class.java))
-        verify(lectureRepository, never()).save(any(Lecture::class.java))
-        verify(lectureScheduleRepository, never()).save(any(LectureSchedule::class.java))
-        verify(timetableRepository, never()).save(any(Timetable::class.java))
-        verify(timetableLectureRepository, never()).save(any(TimetableLecture::class.java))
+        verify(courseReviewRepository, never()).save(any(CourseReview::class.java))
+    }
+
+    private fun stubMissingLectureLookups(springSemesterId: Long, fallSemesterId: Long) {
+        listOf("CS101", "MATH201", "PHYS301", "HIST110", "CHEM105", "ECON210", "ENG220", "STAT230", "ART150")
+            .forEach { code ->
+                `when`(lectureRepository.findBySemesterIdAndCode(springSemesterId, code)).thenReturn(null)
+            }
+        `when`(lectureRepository.findBySemesterIdAndCode(fallSemesterId, "CS101")).thenReturn(null)
+    }
+
+    private fun stubExistingLectureLookups(springSemesterId: Long, fallSemesterId: Long, lectures: Map<String, Lecture>) {
+        `when`(lectureRepository.findBySemesterIdAndCode(springSemesterId, "CS101")).thenReturn(lectures.getValue("2026-SPRING-CS101"))
+        `when`(lectureRepository.findBySemesterIdAndCode(springSemesterId, "MATH201")).thenReturn(lectures.getValue("2026-SPRING-MATH201"))
+        `when`(lectureRepository.findBySemesterIdAndCode(springSemesterId, "PHYS301")).thenReturn(lectures.getValue("2026-SPRING-PHYS301"))
+        `when`(lectureRepository.findBySemesterIdAndCode(springSemesterId, "HIST110")).thenReturn(lectures.getValue("2026-SPRING-HIST110"))
+        `when`(lectureRepository.findBySemesterIdAndCode(springSemesterId, "CHEM105")).thenReturn(lectures.getValue("2026-SPRING-CHEM105"))
+        `when`(lectureRepository.findBySemesterIdAndCode(springSemesterId, "ECON210")).thenReturn(lectures.getValue("2026-SPRING-ECON210"))
+        `when`(lectureRepository.findBySemesterIdAndCode(springSemesterId, "ENG220")).thenReturn(lectures.getValue("2026-SPRING-ENG220"))
+        `when`(lectureRepository.findBySemesterIdAndCode(springSemesterId, "STAT230")).thenReturn(lectures.getValue("2026-SPRING-STAT230"))
+        `when`(lectureRepository.findBySemesterIdAndCode(springSemesterId, "ART150")).thenReturn(lectures.getValue("2026-SPRING-ART150"))
+        `when`(lectureRepository.findBySemesterIdAndCode(fallSemesterId, "CS101")).thenReturn(lectures.getValue("2025-FALL-CS101"))
+    }
+
+    private fun stubMissingScheduleLookups() {
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(5L, DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(10, 30))).thenReturn(null)
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(5L, DayOfWeek.WEDNESDAY, LocalTime.of(9, 0), LocalTime.of(10, 30))).thenReturn(null)
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(6L, DayOfWeek.TUESDAY, LocalTime.of(13, 0), LocalTime.of(14, 30))).thenReturn(null)
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(7L, DayOfWeek.MONDAY, LocalTime.of(10, 0), LocalTime.of(11, 0))).thenReturn(null)
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(8L, DayOfWeek.TUESDAY, LocalTime.of(9, 0), LocalTime.of(10, 30))).thenReturn(null)
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(9L, DayOfWeek.WEDNESDAY, LocalTime.of(14, 0), LocalTime.of(15, 30))).thenReturn(null)
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(10L, DayOfWeek.THURSDAY, LocalTime.of(10, 0), LocalTime.of(11, 30))).thenReturn(null)
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(11L, DayOfWeek.THURSDAY, LocalTime.of(13, 0), LocalTime.of(14, 30))).thenReturn(null)
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(12L, DayOfWeek.FRIDAY, LocalTime.of(9, 0), LocalTime.of(10, 30))).thenReturn(null)
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(13L, DayOfWeek.FRIDAY, LocalTime.of(11, 0), LocalTime.of(12, 30))).thenReturn(null)
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(14L, DayOfWeek.TUESDAY, LocalTime.of(10, 0), LocalTime.of(11, 30))).thenReturn(null)
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(14L, DayOfWeek.THURSDAY, LocalTime.of(10, 0), LocalTime.of(11, 30))).thenReturn(null)
+    }
+
+    private fun stubExistingScheduleLookups(lectures: Map<String, Lecture>) {
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(5L, DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(10, 30)))
+            .thenReturn(schedule(lecture = lectures.getValue("2026-SPRING-CS101"), dayOfWeek = DayOfWeek.MONDAY, start = LocalTime.of(9, 0), end = LocalTime.of(10, 30)))
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(5L, DayOfWeek.WEDNESDAY, LocalTime.of(9, 0), LocalTime.of(10, 30)))
+            .thenReturn(schedule(lecture = lectures.getValue("2026-SPRING-CS101"), dayOfWeek = DayOfWeek.WEDNESDAY, start = LocalTime.of(9, 0), end = LocalTime.of(10, 30)))
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(6L, DayOfWeek.TUESDAY, LocalTime.of(13, 0), LocalTime.of(14, 30)))
+            .thenReturn(schedule(lecture = lectures.getValue("2026-SPRING-MATH201"), dayOfWeek = DayOfWeek.TUESDAY, start = LocalTime.of(13, 0), end = LocalTime.of(14, 30)))
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(7L, DayOfWeek.MONDAY, LocalTime.of(10, 0), LocalTime.of(11, 0)))
+            .thenReturn(schedule(lecture = lectures.getValue("2026-SPRING-PHYS301"), dayOfWeek = DayOfWeek.MONDAY, start = LocalTime.of(10, 0), end = LocalTime.of(11, 0)))
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(8L, DayOfWeek.TUESDAY, LocalTime.of(9, 0), LocalTime.of(10, 30)))
+            .thenReturn(schedule(lecture = lectures.getValue("2026-SPRING-HIST110"), dayOfWeek = DayOfWeek.TUESDAY, start = LocalTime.of(9, 0), end = LocalTime.of(10, 30)))
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(9L, DayOfWeek.WEDNESDAY, LocalTime.of(14, 0), LocalTime.of(15, 30)))
+            .thenReturn(schedule(lecture = lectures.getValue("2026-SPRING-CHEM105"), dayOfWeek = DayOfWeek.WEDNESDAY, start = LocalTime.of(14, 0), end = LocalTime.of(15, 30)))
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(10L, DayOfWeek.THURSDAY, LocalTime.of(10, 0), LocalTime.of(11, 30)))
+            .thenReturn(schedule(lecture = lectures.getValue("2026-SPRING-ECON210"), dayOfWeek = DayOfWeek.THURSDAY, start = LocalTime.of(10, 0), end = LocalTime.of(11, 30)))
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(11L, DayOfWeek.THURSDAY, LocalTime.of(13, 0), LocalTime.of(14, 30)))
+            .thenReturn(schedule(lecture = lectures.getValue("2026-SPRING-ENG220"), dayOfWeek = DayOfWeek.THURSDAY, start = LocalTime.of(13, 0), end = LocalTime.of(14, 30)))
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(12L, DayOfWeek.FRIDAY, LocalTime.of(9, 0), LocalTime.of(10, 30)))
+            .thenReturn(schedule(lecture = lectures.getValue("2026-SPRING-STAT230"), dayOfWeek = DayOfWeek.FRIDAY, start = LocalTime.of(9, 0), end = LocalTime.of(10, 30)))
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(13L, DayOfWeek.FRIDAY, LocalTime.of(11, 0), LocalTime.of(12, 30)))
+            .thenReturn(schedule(lecture = lectures.getValue("2026-SPRING-ART150"), dayOfWeek = DayOfWeek.FRIDAY, start = LocalTime.of(11, 0), end = LocalTime.of(12, 30)))
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(14L, DayOfWeek.TUESDAY, LocalTime.of(10, 0), LocalTime.of(11, 30)))
+            .thenReturn(schedule(lecture = lectures.getValue("2025-FALL-CS101"), dayOfWeek = DayOfWeek.TUESDAY, start = LocalTime.of(10, 0), end = LocalTime.of(11, 30)))
+        `when`(lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(14L, DayOfWeek.THURSDAY, LocalTime.of(10, 0), LocalTime.of(11, 30)))
+            .thenReturn(schedule(lecture = lectures.getValue("2025-FALL-CS101"), dayOfWeek = DayOfWeek.THURSDAY, start = LocalTime.of(10, 0), end = LocalTime.of(11, 30)))
+    }
+
+    private fun stubExistingCourseLookups(courses: Map<String, Course>) {
+        courses.forEach { (code, course) ->
+            `when`(courseRepository.findByUniversityIdAndCode(1L, code)).thenReturn(course)
+        }
+    }
+
+    private fun courses(university: University): Map<String, Course> {
+        return listOf(
+            course(id = 100L, university = university, code = "CS101", name = "Introduction to Computer Science"),
+            course(id = 101L, university = university, code = "MATH201", name = "Linear Algebra"),
+            course(id = 102L, university = university, code = "PHYS301", name = "Classical Mechanics"),
+            course(id = 103L, university = university, code = "HIST110", name = "World History"),
+            course(id = 104L, university = university, code = "CHEM105", name = "General Chemistry"),
+            course(id = 105L, university = university, code = "ECON210", name = "Microeconomics"),
+            course(id = 106L, university = university, code = "ENG220", name = "Academic English"),
+            course(id = 107L, university = university, code = "STAT230", name = "Statistics Fundamentals"),
+            course(id = 108L, university = university, code = "ART150", name = "Visual Arts Appreciation")
+        ).associateBy { it.code }
+    }
+
+    private fun lectures(
+        springSemester: Semester,
+        fallSemester: Semester,
+        computerScience: Major,
+        mathematics: Major,
+        courses: Map<String, Course>
+    ): Map<String, Lecture> {
+        return listOf(
+            lecture(id = 5L, semester = springSemester, major = computerScience, course = courses.getValue("CS101"), code = "CS101", name = "Introduction to Computer Science", professor = "Prof. Akiyama", credit = 3),
+            lecture(id = 6L, semester = springSemester, major = null, course = courses.getValue("MATH201"), code = "MATH201", name = "Linear Algebra", professor = "Prof. Sato", credit = 2),
+            lecture(id = 7L, semester = springSemester, major = null, course = courses.getValue("PHYS301"), code = "PHYS301", name = "Classical Mechanics", professor = "Prof. Tanaka", credit = 3),
+            lecture(id = 8L, semester = springSemester, major = null, course = courses.getValue("HIST110"), code = "HIST110", name = "World History", professor = "Prof. Nakamura", credit = 2),
+            lecture(id = 9L, semester = springSemester, major = null, course = courses.getValue("CHEM105"), code = "CHEM105", name = "General Chemistry", professor = "Prof. Suzuki", credit = 3),
+            lecture(id = 10L, semester = springSemester, major = null, course = courses.getValue("ECON210"), code = "ECON210", name = "Microeconomics", professor = "Prof. Kobayashi", credit = 2),
+            lecture(id = 11L, semester = springSemester, major = null, course = courses.getValue("ENG220"), code = "ENG220", name = "Academic English", professor = "Prof. Wilson", credit = 2),
+            lecture(id = 12L, semester = springSemester, major = mathematics, course = courses.getValue("STAT230"), code = "STAT230", name = "Statistics Fundamentals", professor = "Prof. Yamamoto", credit = 2),
+            lecture(id = 13L, semester = springSemester, major = null, course = courses.getValue("ART150"), code = "ART150", name = "Visual Arts Appreciation", professor = "Prof. Lee", credit = 2),
+            lecture(id = 14L, semester = fallSemester, major = computerScience, course = courses.getValue("CS101"), code = "CS101", name = "Introduction to Computer Science", professor = "Prof. Ito", credit = 3)
+        ).associateBy { lecture -> "${lecture.semester.academicYear}-${lecture.semester.term.name}-${lecture.code}" }
     }
 
     private fun university(): University {
@@ -252,8 +413,34 @@ class LocalTestDataInitializerTest {
         )
     }
 
-    private fun semester(university: University): Semester {
-        return Semester(id = 4L, university = university, academicYear = 2026, term = SemesterTerm.SPRING)
+    private fun course(id: Long, university: University, code: String, name: String): Course {
+        return Course(id = id, university = university, code = code, name = name)
+    }
+
+    private fun semester(id: Long, university: University, academicYear: Int, term: SemesterTerm): Semester {
+        return Semester(id = id, university = university, academicYear = academicYear, term = term)
+    }
+
+    private fun lecture(
+        id: Long,
+        semester: Semester,
+        major: Major?,
+        course: Course,
+        code: String,
+        name: String,
+        professor: String,
+        credit: Int
+    ): Lecture {
+        return Lecture(
+            id = id,
+            semester = semester,
+            major = major,
+            course = course,
+            code = code,
+            name = name,
+            professor = professor,
+            credit = credit
+        )
     }
 
     private fun post(
@@ -278,80 +465,31 @@ class LocalTestDataInitializerTest {
         )
     }
 
-    private fun lectureSeeds(semester: Semester, computerScience: Major, mathematics: Major): List<Lecture> {
-        return listOf(
-            Lecture(id = 5L, semester = semester, major = computerScience, code = "CS101", name = "Introduction to Computer Science", professor = "Prof. Akiyama", credit = 3),
-            Lecture(id = 6L, semester = semester, major = null, code = "MATH201", name = "Linear Algebra", professor = "Prof. Sato", credit = 2),
-            Lecture(id = 7L, semester = semester, major = null, code = "PHYS301", name = "Classical Mechanics", professor = "Prof. Tanaka", credit = 3),
-            Lecture(id = 8L, semester = semester, major = null, code = "HIST110", name = "World History", professor = "Prof. Nakamura", credit = 2),
-            Lecture(id = 9L, semester = semester, major = null, code = "CHEM105", name = "General Chemistry", professor = "Prof. Suzuki", credit = 3),
-            Lecture(id = 10L, semester = semester, major = null, code = "ECON210", name = "Microeconomics", professor = "Prof. Kobayashi", credit = 2),
-            Lecture(id = 11L, semester = semester, major = null, code = "ENG220", name = "Academic English", professor = "Prof. Wilson", credit = 2),
-            Lecture(id = 12L, semester = semester, major = mathematics, code = "STAT230", name = "Statistics Fundamentals", professor = "Prof. Yamamoto", credit = 2),
-            Lecture(id = 13L, semester = semester, major = null, code = "ART150", name = "Visual Arts Appreciation", professor = "Prof. Lee", credit = 2)
+    private fun schedule(lecture: Lecture, dayOfWeek: DayOfWeek, start: LocalTime, end: LocalTime): LectureSchedule {
+        return LectureSchedule(
+            id = lecture.id * 10 + dayOfWeek.value,
+            lecture = lecture,
+            dayOfWeek = dayOfWeek,
+            startTime = start,
+            endTime = end,
+            location = "Room"
         )
     }
 
-    private fun stubMissingLectureLookups(semesterId: Long) {
-        listOf("CS101", "MATH201", "PHYS301", "HIST110", "CHEM105", "ECON210", "ENG220", "STAT230", "ART150")
-            .forEach { code ->
-                `when`(lectureRepository.findBySemesterIdAndCode(semesterId, code)).thenReturn(null)
-            }
-    }
-
-    private fun stubExistingLectureLookups(semesterId: Long, lectures: List<Lecture>) {
-        lectures.forEach { lecture ->
-            `when`(lectureRepository.findBySemesterIdAndCode(semesterId, lecture.code)).thenReturn(lecture)
-        }
-    }
-
-    private fun stubMissingScheduleLookups() {
-        listOf(
-            Triple(5L, DayOfWeek.MONDAY, LocalTime.of(9, 0) to LocalTime.of(10, 30)),
-            Triple(5L, DayOfWeek.WEDNESDAY, LocalTime.of(9, 0) to LocalTime.of(10, 30)),
-            Triple(6L, DayOfWeek.TUESDAY, LocalTime.of(13, 0) to LocalTime.of(14, 30)),
-            Triple(7L, DayOfWeek.MONDAY, LocalTime.of(10, 0) to LocalTime.of(11, 0)),
-            Triple(8L, DayOfWeek.TUESDAY, LocalTime.of(9, 0) to LocalTime.of(10, 30)),
-            Triple(9L, DayOfWeek.WEDNESDAY, LocalTime.of(14, 0) to LocalTime.of(15, 30)),
-            Triple(10L, DayOfWeek.THURSDAY, LocalTime.of(10, 0) to LocalTime.of(11, 30)),
-            Triple(11L, DayOfWeek.THURSDAY, LocalTime.of(13, 0) to LocalTime.of(14, 30)),
-            Triple(12L, DayOfWeek.FRIDAY, LocalTime.of(9, 0) to LocalTime.of(10, 30)),
-            Triple(13L, DayOfWeek.FRIDAY, LocalTime.of(11, 0) to LocalTime.of(12, 30))
-        ).forEach { (lectureId, day, timeRange) ->
-            `when`(
-                lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(
-                    lectureId,
-                    day,
-                    timeRange.first,
-                    timeRange.second
-                )
-            ).thenReturn(null)
-        }
-    }
-
-    private fun stubExistingScheduleLookups(lectures: List<Lecture>) {
-        val schedules = listOf(
-            LectureSchedule(id = 100L, lecture = lectures[0], dayOfWeek = DayOfWeek.MONDAY, startTime = LocalTime.of(9, 0), endTime = LocalTime.of(10, 30), location = "Engineering Hall 101"),
-            LectureSchedule(id = 101L, lecture = lectures[0], dayOfWeek = DayOfWeek.WEDNESDAY, startTime = LocalTime.of(9, 0), endTime = LocalTime.of(10, 30), location = "Engineering Hall 101"),
-            LectureSchedule(id = 102L, lecture = lectures[1], dayOfWeek = DayOfWeek.TUESDAY, startTime = LocalTime.of(13, 0), endTime = LocalTime.of(14, 30), location = "Science Building 202"),
-            LectureSchedule(id = 103L, lecture = lectures[2], dayOfWeek = DayOfWeek.MONDAY, startTime = LocalTime.of(10, 0), endTime = LocalTime.of(11, 0), location = "Physics Hall 303"),
-            LectureSchedule(id = 104L, lecture = lectures[3], dayOfWeek = DayOfWeek.TUESDAY, startTime = LocalTime.of(9, 0), endTime = LocalTime.of(10, 30), location = "Humanities Hall 105"),
-            LectureSchedule(id = 105L, lecture = lectures[4], dayOfWeek = DayOfWeek.WEDNESDAY, startTime = LocalTime.of(14, 0), endTime = LocalTime.of(15, 30), location = "Science Building 110"),
-            LectureSchedule(id = 106L, lecture = lectures[5], dayOfWeek = DayOfWeek.THURSDAY, startTime = LocalTime.of(10, 0), endTime = LocalTime.of(11, 30), location = "Social Sciences 204"),
-            LectureSchedule(id = 107L, lecture = lectures[6], dayOfWeek = DayOfWeek.THURSDAY, startTime = LocalTime.of(13, 0), endTime = LocalTime.of(14, 30), location = "Language Center 301"),
-            LectureSchedule(id = 108L, lecture = lectures[7], dayOfWeek = DayOfWeek.FRIDAY, startTime = LocalTime.of(9, 0), endTime = LocalTime.of(10, 30), location = "Science Building 305"),
-            LectureSchedule(id = 109L, lecture = lectures[8], dayOfWeek = DayOfWeek.FRIDAY, startTime = LocalTime.of(11, 0), endTime = LocalTime.of(12, 30), location = "Arts Hall 201")
+    private fun review(id: Long, course: Course, member: Member, lecture: Lecture, content: String): CourseReview {
+        return CourseReview(
+            id = id,
+            course = course,
+            member = member,
+            lecture = lecture,
+            academicYear = lecture.semester.academicYear,
+            term = lecture.semester.term,
+            professor = lecture.professor,
+            overallRating = 4,
+            difficulty = 3,
+            workload = 2,
+            wouldTakeAgain = true,
+            content = content
         )
-
-        schedules.forEach { schedule ->
-            `when`(
-                lectureScheduleRepository.findByLectureIdAndDayOfWeekAndStartTimeAndEndTime(
-                    schedule.lecture.id,
-                    schedule.dayOfWeek,
-                    schedule.startTime,
-                    schedule.endTime
-                )
-            ).thenReturn(schedule)
-        }
     }
 }

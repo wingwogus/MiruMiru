@@ -2,6 +2,7 @@ package com.example.application.timetable
 
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
+import com.example.domain.course.Course
 import com.example.domain.lecture.Lecture
 import com.example.domain.lecture.LectureRepository
 import com.example.domain.lecture.LectureSchedule
@@ -241,10 +242,20 @@ class TimetableWriteServiceTest {
             id = id,
             semester = semester,
             major = major(semester.university),
+            course = course(semester.university, code),
             code = code,
             name = code,
             professor = "Prof. Akiyama",
             credit = 3
+        )
+    }
+
+    private fun course(university: University, code: String): Course {
+        return Course(
+            id = if (code == "PHYS301") 21L else 20L,
+            university = university,
+            code = code,
+            name = code
         )
     }
 

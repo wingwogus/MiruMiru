@@ -4,6 +4,10 @@ import com.example.domain.board.Board
 import com.example.domain.board.BoardRepository
 import com.example.domain.comment.Comment
 import com.example.domain.comment.CommentRepository
+import com.example.domain.course.Course
+import com.example.domain.course.CourseRepository
+import com.example.domain.course.CourseReview
+import com.example.domain.course.CourseReviewRepository
 import com.example.domain.lecture.Lecture
 import com.example.domain.lecture.LectureRepository
 import com.example.domain.lecture.LectureSchedule
@@ -52,6 +56,8 @@ class LocalTestDataInitializer(
     private val commentRepository: CommentRepository,
     private val postImageRepository: PostImageRepository,
     private val semesterRepository: SemesterRepository,
+    private val courseRepository: CourseRepository,
+    private val courseReviewRepository: CourseReviewRepository,
     private val lectureRepository: LectureRepository,
     private val lectureScheduleRepository: LectureScheduleRepository,
     private val timetableRepository: TimetableRepository,
@@ -64,7 +70,7 @@ class LocalTestDataInitializer(
         val majorsByCode = MAJOR_SEEDS.associate { seed ->
             seed.code to findOrCreateMajor(university, seed)
         }
-        val member = findOrCreateMember(university, majorsByCode.getValue(TEST_MEMBER_MAJOR_CODE))
+        val testMember = findOrCreateMember(university, majorsByCode.getValue(TEST_MEMBER_MAJOR_CODE))
         val emptyMember = findOrCreateMember(
             university,
             majorsByCode.getValue(EMPTY_MEMBER_MAJOR_CODE),
@@ -74,10 +80,15 @@ class LocalTestDataInitializer(
         val boardsByCode = BOARD_SEEDS.associate { seed ->
             seed.code to findOrCreateBoard(university, seed)
         }
-        val semester = findOrCreateSemester(university)
-        val lectures = LECTURE_SEEDS.map { seed ->
-            findOrCreateLecture(semester, majorsByCode[seed.majorCode], seed)
+        val semestersByKey = SEMESTER_SEEDS.associate { seed ->
+            SemesterKey(seed.academicYear, seed.term) to findOrCreateSemester(university, seed)
         }
+        val lectures = LECTURE_SEEDS.map { seed ->
+            val semester = semestersByKey.getValue(SemesterKey(seed.academicYear, seed.term))
+            val course = findOrCreateCourse(university, seed)
+            findOrCreateLecture(semester, majorsByCode[seed.majorCode], course, seed)
+        }
+        val currentSemester = semestersByKey.getValue(SemesterKey(SEED_ACADEMIC_YEAR, SEED_TERM))
 
         lectures.zip(LECTURE_SEEDS).forEach { (lecture, seed) ->
             seed.schedules.forEach { schedule ->
@@ -85,15 +96,15 @@ class LocalTestDataInitializer(
             }
         }
 
-        val timetable = findOrCreateTimetable(member, semester)
-        lectures.filter { INITIAL_TIMETABLE_LECTURE_CODES.contains(it.code) }.forEach { lecture ->
+        val timetable = findOrCreateTimetable(testMember, currentSemester)
+        lectures.filter { it.semester.id == currentSemester.id && INITIAL_TIMETABLE_LECTURE_CODES.contains(it.code) }.forEach { lecture ->
             linkLectureToTimetable(timetable, lecture)
         }
 
         POST_SEEDS.forEach { seed ->
             val author = when (seed.memberEmail) {
                 EMPTY_MEMBER_EMAIL -> emptyMember
-                else -> member
+                else -> testMember
             }
             val board = boardsByCode.getValue(seed.boardCode)
             val post = findOrCreatePost(board, author, seed)
@@ -112,7 +123,7 @@ class LocalTestDataInitializer(
             val post = postsByTitle.getValue(seed.postTitle)
             val mappedMember = when (seed.memberEmail) {
                 EMPTY_MEMBER_EMAIL -> emptyMember
-                else -> member
+                else -> testMember
             }
             findOrCreatePostAnonymousMapping(post, mappedMember, seed.anonNumber)
         }
@@ -121,7 +132,7 @@ class LocalTestDataInitializer(
             val post = postsByTitle.getValue(seed.postTitle)
             val likedMember = when (seed.memberEmail) {
                 EMPTY_MEMBER_EMAIL -> emptyMember
-                else -> member
+                else -> testMember
             }
             findOrCreatePostLike(post, likedMember)
         }
@@ -130,7 +141,7 @@ class LocalTestDataInitializer(
             val post = postsByTitle.getValue(seed.postTitle)
             val commentMember = when (seed.memberEmail) {
                 EMPTY_MEMBER_EMAIL -> emptyMember
-                else -> member
+                else -> testMember
             }
             val parent = seed.parentContent?.let { parentContent ->
                 commentRepository.findAllByPostIdOrderByCreatedAtAsc(post.id)
@@ -138,6 +149,34 @@ class LocalTestDataInitializer(
                     ?: error("Parent comment must exist for content=$parentContent")
             }
             findOrCreateComment(post, commentMember, parent, seed)
+        }
+
+        val lecturesByKey = lectures.associateBy { lecture ->
+            LectureSeedKey(
+                academicYear = lecture.semester.academicYear,
+                term = lecture.semester.term,
+                code = lecture.code
+            )
+        }
+
+        COURSE_REVIEW_SEEDS.forEach { seed ->
+            val member = when (seed.memberEmail) {
+                EMPTY_MEMBER_EMAIL -> emptyMember
+                else -> testMember
+            }
+            val lecture = lecturesByKey.getValue(
+                LectureSeedKey(
+                    academicYear = seed.academicYear,
+                    term = seed.term,
+                    code = seed.courseCode
+                )
+            )
+            findOrCreateCourseReview(
+                course = lecture.course,
+                member = member,
+                lecture = lecture,
+                seed = seed
+            )
         }
     }
 
@@ -203,30 +242,61 @@ class LocalTestDataInitializer(
         )
     }
 
-    private fun findOrCreateSemester(university: University): Semester {
+    private fun findOrCreateSemester(university: University, seed: SemesterSeed): Semester {
         return semesterRepository.findByUniversityIdAndAcademicYearAndTerm(
             universityId = university.id,
-            academicYear = SEED_ACADEMIC_YEAR,
-            term = SEED_TERM
+            academicYear = seed.academicYear,
+            term = seed.term
         ) ?: semesterRepository.save(
             Semester(
                 university = university,
-                academicYear = SEED_ACADEMIC_YEAR,
-                term = SEED_TERM
+                academicYear = seed.academicYear,
+                term = seed.term
             )
             )
     }
 
-    private fun findOrCreateLecture(semester: Semester, major: Major?, seed: LectureSeed): Lecture {
+    private fun findOrCreateCourse(university: University, seed: LectureSeed): Course {
+        return courseRepository.findByUniversityIdAndCode(university.id, seed.courseCode)
+            ?: courseRepository.save(
+                Course(
+                    university = university,
+                    code = seed.courseCode,
+                    name = seed.courseName
+                )
+            )
+    }
+
+    private fun findOrCreateLecture(semester: Semester, major: Major?, course: Course, seed: LectureSeed): Lecture {
         return lectureRepository.findBySemesterIdAndCode(semester.id, seed.code)
             ?: lectureRepository.save(
                 Lecture(
                     semester = semester,
                     major = major,
+                    course = course,
                     code = seed.code,
                     name = seed.name,
                     professor = seed.professor,
                     credit = seed.credit
+                )
+            )
+    }
+
+    private fun findOrCreateCourseReview(course: Course, member: Member, lecture: Lecture, seed: CourseReviewSeed): CourseReview {
+        return courseReviewRepository.findByCourseIdAndMemberId(course.id, member.id)
+            ?: courseReviewRepository.save(
+                CourseReview(
+                    course = course,
+                    member = member,
+                    lecture = lecture,
+                    academicYear = lecture.semester.academicYear,
+                    term = lecture.semester.term,
+                    professor = lecture.professor,
+                    overallRating = seed.overallRating,
+                    difficulty = seed.difficulty,
+                    workload = seed.workload,
+                    wouldTakeAgain = seed.wouldTakeAgain,
+                    content = seed.content
                 )
             )
     }
@@ -370,6 +440,16 @@ class LocalTestDataInitializer(
         private const val SEED_ACADEMIC_YEAR = 2026
         private val SEED_TERM = SemesterTerm.SPRING
         private val INITIAL_TIMETABLE_LECTURE_CODES = setOf("CS101", "MATH201")
+        private val SEMESTER_SEEDS = listOf(
+            SemesterSeed(
+                academicYear = 2026,
+                term = SemesterTerm.SPRING
+            ),
+            SemesterSeed(
+                academicYear = 2025,
+                term = SemesterTerm.FALL
+            )
+        )
         private val BOARD_SEEDS = listOf(
             BoardSeed(
                 code = "general",
@@ -455,7 +535,11 @@ class LocalTestDataInitializer(
 
         private val LECTURE_SEEDS = listOf(
             LectureSeed(
+                academicYear = 2026,
+                term = SemesterTerm.SPRING,
                 code = "CS101",
+                courseCode = "CS101",
+                courseName = "Introduction to Computer Science",
                 name = "Introduction to Computer Science",
                 professor = "Prof. Akiyama",
                 credit = 3,
@@ -476,7 +560,11 @@ class LocalTestDataInitializer(
                 )
             ),
             LectureSeed(
+                academicYear = 2026,
+                term = SemesterTerm.SPRING,
                 code = "MATH201",
+                courseCode = "MATH201",
+                courseName = "Linear Algebra",
                 name = "Linear Algebra",
                 professor = "Prof. Sato",
                 credit = 2,
@@ -491,7 +579,11 @@ class LocalTestDataInitializer(
                 )
             ),
             LectureSeed(
+                academicYear = 2026,
+                term = SemesterTerm.SPRING,
                 code = "PHYS301",
+                courseCode = "PHYS301",
+                courseName = "Classical Mechanics",
                 name = "Classical Mechanics",
                 professor = "Prof. Tanaka",
                 credit = 3,
@@ -506,7 +598,11 @@ class LocalTestDataInitializer(
                 )
             ),
             LectureSeed(
+                academicYear = 2026,
+                term = SemesterTerm.SPRING,
                 code = "HIST110",
+                courseCode = "HIST110",
+                courseName = "World History",
                 name = "World History",
                 professor = "Prof. Nakamura",
                 credit = 2,
@@ -521,7 +617,11 @@ class LocalTestDataInitializer(
                 )
             ),
             LectureSeed(
+                academicYear = 2026,
+                term = SemesterTerm.SPRING,
                 code = "CHEM105",
+                courseCode = "CHEM105",
+                courseName = "General Chemistry",
                 name = "General Chemistry",
                 professor = "Prof. Suzuki",
                 credit = 3,
@@ -536,7 +636,11 @@ class LocalTestDataInitializer(
                 )
             ),
             LectureSeed(
+                academicYear = 2026,
+                term = SemesterTerm.SPRING,
                 code = "ECON210",
+                courseCode = "ECON210",
+                courseName = "Microeconomics",
                 name = "Microeconomics",
                 professor = "Prof. Kobayashi",
                 credit = 2,
@@ -551,7 +655,11 @@ class LocalTestDataInitializer(
                 )
             ),
             LectureSeed(
+                academicYear = 2026,
+                term = SemesterTerm.SPRING,
                 code = "ENG220",
+                courseCode = "ENG220",
+                courseName = "Academic English",
                 name = "Academic English",
                 professor = "Prof. Wilson",
                 credit = 2,
@@ -566,7 +674,11 @@ class LocalTestDataInitializer(
                 )
             ),
             LectureSeed(
+                academicYear = 2026,
+                term = SemesterTerm.SPRING,
                 code = "STAT230",
+                courseCode = "STAT230",
+                courseName = "Statistics Fundamentals",
                 name = "Statistics Fundamentals",
                 professor = "Prof. Yamamoto",
                 credit = 2,
@@ -581,7 +693,11 @@ class LocalTestDataInitializer(
                 )
             ),
             LectureSeed(
+                academicYear = 2026,
+                term = SemesterTerm.SPRING,
                 code = "ART150",
+                courseCode = "ART150",
+                courseName = "Visual Arts Appreciation",
                 name = "Visual Arts Appreciation",
                 professor = "Prof. Lee",
                 credit = 2,
@@ -594,9 +710,63 @@ class LocalTestDataInitializer(
                         location = "Arts Hall 201"
                     )
                 )
+            ),
+            LectureSeed(
+                academicYear = 2025,
+                term = SemesterTerm.FALL,
+                code = "CS101",
+                courseCode = "CS101",
+                courseName = "Introduction to Computer Science",
+                name = "Introduction to Computer Science",
+                professor = "Prof. Ito",
+                credit = 3,
+                majorCode = "CS",
+                schedules = listOf(
+                    LectureScheduleSeed(
+                        dayOfWeek = DayOfWeek.TUESDAY,
+                        startTime = LocalTime.of(10, 0),
+                        endTime = LocalTime.of(11, 30),
+                        location = "Engineering Hall 204"
+                    ),
+                    LectureScheduleSeed(
+                        dayOfWeek = DayOfWeek.THURSDAY,
+                        startTime = LocalTime.of(10, 0),
+                        endTime = LocalTime.of(11, 30),
+                        location = "Engineering Hall 204"
+                    )
+                )
+            )
+        )
+        private val COURSE_REVIEW_SEEDS = listOf(
+            CourseReviewSeed(
+                memberEmail = TEST_MEMBER_EMAIL,
+                courseCode = "CS101",
+                academicYear = 2025,
+                term = SemesterTerm.FALL,
+                overallRating = 5,
+                difficulty = 3,
+                workload = 2,
+                wouldTakeAgain = true,
+                content = "Clear explanations and manageable assignments."
+            ),
+            CourseReviewSeed(
+                memberEmail = EMPTY_MEMBER_EMAIL,
+                courseCode = "CS101",
+                academicYear = 2026,
+                term = SemesterTerm.SPRING,
+                overallRating = 4,
+                difficulty = 4,
+                workload = 3,
+                wouldTakeAgain = true,
+                content = "Fast-paced but still one of the better core classes."
             )
         )
     }
+
+    private data class SemesterSeed(
+        val academicYear: Int,
+        val term: SemesterTerm
+    )
 
     private data class MajorSeed(
         val code: String,
@@ -610,7 +780,11 @@ class LocalTestDataInitializer(
     )
 
     private data class LectureSeed(
+        val academicYear: Int,
+        val term: SemesterTerm,
         val code: String,
+        val courseCode: String,
+        val courseName: String,
         val name: String,
         val professor: String,
         val credit: Int,
@@ -659,5 +833,28 @@ class LocalTestDataInitializer(
         val startTime: LocalTime,
         val endTime: LocalTime,
         val location: String
+    )
+
+    private data class CourseReviewSeed(
+        val memberEmail: String,
+        val courseCode: String,
+        val academicYear: Int,
+        val term: SemesterTerm,
+        val overallRating: Int,
+        val difficulty: Int,
+        val workload: Int,
+        val wouldTakeAgain: Boolean,
+        val content: String
+    )
+
+    private data class SemesterKey(
+        val academicYear: Int,
+        val term: SemesterTerm
+    )
+
+    private data class LectureSeedKey(
+        val academicYear: Int,
+        val term: SemesterTerm,
+        val code: String
     )
 }

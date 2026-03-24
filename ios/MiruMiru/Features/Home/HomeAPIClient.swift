@@ -26,6 +26,11 @@ final class HomeAPIClient: HomeClientProtocol, @unchecked Sendable {
         return payload.toDomain()
     }
 
+    func fetchHotPosts() async throws -> [HotPostSummary] {
+        let payload: [HotPostResponse] = try await requestPayload(path: "/api/v1/posts/hot")
+        return payload.map(\.toDomain)
+    }
+
     private func requestPayload<Response: Decodable>(path: String) async throws -> Response {
         let accessToken = try readAccessToken()
 
@@ -169,6 +174,34 @@ private extension HomeAPIClient {
                 startTime: startTime,
                 endTime: endTime,
                 location: location
+            )
+        }
+    }
+
+    struct HotPostResponse: Decodable {
+        let postId: Int64
+        let boardId: Int64
+        let boardCode: String
+        let boardName: String
+        let title: String
+        let authorDisplayName: String
+        let isAnonymous: Bool
+        let likeCount: Int
+        let commentCount: Int
+        let createdAt: String
+
+        var toDomain: HotPostSummary {
+            HotPostSummary(
+                id: postId,
+                boardId: boardId,
+                boardCode: boardCode,
+                boardName: boardName,
+                title: title,
+                authorDisplayName: authorDisplayName,
+                isAnonymous: isAnonymous,
+                likeCount: likeCount,
+                commentCount: commentCount,
+                createdAt: createdAt
             )
         }
     }

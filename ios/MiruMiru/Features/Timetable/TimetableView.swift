@@ -40,7 +40,7 @@ struct TimetableView: View {
                 }
                 .padding(.horizontal, 10)
                 .padding(.top, 18)
-                .padding(.bottom, 40)
+                .padding(.bottom, 116)
             }
             .background(background)
             .task(id: isActive) {

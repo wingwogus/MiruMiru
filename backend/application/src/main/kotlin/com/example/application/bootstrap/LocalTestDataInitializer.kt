@@ -1,5 +1,9 @@
 package com.example.application.bootstrap
 
+import com.example.domain.board.Board
+import com.example.domain.board.BoardRepository
+import com.example.domain.comment.Comment
+import com.example.domain.comment.CommentRepository
 import com.example.domain.lecture.Lecture
 import com.example.domain.lecture.LectureRepository
 import com.example.domain.lecture.LectureSchedule
@@ -8,6 +12,14 @@ import com.example.domain.major.Major
 import com.example.domain.major.MajorRepository
 import com.example.domain.member.Member
 import com.example.domain.member.MemberRepository
+import com.example.domain.post.Post
+import com.example.domain.post.PostAnonymousMapping
+import com.example.domain.post.PostAnonymousMappingRepository
+import com.example.domain.post.PostImage
+import com.example.domain.post.PostImageRepository
+import com.example.domain.post.PostLike
+import com.example.domain.post.PostLikeRepository
+import com.example.domain.post.PostRepository
 import com.example.domain.semester.Semester
 import com.example.domain.semester.SemesterRepository
 import com.example.domain.semester.SemesterTerm
@@ -33,6 +45,12 @@ class LocalTestDataInitializer(
     private val universityRepository: UniversityRepository,
     private val majorRepository: MajorRepository,
     private val memberRepository: MemberRepository,
+    private val boardRepository: BoardRepository,
+    private val postRepository: PostRepository,
+    private val postLikeRepository: PostLikeRepository,
+    private val postAnonymousMappingRepository: PostAnonymousMappingRepository,
+    private val commentRepository: CommentRepository,
+    private val postImageRepository: PostImageRepository,
     private val semesterRepository: SemesterRepository,
     private val lectureRepository: LectureRepository,
     private val lectureScheduleRepository: LectureScheduleRepository,
@@ -47,7 +65,15 @@ class LocalTestDataInitializer(
             seed.code to findOrCreateMajor(university, seed)
         }
         val member = findOrCreateMember(university, majorsByCode.getValue(TEST_MEMBER_MAJOR_CODE))
-        findOrCreateMember(university, majorsByCode.getValue(EMPTY_MEMBER_MAJOR_CODE), EMPTY_MEMBER_EMAIL, EMPTY_MEMBER_NICKNAME)
+        val emptyMember = findOrCreateMember(
+            university,
+            majorsByCode.getValue(EMPTY_MEMBER_MAJOR_CODE),
+            EMPTY_MEMBER_EMAIL,
+            EMPTY_MEMBER_NICKNAME
+        )
+        val boardsByCode = BOARD_SEEDS.associate { seed ->
+            seed.code to findOrCreateBoard(university, seed)
+        }
         val semester = findOrCreateSemester(university)
         val lectures = LECTURE_SEEDS.map { seed ->
             findOrCreateLecture(semester, majorsByCode[seed.majorCode], seed)
@@ -62,6 +88,56 @@ class LocalTestDataInitializer(
         val timetable = findOrCreateTimetable(member, semester)
         lectures.filter { INITIAL_TIMETABLE_LECTURE_CODES.contains(it.code) }.forEach { lecture ->
             linkLectureToTimetable(timetable, lecture)
+        }
+
+        POST_SEEDS.forEach { seed ->
+            val author = when (seed.memberEmail) {
+                EMPTY_MEMBER_EMAIL -> emptyMember
+                else -> member
+            }
+            val board = boardsByCode.getValue(seed.boardCode)
+            val post = findOrCreatePost(board, author, seed)
+            seed.images.forEach { imageSeed ->
+                findOrCreatePostImage(post, imageSeed)
+            }
+        }
+
+        val postsByTitle = POST_SEEDS.associate { seed ->
+            val board = boardsByCode.getValue(seed.boardCode)
+            seed.title to (postRepository.findByBoardIdAndTitle(board.id, seed.title)
+                ?: error("Seed post must exist for title=${seed.title}"))
+        }
+
+        POST_ANON_MAPPING_SEEDS.forEach { seed ->
+            val post = postsByTitle.getValue(seed.postTitle)
+            val mappedMember = when (seed.memberEmail) {
+                EMPTY_MEMBER_EMAIL -> emptyMember
+                else -> member
+            }
+            findOrCreatePostAnonymousMapping(post, mappedMember, seed.anonNumber)
+        }
+
+        POST_LIKE_SEEDS.forEach { seed ->
+            val post = postsByTitle.getValue(seed.postTitle)
+            val likedMember = when (seed.memberEmail) {
+                EMPTY_MEMBER_EMAIL -> emptyMember
+                else -> member
+            }
+            findOrCreatePostLike(post, likedMember)
+        }
+
+        COMMENT_SEEDS.forEach { seed ->
+            val post = postsByTitle.getValue(seed.postTitle)
+            val commentMember = when (seed.memberEmail) {
+                EMPTY_MEMBER_EMAIL -> emptyMember
+                else -> member
+            }
+            val parent = seed.parentContent?.let { parentContent ->
+                commentRepository.findAllByPostIdOrderByCreatedAtAsc(post.id)
+                    .firstOrNull { comment -> comment.content == parentContent }
+                    ?: error("Parent comment must exist for content=$parentContent")
+            }
+            findOrCreateComment(post, commentMember, parent, seed)
         }
     }
 
@@ -82,6 +158,18 @@ class LocalTestDataInitializer(
                     university = university,
                     code = seed.code,
                     name = seed.name
+                )
+            )
+    }
+
+    private fun findOrCreateBoard(university: University, seed: BoardSeed): Board {
+        return boardRepository.findByUniversityIdAndCode(university.id, seed.code)
+            ?: boardRepository.save(
+                Board(
+                    university = university,
+                    code = seed.code,
+                    name = seed.name,
+                    isAnonymousAllowed = seed.isAnonymousAllowed
                 )
             )
     }
@@ -139,6 +227,80 @@ class LocalTestDataInitializer(
                     name = seed.name,
                     professor = seed.professor,
                     credit = seed.credit
+                )
+            )
+    }
+
+    private fun findOrCreatePost(board: Board, member: Member, seed: PostSeed): Post {
+        require(board.university.id == member.university.id) {
+            "Board and post author must belong to the same university."
+        }
+        require(board.isAnonymousAllowed || !seed.isAnonymous) {
+            "Anonymous sample posts must target anonymous-enabled boards."
+        }
+
+        return postRepository.findByBoardIdAndTitle(board.id, seed.title)
+            ?: postRepository.save(
+                Post(
+                    board = board,
+                    member = member,
+                    title = seed.title,
+                    content = seed.content,
+                    isAnonymous = seed.isAnonymous,
+                    likeCount = seed.likeCount,
+                    commentCount = seed.commentCount,
+                    isDeleted = false
+                )
+            )
+    }
+
+    private fun findOrCreatePostImage(post: Post, seed: PostImageSeed): PostImage {
+        return postImageRepository.findByPostIdAndDisplayOrder(post.id, seed.displayOrder)
+            ?: postImageRepository.save(
+                PostImage(
+                    post = post,
+                    imageUrl = seed.imageUrl,
+                    displayOrder = seed.displayOrder
+                )
+            )
+    }
+
+    private fun findOrCreatePostLike(post: Post, member: Member): PostLike {
+        return postLikeRepository.findByPostIdAndMemberId(post.id, member.id)
+            ?: postLikeRepository.save(
+                PostLike(
+                    post = post,
+                    member = member
+                )
+            )
+    }
+
+    private fun findOrCreatePostAnonymousMapping(post: Post, member: Member, anonNumber: Int): PostAnonymousMapping {
+        return postAnonymousMappingRepository.findByPostIdAndMemberId(post.id, member.id)
+            ?: postAnonymousMappingRepository.save(
+                PostAnonymousMapping(
+                    post = post,
+                    member = member,
+                    anonNumber = anonNumber
+                )
+            )
+    }
+
+    private fun findOrCreateComment(post: Post, member: Member, parent: Comment?, seed: CommentSeed): Comment {
+        return commentRepository.findAllByPostIdOrderByCreatedAtAsc(post.id)
+            .firstOrNull { comment ->
+                comment.member.id == member.id &&
+                    comment.content == seed.content &&
+                    comment.parent?.id == parent?.id
+            }
+            ?: commentRepository.save(
+                Comment(
+                    post = post,
+                    member = member,
+                    parent = parent,
+                    content = seed.content,
+                    isAnonymous = seed.isAnonymous,
+                    isDeleted = seed.isDeleted
                 )
             )
     }
@@ -208,6 +370,77 @@ class LocalTestDataInitializer(
         private const val SEED_ACADEMIC_YEAR = 2026
         private val SEED_TERM = SemesterTerm.SPRING
         private val INITIAL_TIMETABLE_LECTURE_CODES = setOf("CS101", "MATH201")
+        private val BOARD_SEEDS = listOf(
+            BoardSeed(
+                code = "general",
+                name = "General",
+                isAnonymousAllowed = false
+            ),
+            BoardSeed(
+                code = "free",
+                name = "Free Talk",
+                isAnonymousAllowed = true
+            )
+        )
+        private val POST_SEEDS = listOf(
+            PostSeed(
+                boardCode = "general",
+                memberEmail = TEST_MEMBER_EMAIL,
+                title = "Welcome to MiruMiru",
+                content = "Use this board to share campus updates and study tips.",
+                isAnonymous = false,
+                likeCount = 0,
+                commentCount = 0,
+                images = listOf(
+                    PostImageSeed(
+                        imageUrl = "https://example.com/images/mirumiru-welcome.png",
+                        displayOrder = 0
+                    )
+                )
+            ),
+            PostSeed(
+                boardCode = "free",
+                memberEmail = TEST_MEMBER_EMAIL,
+                title = "Best lunch near campus?",
+                content = "Looking for affordable lunch spots around the engineering buildings.",
+                isAnonymous = true,
+                likeCount = 1,
+                commentCount = 2
+            )
+        )
+        private val POST_ANON_MAPPING_SEEDS = listOf(
+            PostAnonMappingSeed(
+                postTitle = "Best lunch near campus?",
+                memberEmail = TEST_MEMBER_EMAIL,
+                anonNumber = 1
+            ),
+            PostAnonMappingSeed(
+                postTitle = "Best lunch near campus?",
+                memberEmail = EMPTY_MEMBER_EMAIL,
+                anonNumber = 2
+            )
+        )
+        private val POST_LIKE_SEEDS = listOf(
+            PostLikeSeed(
+                postTitle = "Best lunch near campus?",
+                memberEmail = EMPTY_MEMBER_EMAIL
+            )
+        )
+        private val COMMENT_SEEDS = listOf(
+            CommentSeed(
+                postTitle = "Best lunch near campus?",
+                memberEmail = EMPTY_MEMBER_EMAIL,
+                content = "There is a cheap curry place behind the engineering building.",
+                isAnonymous = true
+            ),
+            CommentSeed(
+                postTitle = "Best lunch near campus?",
+                memberEmail = TEST_MEMBER_EMAIL,
+                parentContent = "There is a cheap curry place behind the engineering building.",
+                content = "Thanks, I will try that place tomorrow.",
+                isAnonymous = true
+            )
+        )
 
         private val MAJOR_SEEDS = listOf(
             MajorSeed(
@@ -370,6 +603,12 @@ class LocalTestDataInitializer(
         val name: String
     )
 
+    private data class BoardSeed(
+        val code: String,
+        val name: String,
+        val isAnonymousAllowed: Boolean
+    )
+
     private data class LectureSeed(
         val code: String,
         val name: String,
@@ -377,6 +616,42 @@ class LocalTestDataInitializer(
         val credit: Int,
         val majorCode: String?,
         val schedules: List<LectureScheduleSeed>
+    )
+
+    private data class PostSeed(
+        val boardCode: String,
+        val memberEmail: String,
+        val title: String,
+        val content: String,
+        val isAnonymous: Boolean,
+        val likeCount: Int,
+        val commentCount: Int,
+        val images: List<PostImageSeed> = emptyList()
+    )
+
+    private data class PostAnonMappingSeed(
+        val postTitle: String,
+        val memberEmail: String,
+        val anonNumber: Int
+    )
+
+    private data class PostLikeSeed(
+        val postTitle: String,
+        val memberEmail: String
+    )
+
+    private data class CommentSeed(
+        val postTitle: String,
+        val memberEmail: String,
+        val content: String,
+        val isAnonymous: Boolean,
+        val isDeleted: Boolean = false,
+        val parentContent: String? = null
+    )
+
+    private data class PostImageSeed(
+        val imageUrl: String,
+        val displayOrder: Int
     )
 
     private data class LectureScheduleSeed(

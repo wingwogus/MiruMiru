@@ -4,16 +4,25 @@ struct HomeView: View {
     @ObservedObject private var session: AppSession
     @StateObject private var viewModel: HomeViewModel
     private let isActive: Bool
+    private let onSemesterTap: () -> Void
+    private let onBoardsTap: () -> Void
+    private let onTrendingPostTap: (Int64) -> Void
 
     init(
         session: AppSession,
         client: HomeClientProtocol,
         isActive: Bool = true,
+        onSemesterTap: @escaping () -> Void = {},
+        onBoardsTap: @escaping () -> Void = {},
+        onTrendingPostTap: @escaping (Int64) -> Void = { _ in },
         nowProvider: @escaping @Sendable () -> Date = Date.init,
         calendar: Calendar = .current
     ) {
         self.session = session
         self.isActive = isActive
+        self.onSemesterTap = onSemesterTap
+        self.onBoardsTap = onBoardsTap
+        self.onTrendingPostTap = onTrendingPostTap
         _viewModel = StateObject(
             wrappedValue: HomeViewModel(
                 client: client,
@@ -27,26 +36,42 @@ struct HomeView: View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 28) {
-                    switch viewModel.state {
-                    case .loading:
-                        loadingHeader
+                switch viewModel.state {
+                case .loading:
+                    loadingHeader
                         HomeLoadingCard()
-                    case let .loaded(content):
-                        HomeHeaderSection(profile: content.profile)
-                        TodayClassesSection(
-                            semesterTitle: content.semesterTitle,
-                            rows: content.todayClasses
+                case let .loaded(content):
+                    HomeHeaderSection(profile: content.profile)
+                    TodayClassesSection(
+                        semesterTitle: content.semesterTitle,
+                        rows: content.todayClasses,
+                        onSemesterTap: onSemesterTap
+                    )
+                    if content.trendingPosts.isEmpty == false {
+                        HomeTrendingPostsSection(
+                            posts: content.trendingPosts,
+                            onBoardsTap: onBoardsTap,
+                            onPostTap: onTrendingPostTap
                         )
-                    case let .empty(content):
-                        HomeHeaderSection(profile: content.profile)
-                        HomeEmptyCard(
-                            title: content.state.title,
-                            message: content.state.message,
-                            semesterTitle: content.semesterTitle
-                        )
-                    case let .failed(failure):
-                        failureCard(failure)
                     }
+                case let .empty(content):
+                    HomeHeaderSection(profile: content.profile)
+                    HomeEmptyCard(
+                        title: content.state.title,
+                        message: content.state.message,
+                        semesterTitle: content.semesterTitle,
+                        onSemesterTap: onSemesterTap
+                    )
+                    if content.trendingPosts.isEmpty == false {
+                        HomeTrendingPostsSection(
+                            posts: content.trendingPosts,
+                            onBoardsTap: onBoardsTap,
+                            onPostTap: onTrendingPostTap
+                        )
+                    }
+                case let .failed(failure):
+                    failureCard(failure)
+                }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 18)
@@ -224,6 +249,7 @@ private struct HomeAvatar: View {
 private struct TodayClassesSection: View {
     let semesterTitle: String
     let rows: [TodayClassRow]
+    let onSemesterTap: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -234,9 +260,12 @@ private struct TodayClassesSection: View {
 
                 Spacer()
 
-                Text(semesterTitle)
-                    .font(AppFont.semibold(15, relativeTo: .subheadline))
-                    .foregroundStyle(AuthPalette.primaryStart)
+                Button(action: onSemesterTap) {
+                    Text(semesterTitle)
+                        .font(AppFont.semibold(15, relativeTo: .subheadline))
+                        .foregroundStyle(AuthPalette.primaryStart)
+                }
+                .buttonStyle(.plain)
             }
 
             VStack(spacing: 18) {
@@ -398,6 +427,7 @@ private struct HomeEmptyCard: View {
     let title: String
     let message: String
     let semesterTitle: String?
+    let onSemesterTap: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -409,9 +439,12 @@ private struct HomeEmptyCard: View {
                 Spacer()
 
                 if let semesterTitle {
-                    Text(semesterTitle)
-                        .font(AppFont.semibold(15, relativeTo: .subheadline))
-                        .foregroundStyle(AuthPalette.primaryStart)
+                    Button(action: onSemesterTap) {
+                        Text(semesterTitle)
+                            .font(AppFont.semibold(15, relativeTo: .subheadline))
+                            .foregroundStyle(AuthPalette.primaryStart)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 
@@ -454,6 +487,101 @@ private struct HomeLoadingCard: View {
                 }
             }
         }
+    }
+}
+
+private struct HomeTrendingPostsSection: View {
+    let posts: [HotPostSummary]
+    let onBoardsTap: () -> Void
+    let onPostTap: (Int64) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Label {
+                    Text("Trending Posts")
+                        .font(AppFont.extraBold(24, relativeTo: .title3))
+                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                } icon: {
+                    Image(systemName: "flame.fill")
+                        .foregroundStyle(Color(red: 0.98, green: 0.32, blue: 0.26))
+                }
+
+                Spacer()
+
+                Button(action: onBoardsTap) {
+                    Text("To Boards")
+                        .font(AppFont.semibold(15, relativeTo: .subheadline))
+                        .foregroundStyle(AuthPalette.primaryStart)
+                }
+                .buttonStyle(.plain)
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(posts) { post in
+                        Button {
+                            onPostTap(post.id)
+                        } label: {
+                            HomeTrendingPostCard(post: post)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.trailing, 4)
+            }
+        }
+    }
+}
+
+private struct HomeTrendingPostCard: View {
+    let post: HotPostSummary
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text(post.boardName.uppercased())
+                    .font(AppFont.bold(10, relativeTo: .caption))
+                    .foregroundStyle(AuthPalette.primaryStart)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(AuthPalette.primaryStart.opacity(0.10))
+                    )
+
+                Spacer()
+
+                Text(post.relativeCreatedAt)
+                    .font(AppFont.medium(13, relativeTo: .caption))
+                    .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+            }
+
+            Text(post.title)
+                .font(AppFont.bold(18, relativeTo: .headline))
+                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .lineLimit(3)
+                .multilineTextAlignment(.leading)
+
+            Spacer(minLength: 8)
+
+            HStack(spacing: 16) {
+                Label("\(post.likeCount)", systemImage: "heart.fill")
+                    .font(AppFont.medium(14, relativeTo: .caption))
+                    .foregroundStyle(Color.red)
+
+                Label("\(post.commentCount)", systemImage: "message.fill")
+                    .font(AppFont.medium(14, relativeTo: .caption))
+                    .foregroundStyle(Color(red: 0.28, green: 0.27, blue: 0.88))
+            }
+        }
+        .padding(20)
+        .frame(width: 286, height: 172, alignment: .topLeading)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.05), radius: 14, y: 6)
+        )
     }
 }
 

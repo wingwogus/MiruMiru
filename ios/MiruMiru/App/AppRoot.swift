@@ -4,17 +4,20 @@ struct AppRoot: View {
     @ObservedObject var session: AppSession
     private let homeClient: HomeClientProtocol
     private let timetableClient: TimetableClientProtocol
+    private let boardsClient: BoardsClientProtocol
     @State private var authRoute: AuthRoute = .login
     @State private var loginPrefillEmail = ""
 
     init(
         session: AppSession,
         homeClient: HomeClientProtocol,
-        timetableClient: TimetableClientProtocol
+        timetableClient: TimetableClientProtocol,
+        boardsClient: BoardsClientProtocol
     ) {
         self.session = session
         self.homeClient = homeClient
         self.timetableClient = timetableClient
+        self.boardsClient = boardsClient
     }
 
     var body: some View {
@@ -28,7 +31,8 @@ struct AppRoot: View {
                 AuthenticatedAppShell(
                     session: session,
                     homeClient: homeClient,
-                    timetableClient: timetableClient
+                    timetableClient: timetableClient,
+                    boardsClient: boardsClient
                 )
             }
         }
@@ -102,14 +106,16 @@ struct AppRoot_Previews: PreviewProvider {
             AppRoot(
                 session: PreviewFactory.makeSession(state: .unauthenticated),
                 homeClient: PreviewHomeClient.loaded(),
-                timetableClient: PreviewTimetableClient.loaded()
+                timetableClient: PreviewTimetableClient.loaded(),
+                boardsClient: PreviewBoardsClient(scenario: .loaded)
             )
             .previewDisplayName("AppRoot Login")
 
             AppRoot(
                 session: PreviewFactory.makeSession(state: .authenticated),
                 homeClient: PreviewHomeClient.loaded(),
-                timetableClient: PreviewTimetableClient.loaded()
+                timetableClient: PreviewTimetableClient.loaded(),
+                boardsClient: PreviewBoardsClient(scenario: .loaded)
             )
             .previewDisplayName("AppRoot Home")
         }

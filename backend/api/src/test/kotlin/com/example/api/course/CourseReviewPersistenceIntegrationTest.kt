@@ -2,9 +2,8 @@ package com.example.api.course
 
 import com.example.ApiApplication
 import com.example.domain.course.CourseReviewRepository
+import com.example.domain.course.CourseReviewTargetRepository
 import com.example.domain.lecture.LectureRepository
-import com.example.domain.semester.SemesterRepository
-import com.example.domain.semester.SemesterTerm
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
@@ -25,41 +24,59 @@ import org.springframework.transaction.annotation.Transactional
 @ActiveProfiles("local")
 @Transactional
 class CourseReviewPersistenceIntegrationTest(
-    @Autowired private val semesterRepository: SemesterRepository,
     @Autowired private val lectureRepository: LectureRepository,
-    @Autowired private val courseReviewRepository: CourseReviewRepository
+    @Autowired private val courseReviewRepository: CourseReviewRepository,
+    @Autowired private val courseReviewTargetRepository: CourseReviewTargetRepository
 ) {
     @Test
-    fun `local bootstrap seeds course scoped reviews across semesters`() {
-        val springSemester = semesterRepository.findAll()
-            .firstOrNull { it.academicYear == 2026 && it.term == SemesterTerm.SPRING }
-        val fallSemester = semesterRepository.findAll()
-            .firstOrNull { it.academicYear == 2025 && it.term == SemesterTerm.FALL }
-
-        assertNotNull(springSemester)
-        assertNotNull(fallSemester)
-
-        val springLecture = lectureRepository.findBySemesterIdAndCode(springSemester!!.id, "CS101")
-        val fallLecture = lectureRepository.findBySemesterIdAndCode(fallSemester!!.id, "CS101")
+    fun `local bootstrap seeds review targets from lectures and keeps reviews by target`() {
+        val springLecture = lectureRepository.findAll()
+            .firstOrNull { it.course.code == "CS101" && it.professor == "Prof. Akiyama" }
+        val fallLecture = lectureRepository.findAll()
+            .firstOrNull { it.course.code == "CS101" && it.professor == "Prof. Ito" }
 
         assertNotNull(springLecture)
         assertNotNull(fallLecture)
         assertEquals(springLecture!!.course.id, fallLecture!!.course.id)
 
-        val reviews = courseReviewRepository.findAllByCourseId(
-            springLecture.course.id,
+        val springTarget = courseReviewTargetRepository.findAll()
+            .firstOrNull { it.course.id == springLecture.course.id && it.professorDisplayName == "Prof. Akiyama" }
+        val fallTarget = courseReviewTargetRepository.findAll()
+            .firstOrNull { it.course.id == fallLecture.course.id && it.professorDisplayName == "Prof. Ito" }
+
+        assertNotNull(springTarget)
+        assertNotNull(fallTarget)
+        assertEquals(springLecture.course.id, springTarget!!.course.id)
+        assertEquals(fallLecture.course.id, fallTarget!!.course.id)
+
+        val reviews = courseReviewRepository.findAllByTargetId(
+            fallTarget.id,
             PageRequest.of(
                 0,
                 10,
-                Sort.by(
-                    Sort.Order.desc("createdAt"),
-                    Sort.Order.desc("id")
-                )
+                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))
+            )
+        )
+
+        assertEquals(1, reviews.totalElements)
+        assertEquals(2025, reviews.content.single().academicYear)
+        assertEquals("Prof. Ito", reviews.content.single().professorDisplayName)
+    }
+
+    @Test
+    fun `local bootstrap school review feed includes multiple target reviews`() {
+        val universityId = lectureRepository.findAll().first().semester.university.id
+
+        val reviews = courseReviewRepository.findAllByTargetCourseUniversityId(
+            universityId,
+            PageRequest.of(
+                0,
+                20,
+                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))
             )
         )
 
         assertEquals(2, reviews.totalElements)
-        assertEquals(setOf(2025, 2026), reviews.content.map { it.academicYear }.toSet())
-        assertEquals(setOf("Prof. Ito", "Prof. Akiyama"), reviews.content.map { it.professor }.toSet())
+        assertEquals(2, reviews.content.map { it.target.id }.distinct().size)
     }
 }

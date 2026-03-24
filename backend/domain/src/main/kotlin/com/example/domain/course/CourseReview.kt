@@ -1,7 +1,6 @@
 package com.example.domain.course
 
 import com.example.domain.common.BaseTimeEntity
-import com.example.domain.lecture.Lecture
 import com.example.domain.member.Member
 import com.example.domain.semester.SemesterTerm
 import jakarta.persistence.Column
@@ -23,12 +22,12 @@ import jakarta.persistence.UniqueConstraint
     name = "course_review",
     uniqueConstraints = [
         UniqueConstraint(
-            name = "uk_course_review_course_member",
-            columnNames = ["course_id", "member_id"]
+            name = "uk_course_review_target_member",
+            columnNames = ["course_review_target_id", "member_id"]
         )
     ],
     indexes = [
-        Index(name = "idx_course_review_course_created", columnList = "course_id, created_at"),
+        Index(name = "idx_course_review_target_created", columnList = "course_review_target_id, created_at"),
         Index(name = "idx_course_review_member_created", columnList = "member_id, created_at")
     ]
 )
@@ -37,16 +36,12 @@ class CourseReview(
     val id: Long = 0L,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false)
-    val course: Course,
+    @JoinColumn(name = "course_review_target_id", nullable = false)
+    val target: CourseReviewTarget,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     val member: Member,
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lecture_id", nullable = false)
-    var lecture: Lecture,
 
     @Column(name = "academic_year", nullable = false)
     var academicYear: Int,
@@ -55,8 +50,8 @@ class CourseReview(
     @Column(nullable = false, length = 20)
     var term: SemesterTerm,
 
-    @Column(nullable = false)
-    var professor: String,
+    @Column(name = "professor_display_name", nullable = false)
+    var professorDisplayName: String,
 
     @Column(name = "overall_rating", nullable = false)
     var overallRating: Int,
@@ -74,20 +69,18 @@ class CourseReview(
     var content: String
 ) : BaseTimeEntity() {
     fun update(
-        lecture: Lecture,
         academicYear: Int,
         term: SemesterTerm,
-        professor: String,
+        professorDisplayName: String,
         overallRating: Int,
         difficulty: Int,
         workload: Int,
         wouldTakeAgain: Boolean,
         content: String
     ) {
-        this.lecture = lecture
         this.academicYear = academicYear
         this.term = term
-        this.professor = professor
+        this.professorDisplayName = professorDisplayName
         this.overallRating = overallRating
         this.difficulty = difficulty
         this.workload = workload

@@ -8,6 +8,7 @@ import com.example.domain.course.Course
 import com.example.domain.course.CourseRepository
 import com.example.domain.course.CourseReview
 import com.example.domain.course.CourseReviewRepository
+import com.example.domain.course.CourseReviewTarget
 import com.example.domain.lecture.Lecture
 import com.example.domain.lecture.LectureRepository
 import com.example.domain.lecture.LectureSchedule
@@ -58,6 +59,7 @@ class LocalTestDataInitializer(
     private val semesterRepository: SemesterRepository,
     private val courseRepository: CourseRepository,
     private val courseReviewRepository: CourseReviewRepository,
+    private val courseReviewTargetService: com.example.application.course.CourseReviewTargetService,
     private val lectureRepository: LectureRepository,
     private val lectureScheduleRepository: LectureScheduleRepository,
     private val timetableRepository: TimetableRepository,
@@ -94,6 +96,9 @@ class LocalTestDataInitializer(
             seed.schedules.forEach { schedule ->
                 findOrCreateLectureSchedule(lecture, schedule)
             }
+        }
+        val targetsByKey = lectures.associate { lecture ->
+            CourseReviewTargetKey(lecture.course.code, lecture.professor) to findOrCreateCourseReviewTarget(lecture)
         }
 
         val timetable = findOrCreateTimetable(testMember, currentSemester)
@@ -151,30 +156,20 @@ class LocalTestDataInitializer(
             findOrCreateComment(post, commentMember, parent, seed)
         }
 
-        val lecturesByKey = lectures.associateBy { lecture ->
-            LectureSeedKey(
-                academicYear = lecture.semester.academicYear,
-                term = lecture.semester.term,
-                code = lecture.code
-            )
-        }
-
         COURSE_REVIEW_SEEDS.forEach { seed ->
             val member = when (seed.memberEmail) {
                 EMPTY_MEMBER_EMAIL -> emptyMember
                 else -> testMember
             }
-            val lecture = lecturesByKey.getValue(
-                LectureSeedKey(
-                    academicYear = seed.academicYear,
-                    term = seed.term,
-                    code = seed.courseCode
+            val target = targetsByKey.getValue(
+                CourseReviewTargetKey(
+                    courseCode = seed.courseCode,
+                    professorDisplayName = seed.professorDisplayName
                 )
             )
             findOrCreateCourseReview(
-                course = lecture.course,
+                target = target,
                 member = member,
-                lecture = lecture,
                 seed = seed
             )
         }
@@ -282,16 +277,19 @@ class LocalTestDataInitializer(
             )
     }
 
-    private fun findOrCreateCourseReview(course: Course, member: Member, lecture: Lecture, seed: CourseReviewSeed): CourseReview {
-        return courseReviewRepository.findByCourseIdAndMemberId(course.id, member.id)
+    private fun findOrCreateCourseReviewTarget(lecture: Lecture): CourseReviewTarget {
+        return courseReviewTargetService.ensureTarget(lecture.course, lecture.professor)
+    }
+
+    private fun findOrCreateCourseReview(target: CourseReviewTarget, member: Member, seed: CourseReviewSeed): CourseReview {
+        return courseReviewRepository.findByTargetIdAndMemberId(target.id, member.id)
             ?: courseReviewRepository.save(
                 CourseReview(
-                    course = course,
+                    target = target,
                     member = member,
-                    lecture = lecture,
-                    academicYear = lecture.semester.academicYear,
-                    term = lecture.semester.term,
-                    professor = lecture.professor,
+                    academicYear = seed.academicYear,
+                    term = seed.term,
+                    professorDisplayName = target.professorDisplayName,
                     overallRating = seed.overallRating,
                     difficulty = seed.difficulty,
                     workload = seed.workload,
@@ -741,6 +739,7 @@ class LocalTestDataInitializer(
             CourseReviewSeed(
                 memberEmail = TEST_MEMBER_EMAIL,
                 courseCode = "CS101",
+                professorDisplayName = "Prof. Ito",
                 academicYear = 2025,
                 term = SemesterTerm.FALL,
                 overallRating = 5,
@@ -752,6 +751,7 @@ class LocalTestDataInitializer(
             CourseReviewSeed(
                 memberEmail = EMPTY_MEMBER_EMAIL,
                 courseCode = "CS101",
+                professorDisplayName = "Prof. Akiyama",
                 academicYear = 2026,
                 term = SemesterTerm.SPRING,
                 overallRating = 4,
@@ -838,6 +838,7 @@ class LocalTestDataInitializer(
     private data class CourseReviewSeed(
         val memberEmail: String,
         val courseCode: String,
+        val professorDisplayName: String,
         val academicYear: Int,
         val term: SemesterTerm,
         val overallRating: Int,
@@ -856,5 +857,10 @@ class LocalTestDataInitializer(
         val academicYear: Int,
         val term: SemesterTerm,
         val code: String
+    )
+
+    private data class CourseReviewTargetKey(
+        val courseCode: String,
+        val professorDisplayName: String
     )
 }

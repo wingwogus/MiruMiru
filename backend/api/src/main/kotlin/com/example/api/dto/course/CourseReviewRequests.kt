@@ -7,8 +7,11 @@ import jakarta.validation.constraints.NotNull
 
 object CourseReviewRequests {
     data class UpsertCourseReviewRequest(
-        @field:NotNull(message = "lectureId는 필수입니다")
-        val lectureId: Long?,
+        @field:NotNull(message = "academicYear는 필수입니다")
+        val academicYear: Int?,
+
+        @field:NotBlank(message = "term은 필수입니다")
+        val term: String,
 
         @field:NotNull(message = "overallRating은 필수입니다")
         @field:Min(value = 1, message = "overallRating은 1 이상이어야 합니다")

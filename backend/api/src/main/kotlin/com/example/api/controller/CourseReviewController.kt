@@ -21,42 +21,54 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/courses")
+@RequestMapping("/api/v1/course-review-targets")
 class CourseReviewController(
     private val courseReviewQueryService: CourseReviewQueryService,
     private val courseReviewWriteService: CourseReviewWriteService
 ) {
-    @GetMapping("/{courseId}/reviews")
+    @GetMapping
+    fun getCourseReviewTargets(
+        @AuthenticationPrincipal userId: String,
+        @RequestParam(defaultValue = "") query: String,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int
+    ): ResponseEntity<ApiResponse<CourseReviewResponses.CourseReviewTargetPageResponse>> {
+        val response = courseReviewQueryService.getCourseReviewTargets(userId, query, page, size)
+        return ResponseEntity.ok(ApiResponse.ok(CourseReviewResponses.CourseReviewTargetPageResponse.from(response)))
+    }
+
+    @GetMapping("/{targetId}/reviews")
     fun getCourseReviews(
         @AuthenticationPrincipal userId: String,
-        @PathVariable courseId: Long,
+        @PathVariable targetId: Long,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int
     ): ResponseEntity<ApiResponse<CourseReviewResponses.CourseReviewPageResponse>> {
-        val response = courseReviewQueryService.getCourseReviews(userId, courseId, page, size)
+        val response = courseReviewQueryService.getCourseReviews(userId, targetId, page, size)
         return ResponseEntity.ok(ApiResponse.ok(CourseReviewResponses.CourseReviewPageResponse.from(response)))
     }
 
-    @GetMapping("/{courseId}/reviews/me")
+    @GetMapping("/{targetId}/reviews/me")
     fun getMyCourseReview(
         @AuthenticationPrincipal userId: String,
-        @PathVariable courseId: Long
+        @PathVariable targetId: Long
     ): ResponseEntity<ApiResponse<CourseReviewResponses.CourseReviewItem>> {
-        val response = courseReviewQueryService.getMyCourseReview(userId, courseId)
+        val response = courseReviewQueryService.getMyCourseReview(userId, targetId)
         return ResponseEntity.ok(ApiResponse.ok(CourseReviewResponses.CourseReviewItem.from(response)))
     }
 
-    @PostMapping("/{courseId}/reviews")
+    @PostMapping("/{targetId}/reviews")
     fun createCourseReview(
         @AuthenticationPrincipal userId: String,
-        @PathVariable courseId: Long,
+        @PathVariable targetId: Long,
         @Valid @RequestBody request: CourseReviewRequests.UpsertCourseReviewRequest
     ): ResponseEntity<ApiResponse<CourseReviewResponses.CourseReviewIdResponse>> {
         val reviewId = courseReviewWriteService.createCourseReview(
             CourseReviewCommand.CreateCourseReview(
                 userId = userId,
-                courseId = courseId,
-                lectureId = request.lectureId!!,
+                targetId = targetId,
+                academicYear = request.academicYear!!,
+                term = request.term,
                 overallRating = request.overallRating!!,
                 difficulty = request.difficulty!!,
                 workload = request.workload!!,
@@ -69,17 +81,18 @@ class CourseReviewController(
             .body(ApiResponse.ok(CourseReviewResponses.CourseReviewIdResponse(reviewId)))
     }
 
-    @PutMapping("/{courseId}/reviews/me")
+    @PutMapping("/{targetId}/reviews/me")
     fun updateCourseReview(
         @AuthenticationPrincipal userId: String,
-        @PathVariable courseId: Long,
+        @PathVariable targetId: Long,
         @Valid @RequestBody request: CourseReviewRequests.UpsertCourseReviewRequest
     ): ResponseEntity<ApiResponse<CourseReviewResponses.CourseReviewIdResponse>> {
         val reviewId = courseReviewWriteService.updateCourseReview(
             CourseReviewCommand.UpdateCourseReview(
                 userId = userId,
-                courseId = courseId,
-                lectureId = request.lectureId!!,
+                targetId = targetId,
+                academicYear = request.academicYear!!,
+                term = request.term,
                 overallRating = request.overallRating!!,
                 difficulty = request.difficulty!!,
                 workload = request.workload!!,
@@ -90,15 +103,15 @@ class CourseReviewController(
         return ResponseEntity.ok(ApiResponse.ok(CourseReviewResponses.CourseReviewIdResponse(reviewId)))
     }
 
-    @DeleteMapping("/{courseId}/reviews/me")
+    @DeleteMapping("/{targetId}/reviews/me")
     fun deleteCourseReview(
         @AuthenticationPrincipal userId: String,
-        @PathVariable courseId: Long
+        @PathVariable targetId: Long
     ): ResponseEntity<ApiResponse<Unit>> {
         courseReviewWriteService.deleteCourseReview(
             CourseReviewCommand.DeleteCourseReview(
                 userId = userId,
-                courseId = courseId
+                targetId = targetId
             )
         )
         return ResponseEntity.ok(ApiResponse.empty(Unit))

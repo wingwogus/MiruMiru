@@ -3,15 +3,13 @@ package com.example.application.course
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
 import com.example.domain.course.Course
-import com.example.domain.course.CourseRepository
 import com.example.domain.course.CourseReview
 import com.example.domain.course.CourseReviewRepository
-import com.example.domain.lecture.Lecture
-import com.example.domain.lecture.LectureRepository
+import com.example.domain.course.CourseReviewTarget
+import com.example.domain.course.CourseReviewTargetRepository
 import com.example.domain.major.Major
 import com.example.domain.member.Member
 import com.example.domain.member.MemberRepository
-import com.example.domain.semester.Semester
 import com.example.domain.semester.SemesterTerm
 import com.example.domain.university.University
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -22,47 +20,44 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import java.time.LocalDate
 import java.util.Optional
 
 class CourseReviewWriteServiceTest {
     private lateinit var memberRepository: MemberRepository
-    private lateinit var courseRepository: CourseRepository
     private lateinit var courseReviewRepository: CourseReviewRepository
-    private lateinit var lectureRepository: LectureRepository
+    private lateinit var courseReviewTargetRepository: CourseReviewTargetRepository
     private lateinit var courseReviewWriteService: CourseReviewWriteService
 
     @BeforeEach
     fun setUp() {
         memberRepository = mock(MemberRepository::class.java)
-        courseRepository = mock(CourseRepository::class.java)
         courseReviewRepository = mock(CourseReviewRepository::class.java)
-        lectureRepository = mock(LectureRepository::class.java)
+        courseReviewTargetRepository = mock(CourseReviewTargetRepository::class.java)
         courseReviewWriteService = CourseReviewWriteService(
             memberRepository = memberRepository,
-            courseRepository = courseRepository,
             courseReviewRepository = courseReviewRepository,
-            lectureRepository = lectureRepository
+            courseReviewTargetRepository = courseReviewTargetRepository
         )
     }
 
     @Test
-    fun `create review saves lecture snapshot and trimmed content`() {
+    fun `create review saves target snapshot and trimmed content`() {
         val university = university()
         val member = member(id = 2L, university = university)
-        val course = course(id = 10L, university = university)
-        val lecture = lecture(id = 20L, course = course, university = university, year = 2026, term = SemesterTerm.SPRING, professor = "Prof. Akiyama")
+        val target = target(id = 10L, university = university, courseCode = "CS101", courseName = "Introduction to Computer Science", professorDisplayName = "Prof. Akiyama")
 
         `when`(memberRepository.findById(member.id)).thenReturn(Optional.of(member))
-        `when`(courseRepository.findByIdAndUniversityId(course.id, university.id)).thenReturn(course)
-        `when`(courseReviewRepository.findByCourseIdAndMemberId(course.id, member.id)).thenReturn(null)
-        `when`(lectureRepository.findByIdAndCourseIdAndSemesterUniversityId(lecture.id, course.id, university.id)).thenReturn(lecture)
+        `when`(courseReviewTargetRepository.findByIdAndCourseUniversityId(target.id, university.id)).thenReturn(target)
+        `when`(courseReviewRepository.findByTargetIdAndMemberId(target.id, member.id)).thenReturn(null)
         `when`(courseReviewRepository.save(any(CourseReview::class.java))).thenAnswer { invocation -> invocation.arguments.first() }
 
         val reviewId = courseReviewWriteService.createCourseReview(
             CourseReviewCommand.CreateCourseReview(
                 userId = member.id.toString(),
-                courseId = course.id,
-                lectureId = lecture.id,
+                targetId = target.id,
+                academicYear = LocalDate.now().year,
+                term = "SPRING",
                 overallRating = 5,
                 difficulty = 4,
                 workload = 3,
@@ -79,20 +74,19 @@ class CourseReviewWriteServiceTest {
     fun `create review fails when duplicate already exists`() {
         val university = university()
         val member = member(id = 2L, university = university)
-        val course = course(id = 10L, university = university)
+        val target = target(id = 10L, university = university, courseCode = "CS101", courseName = "Introduction to Computer Science", professorDisplayName = "Prof. Akiyama")
 
         `when`(memberRepository.findById(member.id)).thenReturn(Optional.of(member))
-        `when`(courseRepository.findByIdAndUniversityId(course.id, university.id)).thenReturn(course)
-        `when`(courseReviewRepository.findByCourseIdAndMemberId(course.id, member.id))
+        `when`(courseReviewTargetRepository.findByIdAndCourseUniversityId(target.id, university.id)).thenReturn(target)
+        `when`(courseReviewRepository.findByTargetIdAndMemberId(target.id, member.id))
             .thenReturn(
                 CourseReview(
                     id = 99L,
-                    course = course,
+                    target = target,
                     member = member,
-                    lecture = lecture(id = 21L, course = course, university = university, year = 2026, term = SemesterTerm.SPRING, professor = "Prof. Akiyama"),
-                    academicYear = 2026,
+                    academicYear = LocalDate.now().year,
                     term = SemesterTerm.SPRING,
-                    professor = "Prof. Akiyama",
+                    professorDisplayName = target.professorDisplayName,
                     overallRating = 4,
                     difficulty = 3,
                     workload = 2,
@@ -105,8 +99,9 @@ class CourseReviewWriteServiceTest {
             courseReviewWriteService.createCourseReview(
                 CourseReviewCommand.CreateCourseReview(
                     userId = member.id.toString(),
-                    courseId = course.id,
-                    lectureId = 20L,
+                    targetId = target.id,
+                    academicYear = LocalDate.now().year,
+                    term = "SPRING",
                     overallRating = 5,
                     difficulty = 4,
                     workload = 3,
@@ -120,20 +115,17 @@ class CourseReviewWriteServiceTest {
     }
 
     @Test
-    fun `update review refreshes lecture snapshot`() {
+    fun `update review refreshes snapshot fields`() {
         val university = university()
         val member = member(id = 2L, university = university)
-        val course = course(id = 10L, university = university)
-        val oldLecture = lecture(id = 20L, course = course, university = university, year = 2025, term = SemesterTerm.FALL, professor = "Prof. Ito")
-        val newLecture = lecture(id = 21L, course = course, university = university, year = 2026, term = SemesterTerm.SPRING, professor = "Prof. Akiyama")
+        val target = target(id = 10L, university = university, courseCode = "CS101", courseName = "Introduction to Computer Science", professorDisplayName = "Prof. Ito")
         val review = CourseReview(
             id = 30L,
-            course = course,
+            target = target,
             member = member,
-            lecture = oldLecture,
-            academicYear = 2025,
+            academicYear = 2024,
             term = SemesterTerm.FALL,
-            professor = "Prof. Ito",
+            professorDisplayName = target.professorDisplayName,
             overallRating = 4,
             difficulty = 3,
             workload = 2,
@@ -142,15 +134,15 @@ class CourseReviewWriteServiceTest {
         )
 
         `when`(memberRepository.findById(member.id)).thenReturn(Optional.of(member))
-        `when`(courseRepository.findByIdAndUniversityId(course.id, university.id)).thenReturn(course)
-        `when`(courseReviewRepository.findByCourseIdAndMemberId(course.id, member.id)).thenReturn(review)
-        `when`(lectureRepository.findByIdAndCourseIdAndSemesterUniversityId(newLecture.id, course.id, university.id)).thenReturn(newLecture)
+        `when`(courseReviewTargetRepository.findByIdAndCourseUniversityId(target.id, university.id)).thenReturn(target)
+        `when`(courseReviewRepository.findByTargetIdAndMemberId(target.id, member.id)).thenReturn(review)
 
         val reviewId = courseReviewWriteService.updateCourseReview(
             CourseReviewCommand.UpdateCourseReview(
                 userId = member.id.toString(),
-                courseId = course.id,
-                lectureId = newLecture.id,
+                targetId = target.id,
+                academicYear = 2025,
+                term = "SPRING",
                 overallRating = 5,
                 difficulty = 4,
                 workload = 4,
@@ -160,9 +152,8 @@ class CourseReviewWriteServiceTest {
         )
 
         assertEquals(review.id, reviewId)
-        assertEquals(2026, review.academicYear)
+        assertEquals(2025, review.academicYear)
         assertEquals(SemesterTerm.SPRING, review.term)
-        assertEquals("Prof. Akiyama", review.professor)
         assertEquals("updated content", review.content)
         assertEquals(false, review.wouldTakeAgain)
     }
@@ -171,16 +162,14 @@ class CourseReviewWriteServiceTest {
     fun `delete review removes existing review`() {
         val university = university()
         val member = member(id = 2L, university = university)
-        val course = course(id = 10L, university = university)
-        val lecture = lecture(id = 20L, course = course, university = university, year = 2026, term = SemesterTerm.SPRING, professor = "Prof. Akiyama")
+        val target = target(id = 10L, university = university, courseCode = "CS101", courseName = "Introduction to Computer Science", professorDisplayName = "Prof. Akiyama")
         val review = CourseReview(
             id = 30L,
-            course = course,
+            target = target,
             member = member,
-            lecture = lecture,
-            academicYear = 2026,
+            academicYear = LocalDate.now().year,
             term = SemesterTerm.SPRING,
-            professor = "Prof. Akiyama",
+            professorDisplayName = target.professorDisplayName,
             overallRating = 4,
             difficulty = 3,
             workload = 3,
@@ -189,13 +178,13 @@ class CourseReviewWriteServiceTest {
         )
 
         `when`(memberRepository.findById(member.id)).thenReturn(Optional.of(member))
-        `when`(courseRepository.findByIdAndUniversityId(course.id, university.id)).thenReturn(course)
-        `when`(courseReviewRepository.findByCourseIdAndMemberId(course.id, member.id)).thenReturn(review)
+        `when`(courseReviewTargetRepository.findByIdAndCourseUniversityId(target.id, university.id)).thenReturn(target)
+        `when`(courseReviewRepository.findByTargetIdAndMemberId(target.id, member.id)).thenReturn(review)
 
         courseReviewWriteService.deleteCourseReview(
             CourseReviewCommand.DeleteCourseReview(
                 userId = member.id.toString(),
-                courseId = course.id
+                targetId = target.id
             )
         )
 
@@ -203,22 +192,20 @@ class CourseReviewWriteServiceTest {
     }
 
     @Test
-    fun `create review fails when lecture does not belong to course`() {
+    fun `create review fails when target is inaccessible`() {
         val university = university()
         val member = member(id = 2L, university = university)
-        val course = course(id = 10L, university = university)
 
         `when`(memberRepository.findById(member.id)).thenReturn(Optional.of(member))
-        `when`(courseRepository.findByIdAndUniversityId(course.id, university.id)).thenReturn(course)
-        `when`(courseReviewRepository.findByCourseIdAndMemberId(course.id, member.id)).thenReturn(null)
-        `when`(lectureRepository.findByIdAndCourseIdAndSemesterUniversityId(20L, course.id, university.id)).thenReturn(null)
+        `when`(courseReviewTargetRepository.findByIdAndCourseUniversityId(20L, university.id)).thenReturn(null)
 
         val exception = assertThrows(BusinessException::class.java) {
             courseReviewWriteService.createCourseReview(
                 CourseReviewCommand.CreateCourseReview(
                     userId = member.id.toString(),
-                    courseId = course.id,
-                    lectureId = 20L,
+                    targetId = 20L,
+                    academicYear = LocalDate.now().year,
+                    term = "SPRING",
                     overallRating = 4,
                     difficulty = 3,
                     workload = 2,
@@ -228,20 +215,40 @@ class CourseReviewWriteServiceTest {
             )
         }
 
-        assertEquals(ErrorCode.LECTURE_NOT_IN_COURSE, exception.errorCode)
+        assertEquals(ErrorCode.COURSE_REVIEW_TARGET_NOT_FOUND, exception.errorCode)
+    }
+
+    @Test
+    fun `create review fails when academic year is unreasonable`() {
+        val university = university()
+        val member = member(id = 2L, university = university)
+        val target = target(id = 10L, university = university, courseCode = "CS101", courseName = "Introduction to Computer Science", professorDisplayName = "Prof. Akiyama")
+
+        `when`(memberRepository.findById(member.id)).thenReturn(Optional.of(member))
+        `when`(courseReviewTargetRepository.findByIdAndCourseUniversityId(target.id, university.id)).thenReturn(target)
+        `when`(courseReviewRepository.findByTargetIdAndMemberId(target.id, member.id)).thenReturn(null)
+
+        val exception = assertThrows(BusinessException::class.java) {
+            courseReviewWriteService.createCourseReview(
+                CourseReviewCommand.CreateCourseReview(
+                    userId = member.id.toString(),
+                    targetId = target.id,
+                    academicYear = LocalDate.now().year - 40,
+                    term = "SPRING",
+                    overallRating = 4,
+                    difficulty = 3,
+                    workload = 2,
+                    wouldTakeAgain = true,
+                    content = "hello"
+                )
+            )
+        }
+
+        assertEquals(ErrorCode.INVALID_INPUT, exception.errorCode)
     }
 
     private fun university(): University {
         return University(id = 1L, name = "The University of Tokyo", emailDomain = "tokyo.ac.jp")
-    }
-
-    private fun course(id: Long, university: University): Course {
-        return Course(
-            id = id,
-            university = university,
-            code = "CS101",
-            name = "Introduction to Computer Science"
-        )
     }
 
     private fun member(id: Long, university: University): Member {
@@ -255,23 +262,18 @@ class CourseReviewWriteServiceTest {
         )
     }
 
-    private fun lecture(
+    private fun target(
         id: Long,
-        course: Course,
         university: University,
-        year: Int,
-        term: SemesterTerm,
-        professor: String
-    ): Lecture {
-        return Lecture(
+        courseCode: String,
+        courseName: String,
+        professorDisplayName: String
+    ): CourseReviewTarget {
+        return CourseReviewTarget(
             id = id,
-            semester = Semester(id = 20L + id, university = university, academicYear = year, term = term),
-            major = Major(id = 11L, university = university, code = "CS", name = "Computer Science"),
-            course = course,
-            code = course.code,
-            name = course.name,
-            professor = professor,
-            credit = 3
+            course = Course(id = 100L + id, university = university, code = courseCode, name = courseName),
+            professorDisplayName = professorDisplayName,
+            professorKey = professorDisplayName.lowercase()
         )
     }
 }

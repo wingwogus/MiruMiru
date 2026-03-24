@@ -1,10 +1,60 @@
 package com.example.application.course
 
 object CourseReviewQueryResult {
-    data class CourseReviewSummary(
+    data class CourseReviewFeedItem(
+        val reviewId: Long,
+        val targetId: Long,
         val courseId: Long,
-        val code: String,
-        val name: String,
+        val courseCode: String,
+        val courseName: String,
+        val professorDisplayName: String,
+        val displayName: String,
+        val overallRating: Int,
+        val difficulty: Int,
+        val workload: Int,
+        val wouldTakeAgain: Boolean,
+        val content: String,
+        val academicYear: Int,
+        val term: String,
+        val isMine: Boolean,
+        val createdAt: String,
+        val updatedAt: String
+    )
+
+    data class CourseReviewFeedPage(
+        val items: List<CourseReviewFeedItem>,
+        val page: Int,
+        val size: Int,
+        val totalElements: Long,
+        val totalPages: Int,
+        val hasNext: Boolean
+    )
+
+    data class CourseReviewTargetItem(
+        val targetId: Long,
+        val courseId: Long,
+        val courseCode: String,
+        val courseName: String,
+        val professorDisplayName: String,
+        val displayName: String
+    )
+
+    data class CourseReviewTargetPage(
+        val items: List<CourseReviewTargetItem>,
+        val page: Int,
+        val size: Int,
+        val totalElements: Long,
+        val totalPages: Int,
+        val hasNext: Boolean
+    )
+
+    data class CourseReviewSummary(
+        val targetId: Long,
+        val courseId: Long,
+        val courseCode: String,
+        val courseName: String,
+        val professorDisplayName: String,
+        val displayName: String,
         val reviewCount: Long,
         val averageOverall: Double?,
         val averageDifficulty: Double?,
@@ -21,7 +71,7 @@ object CourseReviewQueryResult {
         val content: String,
         val academicYear: Int,
         val term: String,
-        val professor: String,
+        val professorDisplayName: String,
         val isMine: Boolean,
         val createdAt: String,
         val updatedAt: String

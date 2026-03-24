@@ -7,11 +7,14 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 
 interface CourseReviewRepository : JpaRepository<CourseReview, Long> {
-    @EntityGraph(attributePaths = ["member"])
-    fun findAllByCourseId(courseId: Long, pageable: Pageable): Page<CourseReview>
+    @EntityGraph(attributePaths = ["member", "target", "target.course"])
+    fun findAllByTargetCourseUniversityId(universityId: Long, pageable: Pageable): Page<CourseReview>
 
-    @EntityGraph(attributePaths = ["member"])
-    fun findByCourseIdAndMemberId(courseId: Long, memberId: Long): CourseReview?
+    @EntityGraph(attributePaths = ["member", "target", "target.course"])
+    fun findAllByTargetId(targetId: Long, pageable: Pageable): Page<CourseReview>
+
+    @EntityGraph(attributePaths = ["member", "target", "target.course"])
+    fun findByTargetIdAndMemberId(targetId: Long, memberId: Long): CourseReview?
 
     @Query(
         """
@@ -23,8 +26,8 @@ interface CourseReviewRepository : JpaRepository<CourseReview, Long> {
             avg(case when review.wouldTakeAgain = true then 100.0 else 0.0 end)
         )
         from CourseReview review
-        where review.course.id = :courseId
+        where review.target.id = :targetId
         """
     )
-    fun summarizeByCourseId(courseId: Long): CourseReviewSummaryProjection
+    fun summarizeByTargetId(targetId: Long): CourseReviewSummaryProjection
 }

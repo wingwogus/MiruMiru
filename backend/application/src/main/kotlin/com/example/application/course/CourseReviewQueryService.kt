@@ -2,10 +2,10 @@ package com.example.application.course
 
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
-import com.example.domain.course.Course
-import com.example.domain.course.CourseRepository
 import com.example.domain.course.CourseReview
 import com.example.domain.course.CourseReviewRepository
+import com.example.domain.course.CourseReviewTarget
+import com.example.domain.course.CourseReviewTargetRepository
 import com.example.domain.member.Member
 import com.example.domain.member.MemberRepository
 import org.springframework.data.domain.PageRequest
@@ -18,15 +18,15 @@ import kotlin.math.round
 @Transactional(readOnly = true)
 class CourseReviewQueryService(
     private val memberRepository: MemberRepository,
-    private val courseRepository: CourseRepository,
-    private val courseReviewRepository: CourseReviewRepository
+    private val courseReviewRepository: CourseReviewRepository,
+    private val courseReviewTargetRepository: CourseReviewTargetRepository,
+    private val courseReviewTargetService: CourseReviewTargetService
 ) {
-    fun getCourseReviews(userId: String, courseId: Long, page: Int, size: Int): CourseReviewQueryResult.CourseReviewPage {
+    fun getSchoolCourseReviews(userId: String, page: Int, size: Int): CourseReviewQueryResult.CourseReviewFeedPage {
         validatePage(page)
         validateSize(size)
 
         val member = findMember(userId)
-        val course = findCourse(member, courseId)
         val pageable = PageRequest.of(
             page,
             size.coerceAtMost(MAX_PAGE_SIZE),
@@ -35,16 +35,80 @@ class CourseReviewQueryService(
                 Sort.Order.desc("id")
             )
         )
-        val reviewPage = courseReviewRepository.findAllByCourseId(course.id, pageable)
-        val summary = courseReviewRepository.summarizeByCourseId(course.id)
+        val reviewPage = courseReviewRepository.findAllByTargetCourseUniversityId(member.university.id, pageable)
+        val totalElements = reviewPage.totalElements
+        val totalPages = if (totalElements == 0L) 0 else ((totalElements + pageable.pageSize - 1) / pageable.pageSize).toInt()
+
+        return CourseReviewQueryResult.CourseReviewFeedPage(
+            items = reviewPage.content.map { review -> review.toFeedItem(member.id) },
+            page = reviewPage.number,
+            size = reviewPage.size,
+            totalElements = totalElements,
+            totalPages = totalPages,
+            hasNext = reviewPage.hasNext()
+        )
+    }
+
+    fun getCourseReviewTargets(userId: String, query: String, page: Int, size: Int): CourseReviewQueryResult.CourseReviewTargetPage {
+        validatePage(page)
+        validateSize(size)
+
+        val member = findMember(userId)
+        val pageable = PageRequest.of(page, size.coerceAtMost(MAX_PAGE_SIZE))
+        val targetPage = courseReviewTargetRepository.searchByUniversityId(
+            universityId = member.university.id,
+            query = query.trim(),
+            pageable = pageable
+        )
+        val totalElements = targetPage.totalElements
+        val totalPages = if (totalElements == 0L) 0 else ((totalElements + pageable.pageSize - 1) / pageable.pageSize).toInt()
+
+        return CourseReviewQueryResult.CourseReviewTargetPage(
+            items = targetPage.content.map { target ->
+                CourseReviewQueryResult.CourseReviewTargetItem(
+                    targetId = target.targetId,
+                    courseId = target.courseId,
+                    courseCode = target.courseCode,
+                    courseName = target.courseName,
+                    professorDisplayName = target.professorDisplayName,
+                    displayName = courseReviewTargetService.buildDisplayName(target.courseName, target.professorDisplayName)
+                )
+            },
+            page = targetPage.number,
+            size = targetPage.size,
+            totalElements = totalElements,
+            totalPages = totalPages,
+            hasNext = targetPage.hasNext()
+        )
+    }
+
+    fun getCourseReviews(userId: String, targetId: Long, page: Int, size: Int): CourseReviewQueryResult.CourseReviewPage {
+        validatePage(page)
+        validateSize(size)
+
+        val member = findMember(userId)
+        val target = findTarget(member, targetId)
+        val pageable = PageRequest.of(
+            page,
+            size.coerceAtMost(MAX_PAGE_SIZE),
+            Sort.by(
+                Sort.Order.desc("createdAt"),
+                Sort.Order.desc("id")
+            )
+        )
+        val reviewPage = courseReviewRepository.findAllByTargetId(target.id, pageable)
+        val summary = courseReviewRepository.summarizeByTargetId(target.id)
         val totalElements = reviewPage.totalElements
         val totalPages = if (totalElements == 0L) 0 else ((totalElements + pageable.pageSize - 1) / pageable.pageSize).toInt()
 
         return CourseReviewQueryResult.CourseReviewPage(
             summary = CourseReviewQueryResult.CourseReviewSummary(
-                courseId = course.id,
-                code = course.code,
-                name = course.name,
+                targetId = target.id,
+                courseId = target.course.id,
+                courseCode = target.course.code,
+                courseName = target.course.name,
+                professorDisplayName = target.professorDisplayName,
+                displayName = courseReviewTargetService.buildDisplayName(target.course.name, target.professorDisplayName),
                 reviewCount = summary.reviewCount,
                 averageOverall = roundNullable(summary.averageOverall),
                 averageDifficulty = roundNullable(summary.averageDifficulty),
@@ -60,13 +124,35 @@ class CourseReviewQueryService(
         )
     }
 
-    fun getMyCourseReview(userId: String, courseId: Long): CourseReviewQueryResult.CourseReviewItem {
+    fun getMyCourseReview(userId: String, targetId: Long): CourseReviewQueryResult.CourseReviewItem {
         val member = findMember(userId)
-        val course = findCourse(member, courseId)
-        val review = courseReviewRepository.findByCourseIdAndMemberId(course.id, member.id)
+        val target = findTarget(member, targetId)
+        val review = courseReviewRepository.findByTargetIdAndMemberId(target.id, member.id)
             ?: throw BusinessException(ErrorCode.COURSE_REVIEW_NOT_FOUND)
 
         return review.toItem(member.id)
+    }
+
+    private fun CourseReview.toFeedItem(memberId: Long): CourseReviewQueryResult.CourseReviewFeedItem {
+        return CourseReviewQueryResult.CourseReviewFeedItem(
+            reviewId = id,
+            targetId = target.id,
+            courseId = target.course.id,
+            courseCode = target.course.code,
+            courseName = target.course.name,
+            professorDisplayName = professorDisplayName,
+            displayName = courseReviewTargetService.buildDisplayName(target.course.name, professorDisplayName),
+            overallRating = overallRating,
+            difficulty = difficulty,
+            workload = workload,
+            wouldTakeAgain = wouldTakeAgain,
+            content = content,
+            academicYear = academicYear,
+            term = term.name,
+            isMine = member.id == memberId,
+            createdAt = createdAt?.toString().orEmpty(),
+            updatedAt = updatedAt?.toString().orEmpty()
+        )
     }
 
     private fun CourseReview.toItem(memberId: Long): CourseReviewQueryResult.CourseReviewItem {
@@ -79,7 +165,7 @@ class CourseReviewQueryService(
             content = content,
             academicYear = academicYear,
             term = term.name,
-            professor = professor,
+            professorDisplayName = professorDisplayName,
             isMine = member.id == memberId,
             createdAt = createdAt?.toString().orEmpty(),
             updatedAt = updatedAt?.toString().orEmpty()
@@ -111,9 +197,9 @@ class CourseReviewQueryService(
         }
     }
 
-    private fun findCourse(member: Member, courseId: Long): Course {
-        return courseRepository.findByIdAndUniversityId(courseId, member.university.id)
-            ?: throw BusinessException(ErrorCode.COURSE_NOT_FOUND)
+    private fun findTarget(member: Member, targetId: Long): CourseReviewTarget {
+        return courseReviewTargetRepository.findByIdAndCourseUniversityId(targetId, member.university.id)
+            ?: throw BusinessException(ErrorCode.COURSE_REVIEW_TARGET_NOT_FOUND)
     }
 
     companion object {

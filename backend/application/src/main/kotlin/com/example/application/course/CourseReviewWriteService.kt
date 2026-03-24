@@ -2,48 +2,46 @@ package com.example.application.course
 
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
-import com.example.domain.course.Course
-import com.example.domain.course.CourseRepository
 import com.example.domain.course.CourseReview
 import com.example.domain.course.CourseReviewRepository
-import com.example.domain.lecture.Lecture
-import com.example.domain.lecture.LectureRepository
+import com.example.domain.course.CourseReviewTarget
+import com.example.domain.course.CourseReviewTargetRepository
 import com.example.domain.member.Member
 import com.example.domain.member.MemberRepository
+import com.example.domain.semester.SemesterTerm
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
 @Service
 @Transactional
 class CourseReviewWriteService(
     private val memberRepository: MemberRepository,
-    private val courseRepository: CourseRepository,
     private val courseReviewRepository: CourseReviewRepository,
-    private val lectureRepository: LectureRepository
+    private val courseReviewTargetRepository: CourseReviewTargetRepository
 ) {
     fun createCourseReview(command: CourseReviewCommand.CreateCourseReview): Long {
         val member = findMember(command.userId)
-        val course = findCourse(member, command.courseId)
+        val target = findTarget(member, command.targetId)
+        val term = parseTerm(command.term)
+        validateAcademicYear(command.academicYear)
         validateRatings(command.overallRating, command.difficulty, command.workload)
         val content = command.content.trim()
         validateContent(content)
 
-        if (courseReviewRepository.findByCourseIdAndMemberId(course.id, member.id) != null) {
+        if (courseReviewRepository.findByTargetIdAndMemberId(target.id, member.id) != null) {
             throw BusinessException(ErrorCode.COURSE_REVIEW_ALREADY_EXISTS)
         }
-
-        val lecture = findLecture(course, member, command.lectureId)
 
         return try {
             courseReviewRepository.save(
                 CourseReview(
-                    course = course,
+                    target = target,
                     member = member,
-                    lecture = lecture,
-                    academicYear = lecture.semester.academicYear,
-                    term = lecture.semester.term,
-                    professor = lecture.professor,
+                    academicYear = command.academicYear,
+                    term = term,
+                    professorDisplayName = target.professorDisplayName,
                     overallRating = command.overallRating,
                     difficulty = command.difficulty,
                     workload = command.workload,
@@ -58,20 +56,20 @@ class CourseReviewWriteService(
 
     fun updateCourseReview(command: CourseReviewCommand.UpdateCourseReview): Long {
         val member = findMember(command.userId)
-        val course = findCourse(member, command.courseId)
+        val target = findTarget(member, command.targetId)
+        val term = parseTerm(command.term)
+        validateAcademicYear(command.academicYear)
         validateRatings(command.overallRating, command.difficulty, command.workload)
         val content = command.content.trim()
         validateContent(content)
 
-        val review = courseReviewRepository.findByCourseIdAndMemberId(course.id, member.id)
+        val review = courseReviewRepository.findByTargetIdAndMemberId(target.id, member.id)
             ?: throw BusinessException(ErrorCode.COURSE_REVIEW_NOT_FOUND)
-        val lecture = findLecture(course, member, command.lectureId)
 
         review.update(
-            lecture = lecture,
-            academicYear = lecture.semester.academicYear,
-            term = lecture.semester.term,
-            professor = lecture.professor,
+            academicYear = command.academicYear,
+            term = term,
+            professorDisplayName = target.professorDisplayName,
             overallRating = command.overallRating,
             difficulty = command.difficulty,
             workload = command.workload,
@@ -84,8 +82,8 @@ class CourseReviewWriteService(
 
     fun deleteCourseReview(command: CourseReviewCommand.DeleteCourseReview) {
         val member = findMember(command.userId)
-        val course = findCourse(member, command.courseId)
-        val review = courseReviewRepository.findByCourseIdAndMemberId(course.id, member.id)
+        val target = findTarget(member, command.targetId)
+        val review = courseReviewRepository.findByTargetIdAndMemberId(target.id, member.id)
             ?: throw BusinessException(ErrorCode.COURSE_REVIEW_NOT_FOUND)
 
         courseReviewRepository.delete(review)
@@ -103,9 +101,16 @@ class CourseReviewWriteService(
         }
     }
 
-    private fun findLecture(course: Course, member: Member, lectureId: Long): Lecture {
-        return lectureRepository.findByIdAndCourseIdAndSemesterUniversityId(lectureId, course.id, member.university.id)
-            ?: throw BusinessException(ErrorCode.LECTURE_NOT_IN_COURSE)
+    private fun validateAcademicYear(academicYear: Int) {
+        val currentYear = LocalDate.now().year
+        if (academicYear !in (currentYear - YEAR_LOOKBACK_RANGE)..(currentYear + FUTURE_YEAR_ALLOWANCE)) {
+            throw BusinessException(ErrorCode.INVALID_INPUT)
+        }
+    }
+
+    private fun parseTerm(term: String): SemesterTerm {
+        return runCatching { SemesterTerm.valueOf(term.trim().uppercase()) }
+            .getOrElse { throw BusinessException(ErrorCode.INVALID_INPUT) }
     }
 
     private fun findMember(userId: String): Member {
@@ -117,13 +122,15 @@ class CourseReviewWriteService(
         }
     }
 
-    private fun findCourse(member: Member, courseId: Long): Course {
-        return courseRepository.findByIdAndUniversityId(courseId, member.university.id)
-            ?: throw BusinessException(ErrorCode.COURSE_NOT_FOUND)
+    private fun findTarget(member: Member, targetId: Long): CourseReviewTarget {
+        return courseReviewTargetRepository.findByIdAndCourseUniversityId(targetId, member.university.id)
+            ?: throw BusinessException(ErrorCode.COURSE_REVIEW_TARGET_NOT_FOUND)
     }
 
     companion object {
         private const val MIN_RATING = 1
         private const val MAX_RATING = 5
+        private const val YEAR_LOOKBACK_RANGE = 30
+        private const val FUTURE_YEAR_ALLOWANCE = 1
     }
 }

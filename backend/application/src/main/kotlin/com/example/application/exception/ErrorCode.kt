@@ -41,5 +41,5 @@ enum class ErrorCode(
     COURSE_NOT_FOUND("COURSE_001", "error.course_not_found", 404),
     COURSE_REVIEW_NOT_FOUND("COURSE_002", "error.course_review_not_found", 404),
     COURSE_REVIEW_ALREADY_EXISTS("COURSE_003", "error.course_review_already_exists", 409),
-    LECTURE_NOT_IN_COURSE("COURSE_004", "error.lecture_not_in_course", 400)
+    COURSE_REVIEW_TARGET_NOT_FOUND("COURSE_004", "error.course_review_target_not_found", 404)
 }

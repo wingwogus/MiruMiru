@@ -161,6 +161,76 @@ final class MockTimetableClient: TimetableClientProtocol, @unchecked Sendable {
     }
 }
 
+final class MockBoardsClient: BoardsClientProtocol, @unchecked Sendable {
+    var boardsResult: Result<[BoardSummary], Error> = .success([])
+    var hotPostsResult: Result<[HotPostSummary], Error> = .success([])
+    var boardPostsResult: Result<[BoardPostSummary], Error> = .success([])
+    var postDetailResult: Result<PostDetailContent, Error> = .failure(BoardsClientError.unexpected)
+    var createPostResult: Result<Int64, Error> = .success(1)
+    var likePostResult: Result<Void, Error> = .success(())
+    var unlikePostResult: Result<Void, Error> = .success(())
+    var createCommentResult: Result<Int64, Error> = .success(1)
+    var deleteCommentResult: Result<Void, Error> = .success(())
+    var deletePostResult: Result<Void, Error> = .success(())
+
+    private(set) var fetchedBoardPostsIds: [Int64] = []
+    private(set) var fetchedPostDetailIds: [Int64] = []
+    private(set) var createdPostBoardIds: [Int64] = []
+    private(set) var likedPostIds: [Int64] = []
+    private(set) var unlikedPostIds: [Int64] = []
+    private(set) var deletedCommentIds: [Int64] = []
+    private(set) var deletedPostIds: [Int64] = []
+    private(set) var fetchHotPostsCallCount = 0
+
+    func fetchBoards() async throws -> [BoardSummary] {
+        try boardsResult.get()
+    }
+
+    func fetchHotPosts() async throws -> [HotPostSummary] {
+        fetchHotPostsCallCount += 1
+        return try hotPostsResult.get()
+    }
+
+    func fetchBoardPosts(boardId: Int64) async throws -> [BoardPostSummary] {
+        fetchedBoardPostsIds.append(boardId)
+        return try boardPostsResult.get()
+    }
+
+    func fetchPostDetail(postId: Int64) async throws -> PostDetailContent {
+        fetchedPostDetailIds.append(postId)
+        return try postDetailResult.get()
+    }
+
+    func createPost(boardId: Int64, input: CreatePostInput) async throws -> Int64 {
+        createdPostBoardIds.append(boardId)
+        return try createPostResult.get()
+    }
+
+    func likePost(postId: Int64) async throws {
+        likedPostIds.append(postId)
+        try likePostResult.get()
+    }
+
+    func unlikePost(postId: Int64) async throws {
+        unlikedPostIds.append(postId)
+        try unlikePostResult.get()
+    }
+
+    func createComment(postId: Int64, input: CreateCommentInput) async throws -> Int64 {
+        try createCommentResult.get()
+    }
+
+    func deleteComment(commentId: Int64) async throws {
+        deletedCommentIds.append(commentId)
+        try deleteCommentResult.get()
+    }
+
+    func deletePost(postId: Int64) async throws {
+        deletedPostIds.append(postId)
+        try deletePostResult.get()
+    }
+}
+
 final class MockCourseReviewsClient: CourseReviewsClientProtocol, @unchecked Sendable {
     var feedResult: Result<CourseReviewFeedPage, Error> = .failure(CourseReviewsClientError.unexpected)
     var targetSearchResult: Result<CourseReviewTargetPage, Error> = .failure(CourseReviewsClientError.unexpected)

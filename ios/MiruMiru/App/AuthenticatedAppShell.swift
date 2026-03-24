@@ -9,6 +9,7 @@ enum AuthenticatedTab: Hashable {
 
 struct AuthenticatedAppShell: View {
     @ObservedObject private var session: AppSession
+    @ObservedObject private var boardsSyncStore: BoardsSyncStore
     private let homeClient: HomeClientProtocol
     private let timetableClient: TimetableClientProtocol
     private let boardsClient: BoardsClientProtocol
@@ -22,9 +23,11 @@ struct AuthenticatedAppShell: View {
         homeClient: HomeClientProtocol,
         timetableClient: TimetableClientProtocol,
         boardsClient: BoardsClientProtocol,
-        courseReviewsClient: CourseReviewsClientProtocol
+        courseReviewsClient: CourseReviewsClientProtocol,
+        boardsSyncStore: BoardsSyncStore
     ) {
         self.session = session
+        self.boardsSyncStore = boardsSyncStore
         self.homeClient = homeClient
         self.timetableClient = timetableClient
         self.boardsClient = boardsClient
@@ -36,6 +39,7 @@ struct AuthenticatedAppShell: View {
             HomeView(
                 session: session,
                 client: homeClient,
+                boardsSyncStore: boardsSyncStore,
                 isActive: selectedTab == .home,
                 onSemesterTap: {
                     selectedTab = .timetable
@@ -64,6 +68,7 @@ struct AuthenticatedAppShell: View {
             BoardsRootView(
                 session: session,
                 client: boardsClient,
+                syncStore: boardsSyncStore,
                 isTabBarHidden: $isTabBarHidden,
                 pendingPostId: $pendingBoardsPostId,
                 isActive: selectedTab == .boards
@@ -90,6 +95,11 @@ struct AuthenticatedAppShell: View {
         .onChange(of: selectedTab) { _, newValue in
             if newValue != .boards {
                 isTabBarHidden = false
+            }
+        }
+        .onChange(of: session.state) { _, newState in
+            if newState != .authenticated {
+                boardsSyncStore.reset()
             }
         }
     }
@@ -169,7 +179,8 @@ struct AuthenticatedAppShell_Previews: PreviewProvider {
             homeClient: PreviewHomeClient.loaded(),
             timetableClient: PreviewTimetableClient.loaded(),
             boardsClient: PreviewBoardsClient(scenario: .loaded),
-            courseReviewsClient: PreviewCourseReviewsClient.loaded()
+            courseReviewsClient: PreviewCourseReviewsClient.loaded(),
+            boardsSyncStore: BoardsSyncStore()
         )
     }
 }

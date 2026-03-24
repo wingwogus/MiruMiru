@@ -36,6 +36,17 @@ final class HomeViewModel: ObservableObject {
         return false
     }
 
+    func hotPostsSnapshotForSync() -> [HotPostSummary]? {
+        switch state {
+        case let .loaded(content):
+            return content.trendingPosts
+        case let .empty(content):
+            return content.trendingPosts
+        default:
+            return nil
+        }
+    }
+
     private func load() async {
         state = .loading
 

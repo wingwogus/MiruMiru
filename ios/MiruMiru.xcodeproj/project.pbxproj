@@ -54,6 +54,9 @@
 		B00000000000000000000075 /* BoardsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000078 /* BoardsModels.swift */; };
 		B00000000000000000000076 /* BoardsAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000079 /* BoardsAPIClient.swift */; };
 		B00000000000000000000077 /* BoardsFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000007A /* BoardsFeature.swift */; };
+		B0000000000000000000007B /* BoardsSyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000007C /* BoardsSyncStore.swift */; };
+		B0000000000000000000007D /* BoardsSyncStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000007E /* BoardsSyncStoreTests.swift */; };
+		B0000000000000000000007F /* PostDetailViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000080 /* PostDetailViewModelTests.swift */; };
 		B0000000000000000000001E /* AuthPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000040 /* AuthPalette.swift */; };
 		B0000000000000000000001F /* AuthRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000041 /* AuthRoute.swift */; };
 		B00000000000000000000018 /* Pretendard-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000038 /* Pretendard-Regular.otf */; };
@@ -143,6 +146,9 @@
 		B00000000000000000000078 /* BoardsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boards/BoardsModels.swift; sourceTree = "<group>"; };
 		B00000000000000000000079 /* BoardsAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boards/BoardsAPIClient.swift; sourceTree = "<group>"; };
 		B0000000000000000000007A /* BoardsFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boards/BoardsFeature.swift; sourceTree = "<group>"; };
+		B0000000000000000000007C /* BoardsSyncStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boards/BoardsSyncStore.swift; sourceTree = "<group>"; };
+		B0000000000000000000007E /* BoardsSyncStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardsSyncStoreTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000080 /* PostDetailViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailViewModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -215,6 +221,7 @@
 				B00000000000000000000078 /* BoardsModels.swift */,
 				B00000000000000000000079 /* BoardsAPIClient.swift */,
 				B0000000000000000000007A /* BoardsFeature.swift */,
+				B0000000000000000000007C /* BoardsSyncStore.swift */,
 				B0000000000000000000006A /* CourseReviewsFeature.swift */,
 			);
 			path = Features;
@@ -264,6 +271,8 @@
 				B00000000000000000000068 /* TimetableViewModelTests.swift */,
 				B00000000000000000000072 /* CourseReviewsAPIClientTests.swift */,
 				B00000000000000000000074 /* CourseReviewsViewModelTests.swift */,
+				B0000000000000000000007E /* BoardsSyncStoreTests.swift */,
+				B00000000000000000000080 /* PostDetailViewModelTests.swift */,
 			);
 			path = MiruMiruTests;
 			sourceTree = "<group>";
@@ -455,6 +464,7 @@
 				B00000000000000000000075 /* BoardsModels.swift in Sources */,
 				B00000000000000000000076 /* BoardsAPIClient.swift in Sources */,
 				B00000000000000000000077 /* BoardsFeature.swift in Sources */,
+				B0000000000000000000007B /* BoardsSyncStore.swift in Sources */,
 				B00000000000000000000069 /* CourseReviewsFeature.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -475,6 +485,8 @@
 				B0000000000000000000005A /* TimetableViewModelTests.swift in Sources */,
 				B00000000000000000000071 /* CourseReviewsAPIClientTests.swift in Sources */,
 				B00000000000000000000073 /* CourseReviewsViewModelTests.swift in Sources */,
+				B0000000000000000000007D /* BoardsSyncStoreTests.swift in Sources */,
+				B0000000000000000000007F /* PostDetailViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

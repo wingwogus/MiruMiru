@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AppRoot: View {
     @ObservedObject var session: AppSession
+    @StateObject private var boardsSyncStore = BoardsSyncStore()
     private let homeClient: HomeClientProtocol
     private let timetableClient: TimetableClientProtocol
     private let boardsClient: BoardsClientProtocol
@@ -36,7 +37,8 @@ struct AppRoot: View {
                     homeClient: homeClient,
                     timetableClient: timetableClient,
                     boardsClient: boardsClient,
-                    courseReviewsClient: courseReviewsClient
+                    courseReviewsClient: courseReviewsClient,
+                    boardsSyncStore: boardsSyncStore
                 )
             }
         }
@@ -45,6 +47,9 @@ struct AppRoot: View {
         .onChange(of: session.state) { _, newState in
             if newState == .unauthenticated || newState == .invalidSession {
                 authRoute = .login
+            }
+            if newState != .authenticated {
+                boardsSyncStore.reset()
             }
         }
     }

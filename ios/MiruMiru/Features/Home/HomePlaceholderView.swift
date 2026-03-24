@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @ObservedObject private var session: AppSession
+    @ObservedObject private var boardsSyncStore: BoardsSyncStore
     @StateObject private var viewModel: HomeViewModel
     private let isActive: Bool
     private let onSemesterTap: () -> Void
@@ -11,6 +12,7 @@ struct HomeView: View {
     init(
         session: AppSession,
         client: HomeClientProtocol,
+        boardsSyncStore: BoardsSyncStore,
         isActive: Bool = true,
         onSemesterTap: @escaping () -> Void = {},
         onBoardsTap: @escaping () -> Void = {},
@@ -19,6 +21,7 @@ struct HomeView: View {
         calendar: Calendar = .current
     ) {
         self.session = session
+        self.boardsSyncStore = boardsSyncStore
         self.isActive = isActive
         self.onSemesterTap = onSemesterTap
         self.onBoardsTap = onBoardsTap
@@ -41,20 +44,22 @@ struct HomeView: View {
                     loadingHeader
                         HomeLoadingCard()
                 case let .loaded(content):
+                    let trendingPosts = boardsSyncStore.projectHotPosts(content.trendingPosts)
                     HomeHeaderSection(profile: content.profile)
                     TodayClassesSection(
                         semesterTitle: content.semesterTitle,
                         rows: content.todayClasses,
                         onSemesterTap: onSemesterTap
                     )
-                    if content.trendingPosts.isEmpty == false {
+                    if trendingPosts.isEmpty == false {
                         HomeTrendingPostsSection(
-                            posts: content.trendingPosts,
+                            posts: trendingPosts,
                             onBoardsTap: onBoardsTap,
                             onPostTap: onTrendingPostTap
                         )
                     }
                 case let .empty(content):
+                    let trendingPosts = boardsSyncStore.projectHotPosts(content.trendingPosts)
                     HomeHeaderSection(profile: content.profile)
                     HomeEmptyCard(
                         title: content.state.title,
@@ -62,9 +67,9 @@ struct HomeView: View {
                         semesterTitle: content.semesterTitle,
                         onSemesterTap: onSemesterTap
                     )
-                    if content.trendingPosts.isEmpty == false {
+                    if trendingPosts.isEmpty == false {
                         HomeTrendingPostsSection(
-                            posts: content.trendingPosts,
+                            posts: trendingPosts,
                             onBoardsTap: onBoardsTap,
                             onPostTap: onTrendingPostTap
                         )
@@ -85,6 +90,11 @@ struct HomeView: View {
             .onChange(of: viewModel.state) { _, _ in
                 guard viewModel.invalidateStateIfNeeded() else { return }
                 session.invalidateSession()
+            }
+            .onChange(of: viewModel.hotPostsSnapshotForSync()) { _, hotPosts in
+                if let hotPosts {
+                    boardsSyncStore.ingestHotPosts(hotPosts)
+                }
             }
         }
     }
@@ -591,6 +601,7 @@ struct HomeView_Previews: PreviewProvider {
             HomeView(
                 session: PreviewFactory.makeSession(state: .authenticated),
                 client: PreviewHomeClient.loaded(),
+                boardsSyncStore: BoardsSyncStore(),
                 nowProvider: { PreviewHomeData.previewNow }
             )
             .previewDisplayName("Home Loaded - Standard")
@@ -598,6 +609,7 @@ struct HomeView_Previews: PreviewProvider {
             HomeView(
                 session: PreviewFactory.makeSession(state: .authenticated),
                 client: PreviewHomeClient(scenario: .loadedLongTitle),
+                boardsSyncStore: BoardsSyncStore(),
                 nowProvider: { PreviewHomeData.previewNow }
             )
             .previewDisplayName("Home Loaded - Long Title")
@@ -605,6 +617,7 @@ struct HomeView_Previews: PreviewProvider {
             HomeView(
                 session: PreviewFactory.makeSession(state: .authenticated),
                 client: PreviewHomeClient(scenario: .noClassesToday),
+                boardsSyncStore: BoardsSyncStore(),
                 nowProvider: { PreviewHomeData.previewNow }
             )
             .previewDisplayName("Home No Classes")
@@ -612,6 +625,7 @@ struct HomeView_Previews: PreviewProvider {
             HomeView(
                 session: PreviewFactory.makeSession(state: .authenticated),
                 client: PreviewHomeClient(scenario: .networkFailure),
+                boardsSyncStore: BoardsSyncStore(),
                 nowProvider: { PreviewHomeData.previewNow }
             )
             .previewDisplayName("Home Failure")

@@ -80,6 +80,7 @@ struct AuthenticatedAppShell: View {
             CourseReviewsRootView(
                 session: session,
                 client: courseReviewsClient,
+                isTabBarHidden: $isTabBarHidden,
                 isActive: selectedTab == .reviews
             )
             .opacity(selectedTab == .reviews ? 1 : 0)
@@ -93,7 +94,7 @@ struct AuthenticatedAppShell: View {
         }
         .animation(.easeInOut(duration: 0.18), value: isTabBarHidden)
         .onChange(of: selectedTab) { _, newValue in
-            if newValue != .boards {
+            if newValue != .boards, newValue != .reviews {
                 isTabBarHidden = false
             }
         }

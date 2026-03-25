@@ -941,6 +941,7 @@ private enum CourseReviewSearchPurpose: Hashable {
 struct CourseReviewsRootView: View {
     @ObservedObject private var session: AppSession
     @StateObject private var feedViewModel: CourseReviewsFeedViewModel
+    @Binding private var isTabBarHidden: Bool
     private let client: CourseReviewsClientProtocol
     private let isActive: Bool
 
@@ -949,10 +950,12 @@ struct CourseReviewsRootView: View {
     init(
         session: AppSession,
         client: CourseReviewsClientProtocol,
+        isTabBarHidden: Binding<Bool> = .constant(false),
         isActive: Bool = true
     ) {
         self.session = session
         self.client = client
+        self._isTabBarHidden = isTabBarHidden
         self.isActive = isActive
         _feedViewModel = StateObject(wrappedValue: CourseReviewsFeedViewModel(client: client))
     }
@@ -1015,6 +1018,20 @@ struct CourseReviewsRootView: View {
             guard isActive else { return }
             await feedViewModel.loadIfNeeded()
         }
+        .onAppear {
+            isTabBarHidden = path.isEmpty == false
+        }
+        .onChange(of: path) { _, newValue in
+            isTabBarHidden = newValue.isEmpty == false
+        }
+        .onChange(of: isActive) { _, newValue in
+            if newValue == false {
+                isTabBarHidden = false
+            }
+        }
+        .onDisappear {
+            isTabBarHidden = false
+        }
         .onChange(of: feedViewModel.invalidateStateIfNeeded()) { _, shouldInvalidate in
             guard shouldInvalidate else { return }
             session.invalidateSession()
@@ -1049,7 +1066,7 @@ private struct CourseReviewsFeedScreen: View {
 
             writeButton
                 .padding(.trailing, 20)
-                .padding(.bottom, 24)
+                .padding(.bottom, 92)
         }
     }
 
@@ -1547,41 +1564,43 @@ private struct WriteReviewScreen: View {
     }
 
     private var targetCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("TARGET COURSE")
-                .font(AppFont.bold(13, relativeTo: .caption))
-                .tracking(2)
-                .foregroundStyle(AuthPalette.primaryStart)
-
-            Text(target.courseName)
-                .font(AppFont.extraBold(24, relativeTo: .title))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
-                .fixedSize(horizontal: false, vertical: true)
-
-            HStack(spacing: 8) {
-                Image(systemName: "person.fill")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(Color(red: 0.46, green: 0.53, blue: 0.64))
-
-                Text(target.professorDisplayName)
-                    .font(AppFont.medium(15, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.46, green: 0.53, blue: 0.64))
-            }
-        }
-        .padding(.leading, 18)
-        .padding(.vertical, 22)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
+        ZStack(alignment: .leading) {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.05), radius: 18, y: 10)
-                .overlay(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4, style: .continuous)
-                        .fill(AuthPalette.primaryStart)
-                        .frame(width: 3)
-                        .padding(.vertical, 10)
+                .fill(AuthPalette.primaryStart.opacity(0.16))
+
+            VStack(alignment: .leading, spacing: 14) {
+                Text("TARGET COURSE")
+                    .font(AppFont.bold(13, relativeTo: .caption))
+                    .tracking(2)
+                    .foregroundStyle(AuthPalette.primaryStart)
+
+                Text(target.courseName)
+                    .font(AppFont.extraBold(24, relativeTo: .title))
+                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: 8) {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(Color(red: 0.46, green: 0.53, blue: 0.64))
+
+                    Text(target.professorDisplayName)
+                        .font(AppFont.medium(15, relativeTo: .body))
+                        .foregroundStyle(Color(red: 0.46, green: 0.53, blue: 0.64))
                 }
-        )
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 22)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .fill(Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 18, y: 10)
+            )
+            .padding(.leading, 4)
+            .padding(.trailing, 2)
+            .padding(.vertical, 4)
+        }
     }
 
     private var termSection: some View {

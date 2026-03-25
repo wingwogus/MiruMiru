@@ -25,6 +25,15 @@ final class HomeViewModel: ObservableObject {
         await load()
     }
 
+    func loadForActivation() async {
+        if hasLoaded {
+            await load()
+        } else {
+            hasLoaded = true
+            await load()
+        }
+    }
+
     func reload() async {
         await load()
     }

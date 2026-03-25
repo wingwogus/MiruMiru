@@ -85,7 +85,7 @@ struct HomeView: View {
             .background(background)
             .task(id: isActive) {
                 guard isActive else { return }
-                await viewModel.loadIfNeeded()
+                await viewModel.loadForActivation()
             }
             .onChange(of: viewModel.state) { _, _ in
                 guard viewModel.invalidateStateIfNeeded() else { return }

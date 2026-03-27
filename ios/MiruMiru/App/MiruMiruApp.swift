@@ -12,22 +12,30 @@ struct MiruMiruApp: App {
         let environment = AppEnvironment.live()
         let tokenStore = KeychainTokenStore()
         let apiClient = APIClient(environment: environment)
+        let authorizedExecutor = AuthorizedRequestExecutor(
+            apiClient: apiClient,
+            tokenStore: tokenStore
+        )
         let authClient = AuthAPIClient(apiClient: apiClient)
         homeClient = HomeAPIClient(
             apiClient: apiClient,
-            tokenStore: tokenStore
+            tokenStore: tokenStore,
+            authorizedExecutor: authorizedExecutor
         )
         timetableClient = TimetableAPIClient(
             apiClient: apiClient,
-            tokenStore: tokenStore
+            tokenStore: tokenStore,
+            authorizedExecutor: authorizedExecutor
         )
         boardsClient = BoardsAPIClient(
             apiClient: apiClient,
-            tokenStore: tokenStore
+            tokenStore: tokenStore,
+            authorizedExecutor: authorizedExecutor
         )
         courseReviewsClient = CourseReviewsAPIClient(
             apiClient: apiClient,
-            tokenStore: tokenStore
+            tokenStore: tokenStore,
+            authorizedExecutor: authorizedExecutor
         )
         _session = StateObject(
             wrappedValue: AppSession(

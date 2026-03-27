@@ -27,6 +27,30 @@ final class AuthAPIClientTests: XCTestCase {
         XCTAssertEqual(tokenPair, TokenPair(accessToken: "access", refreshToken: "refresh"))
     }
 
+    func testReissuePostsExpectedBodyAndDecodesTokenPair() async throws {
+        let client = makeClient(
+            expectedPath: "/api/v1/auth/reissue",
+            expectedMethod: "POST",
+            responseBody: """
+            {
+              "success": true,
+              "data": {
+                "accessToken": "new-access",
+                "refreshToken": "new-refresh"
+              },
+              "error": null
+            }
+            """
+        ) { request in
+            let body = try XCTUnwrap(request.httpBody)
+            let decoded = try JSONDecoder().decode(ReissueRequest.self, from: body)
+            XCTAssertEqual(decoded, ReissueRequest(accessToken: "old-access", refreshToken: "old-refresh"))
+        }
+
+        let tokenPair = try await client.reissue(accessToken: "old-access", refreshToken: "old-refresh")
+        XCTAssertEqual(tokenPair, TokenPair(accessToken: "new-access", refreshToken: "new-refresh"))
+    }
+
     func testSendEmailCodePostsExpectedBody() async throws {
         let client = makeClient(
             expectedPath: "/api/v1/auth/email/send-code",

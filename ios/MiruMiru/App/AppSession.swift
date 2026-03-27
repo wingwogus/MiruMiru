@@ -53,7 +53,11 @@ final class AppSession: ObservableObject {
                 logger.notice("bootstrap_restore_probe_succeeded")
                 state = .authenticated
             } catch let error as AuthError {
-                handleRestoreFailure(error)
+                if error == .invalidSession {
+                    await attemptSessionReissue(using: session)
+                } else {
+                    handleRestoreFailure(error)
+                }
             } catch {
                 handleRestoreFailure(.unexpected)
             }
@@ -130,6 +134,28 @@ final class AppSession: ObservableObject {
             try? tokenStore.clearSession()
             bannerMessage = "We couldn't restore your session."
             state = .invalidSession
+        }
+    }
+
+    private func attemptSessionReissue(using session: TokenPair) async {
+        do {
+            logger.notice("bootstrap_reissue_started")
+            let refreshedSession = try await authClient.reissue(
+                accessToken: session.accessToken,
+                refreshToken: session.refreshToken
+            )
+            try tokenStore.saveSession(refreshedSession)
+            logger.notice("bootstrap_reissue_succeeded")
+            state = .authenticated
+        } catch let error as AuthError {
+            handleRestoreFailure(error)
+        } catch let error as TokenStoreError {
+            logger.error("bootstrap_reissue_token_store_failed: \(error.logMessage, privacy: .public)")
+            try? tokenStore.clearSession()
+            bannerMessage = "We couldn't restore your previous session."
+            state = .unauthenticated
+        } catch {
+            handleRestoreFailure(.unexpected)
         }
     }
 }

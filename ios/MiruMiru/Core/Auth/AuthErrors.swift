@@ -3,6 +3,7 @@ import Foundation
 enum AuthFailureContext: Equatable {
     case login
     case restoreProbe
+    case reissue
     case signup
 }
 

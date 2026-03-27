@@ -175,12 +175,16 @@ struct CourseReviewTargetPage: Equatable, Sendable {
 
 final class CourseReviewsAPIClient: CourseReviewsClientProtocol, @unchecked Sendable {
     private let apiClient: APIClient
-    private let tokenStore: TokenStore
+    private let authorizedExecutor: AuthorizedRequestExecutor
     private let encoder = JSONEncoder()
 
-    init(apiClient: APIClient, tokenStore: TokenStore) {
+    init(
+        apiClient: APIClient,
+        tokenStore: TokenStore,
+        authorizedExecutor: AuthorizedRequestExecutor? = nil
+    ) {
         self.apiClient = apiClient
-        self.tokenStore = tokenStore
+        self.authorizedExecutor = authorizedExecutor ?? AuthorizedRequestExecutor(apiClient: apiClient, tokenStore: tokenStore)
     }
 
     func fetchReviewFeed(page: Int, size: Int) async throws -> CourseReviewFeedPage {
@@ -240,13 +244,10 @@ final class CourseReviewsAPIClient: CourseReviewsClientProtocol, @unchecked Send
     }
 
     private func requestPayload<Response: Decodable>(path: String) async throws -> Response {
-        let accessToken = try readAccessToken()
-
         do {
-            let (data, _) = try await apiClient.send(
+            let (data, _) = try await authorizedExecutor.send(
                 path: path,
                 method: .get,
-                accessToken: accessToken
             )
             let envelope = try apiClient.decode(APIResponseEnvelope<Response>.self, from: data)
             guard envelope.success, let payload = envelope.data else {
@@ -267,14 +268,11 @@ final class CourseReviewsAPIClient: CourseReviewsClientProtocol, @unchecked Send
         method: HTTPMethod,
         body: Data
     ) async throws -> Response {
-        let accessToken = try readAccessToken()
-
         do {
-            let (data, _) = try await apiClient.send(
+            let (data, _) = try await authorizedExecutor.send(
                 path: path,
                 method: method,
                 body: body,
-                accessToken: accessToken
             )
             let envelope = try apiClient.decode(APIResponseEnvelope<Response>.self, from: data)
             guard envelope.success, let payload = envelope.data else {
@@ -294,13 +292,10 @@ final class CourseReviewsAPIClient: CourseReviewsClientProtocol, @unchecked Send
         path: String,
         method: HTTPMethod
     ) async throws {
-        let accessToken = try readAccessToken()
-
         do {
-            let (data, _) = try await apiClient.send(
+            let (data, _) = try await authorizedExecutor.send(
                 path: path,
                 method: method,
-                accessToken: accessToken
             )
             let envelope = try apiClient.decode(APIResponseEnvelope<EmptyPayload>.self, from: data)
             guard envelope.success else {
@@ -312,20 +307,6 @@ final class CourseReviewsAPIClient: CourseReviewsClientProtocol, @unchecked Send
             throw error
         } catch {
             throw CourseReviewsClientError.unexpected
-        }
-    }
-
-    private func readAccessToken() throws -> String {
-        do {
-            guard let session = try tokenStore.readSession(),
-                  session.accessToken.isEmpty == false else {
-                throw CourseReviewsClientError.invalidSession
-            }
-            return session.accessToken
-        } catch let error as CourseReviewsClientError {
-            throw error
-        } catch {
-            throw CourseReviewsClientError.invalidSession
         }
     }
 

@@ -19,7 +19,7 @@ struct AuthErrorMapper {
                 switch context {
                 case .login:
                     return .invalidCredentials
-                case .restoreProbe:
+                case .restoreProbe, .reissue:
                     return .invalidSession
                 case .signup:
                     return .unexpected

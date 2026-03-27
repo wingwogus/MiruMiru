@@ -15,7 +15,7 @@ enum APIClientError: Error {
     case decoding(Error)
 }
 
-final class APIClient {
+final class APIClient: @unchecked Sendable {
     private let environment: AppEnvironment
     private let session: URLSession
     private let decoder: JSONDecoder
@@ -80,5 +80,118 @@ final class APIClient {
         } catch {
             throw APIClientError.decoding(error)
         }
+    }
+}
+
+actor AuthorizedRequestExecutor {
+    private let apiClient: APIClient
+    private let tokenStore: TokenStore
+    private let encoder: JSONEncoder
+    private var inFlightRefresh: Task<TokenPair, Error>?
+
+    init(
+        apiClient: APIClient,
+        tokenStore: TokenStore,
+        encoder: JSONEncoder = JSONEncoder()
+    ) {
+        self.apiClient = apiClient
+        self.tokenStore = tokenStore
+        self.encoder = encoder
+    }
+
+    func send(
+        path: String,
+        method: HTTPMethod,
+        body: Data? = nil
+    ) async throws -> (Data, HTTPURLResponse) {
+        let session = try readSession()
+
+        do {
+            return try await apiClient.send(
+                path: path,
+                method: method,
+                body: body,
+                accessToken: session.accessToken
+            )
+        } catch let error as APIClientError {
+            guard shouldReissue(after: error) else {
+                throw error
+            }
+
+            let refreshedSession = try await reissueSession(using: session)
+            return try await apiClient.send(
+                path: path,
+                method: method,
+                body: body,
+                accessToken: refreshedSession.accessToken
+            )
+        }
+    }
+
+    private func readSession() throws -> TokenPair {
+        guard let session = try tokenStore.readSession(),
+              session.accessToken.isEmpty == false,
+              session.refreshToken.isEmpty == false else {
+            throw invalidSessionError()
+        }
+        return session
+    }
+
+    private func shouldReissue(after error: APIClientError) -> Bool {
+        if case let .server(statusCode, _) = error {
+            return statusCode == 401
+        }
+        return false
+    }
+
+    private func reissueSession(using session: TokenPair) async throws -> TokenPair {
+        if let inFlightRefresh {
+            return try await inFlightRefresh.value
+        }
+
+        let refreshTask = Task<TokenPair, Error> {
+            let request = ReissueRequest(
+                accessToken: session.accessToken,
+                refreshToken: session.refreshToken
+            )
+            let body = try encoder.encode(request)
+            let (data, _) = try await apiClient.send(
+                path: "/api/v1/auth/reissue",
+                method: .post,
+                body: body
+            )
+            let envelope = try apiClient.decode(APIResponseEnvelope<TokenPair>.self, from: data)
+
+            guard envelope.success, let tokenPair = envelope.data else {
+                throw APIClientError.invalidResponse
+            }
+
+            do {
+                try tokenStore.saveSession(tokenPair)
+            } catch {
+                try? tokenStore.clearSession()
+                throw invalidSessionError()
+            }
+            return tokenPair
+        }
+
+        inFlightRefresh = refreshTask
+        defer { inFlightRefresh = nil }
+
+        do {
+            return try await refreshTask.value
+        } catch let error as APIClientError {
+            if shouldReissue(after: error) {
+                try? tokenStore.clearSession()
+            }
+            throw error
+        } catch {
+            try? tokenStore.clearSession()
+            throw invalidSessionError()
+        }
+    }
+
+    private func invalidSessionError() -> APIClientError {
+        APIClientError.server(statusCode: 401, payload: nil)
     }
 }

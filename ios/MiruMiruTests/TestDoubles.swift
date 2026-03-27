@@ -3,6 +3,7 @@ import Foundation
 
 final class MockAuthClient: AuthClientProtocol, @unchecked Sendable {
     var loginResult: Result<TokenPair, Error> = .failure(AuthError.unexpected)
+    var reissueResult: Result<TokenPair, Error> = .failure(AuthError.invalidSession)
     var sendEmailCodeResult: Result<Void, Error> = .success(())
     var verifyEmailCodeResult: Result<Void, Error> = .success(())
     var fetchMajorsResult: Result<[MajorOption], Error> = .success([])
@@ -10,6 +11,8 @@ final class MockAuthClient: AuthClientProtocol, @unchecked Sendable {
     var signUpResult: Result<Void, Error> = .success(())
     var restoreResult: Result<Void, Error> = .success(())
     private(set) var lastLoginEmail: String?
+    private(set) var lastReissueAccessToken: String?
+    private(set) var lastReissueRefreshToken: String?
     private(set) var lastSendEmailCodeEmail: String?
     private(set) var lastVerifyEmailCodeEmail: String?
     private(set) var lastVerifyEmailCodeValue: String?
@@ -23,6 +26,17 @@ final class MockAuthClient: AuthClientProtocol, @unchecked Sendable {
     func login(email: String, password: String) async throws -> TokenPair {
         lastLoginEmail = email
         switch loginResult {
+        case let .success(tokens):
+            return tokens
+        case let .failure(error):
+            throw error
+        }
+    }
+
+    func reissue(accessToken: String, refreshToken: String) async throws -> TokenPair {
+        lastReissueAccessToken = accessToken
+        lastReissueRefreshToken = refreshToken
+        switch reissueResult {
         case let .success(tokens):
             return tokens
         case let .failure(error):

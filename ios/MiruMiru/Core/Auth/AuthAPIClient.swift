@@ -21,6 +21,15 @@ final class AuthAPIClient: AuthClientProtocol, @unchecked Sendable {
         )
     }
 
+    func reissue(accessToken: String, refreshToken: String) async throws -> TokenPair {
+        let request = ReissueRequest(accessToken: accessToken, refreshToken: refreshToken)
+        return try await requestTokenPair(
+            path: "/api/v1/auth/reissue",
+            body: try encoder.encode(request),
+            context: .reissue
+        )
+    }
+
     func sendEmailCode(email: String) async throws {
         let request = SendEmailCodeRequest(email: email)
         try await performVoidRequest(

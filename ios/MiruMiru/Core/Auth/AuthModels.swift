@@ -5,6 +5,11 @@ struct LoginRequest: Codable, Equatable {
     let password: String
 }
 
+struct ReissueRequest: Codable, Equatable {
+    let accessToken: String
+    let refreshToken: String
+}
+
 struct SendEmailCodeRequest: Codable, Equatable {
     let email: String
 }
@@ -89,6 +94,7 @@ struct EmptyPayload: Decodable, Equatable {}
 
 protocol AuthClientProtocol: Sendable {
     func login(email: String, password: String) async throws -> TokenPair
+    func reissue(accessToken: String, refreshToken: String) async throws -> TokenPair
     func sendEmailCode(email: String) async throws
     func verifyEmailCode(email: String, code: String) async throws
     func fetchMajors(email: String) async throws -> [MajorOption]

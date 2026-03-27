@@ -23,6 +23,10 @@ final class PreviewAuthClient: AuthClientProtocol, @unchecked Sendable {
         loginTokens
     }
 
+    func reissue(accessToken: String, refreshToken: String) async throws -> TokenPair {
+        loginTokens
+    }
+
     func sendEmailCode(email: String) async throws {}
     func verifyEmailCode(email: String, code: String) async throws {}
 

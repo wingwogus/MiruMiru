@@ -27,6 +27,7 @@ class ChatResponses {
         val member2Id: Long,
         val isAnon1: Boolean,
         val isAnon2: Boolean,
+        val created: Boolean,
     )
 
     data class MessageDto(

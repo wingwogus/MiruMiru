@@ -53,6 +53,29 @@ class ChatService(
             post.member
         }
 
+        val existingRoom = messageRoomRepository.findByPostIdAndMember1IdAndMember2Id(
+            postId = post.id,
+            member1Id = requester.id,
+            member2Id = otherMember.id,
+        ) ?: messageRoomRepository.findByPostIdAndMember1IdAndMember2Id(
+            postId = post.id,
+            member1Id = otherMember.id,
+            member2Id = requester.id,
+        )
+
+        if (existingRoom != null) {
+            val requesterIsMember1 = existingRoom.member1.id == requester.id
+            return ChatResult.RoomCreated(
+                roomId = existingRoom.id,
+                postId = existingRoom.post.id,
+                member1Id = requester.id,
+                member2Id = otherMember.id,
+                isAnon1 = if (requesterIsMember1) existingRoom.isAnon1 else existingRoom.isAnon2,
+                isAnon2 = if (requesterIsMember1) existingRoom.isAnon2 else existingRoom.isAnon1,
+                created = false,
+            )
+        }
+
         val room = MessageRoom(
             post = post,
             member1 = requester,
@@ -69,6 +92,7 @@ class ChatService(
             member2Id = otherMember.id,
             isAnon1 = saved.isAnon1,
             isAnon2 = saved.isAnon2,
+            created = true,
         )
     }
 

@@ -502,8 +502,8 @@
     </div>
 
     <div class="hint">
-      로컬 시드: <code>test@tokyo.ac.jp / password123!</code>, <code>test2@tokyo.ac.jp / password123!</code>, post title <code>[LOCAL] Chat Seed Post</code> ·
-      글 작성자가 방을 만들 땐 <code>partnerMemberId</code>가 필요합니다(비워두면 반대 패널 유저 id 자동 사용).
+      로컬 시드: <code>test@tokyo.ac.jp / password123!</code>, <code>empty@tokyo.ac.jp / password123!</code> ·
+      기본 postId는 <code>1</code>(Welcome to MiruMiru) 입니다. 글 작성자가 방을 만들 땐 <code>partnerMemberId</code>가 필요합니다.
     </div>
 
     <div class="panel controls">
@@ -595,7 +595,7 @@
         <div class="auth">
           <div class="field">
             <label>Email</label>
-            <input id="b_email" type="text" value="test2@tokyo.ac.jp" />
+            <input id="b_email" type="text" value="empty@tokyo.ac.jp" />
           </div>
           <div class="field">
             <label>Password</label>
@@ -749,8 +749,16 @@
         const json = safeJson(text) ?? text;
 
         if (!response.ok) {
-          logLine(`${method} ${path} failed (${response.status})`, 'bad');
-          throw new Error(`HTTP ${response.status}`);
+          const backendMessage =
+            (json && typeof json === 'object' && (
+              json.message ||
+              json.error?.message ||
+              json.errorCode ||
+              json.code
+            )) || '';
+          const reason = backendMessage ? ` - ${backendMessage}` : '';
+          logLine(`${method} ${path} failed (${response.status})${reason}`, 'bad');
+          throw new Error(`HTTP ${response.status}${reason}`);
         }
 
         return json;
@@ -1293,15 +1301,20 @@
         if (!user.token) throw new Error(`${user.label} 먼저 로그인 필요`);
 
         const postId = Number(el('postId').value);
+        if (!Number.isFinite(postId) || postId <= 0) {
+          throw new Error('postId는 1 이상의 숫자여야 합니다');
+        }
         const requesterIsAnonymous = !!el('requesterIsAnonymous').checked;
         const manualPartnerMemberId = toNullablePositiveId(el('partnerMemberId').value);
         const fallbackPartnerMemberId = user.prefix === 'a' ? users.b.memberId : users.a.memberId;
         const partnerMemberId = manualPartnerMemberId || toNullablePositiveId(fallbackPartnerMemberId);
+        const body = { postId, requesterIsAnonymous };
+        if (partnerMemberId) body.partnerMemberId = partnerMemberId;
 
         const json = await api('/api/v1/message-rooms', {
           method: 'POST',
           token: user.token,
-          body: { postId, requesterIsAnonymous, partnerMemberId },
+          body,
         });
 
         const roomId = Number(json?.data?.roomId);

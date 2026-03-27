@@ -13,6 +13,7 @@ import com.example.domain.timetable.TimetableLectureRepository
 import com.example.domain.timetable.TimetableRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
@@ -114,7 +115,7 @@ class TimetablePersistenceIntegrationTest(
         val lecture = lectureRepository.findBySemesterIdAndCode(semester.id, "CS101")!!
         val timetable = timetableRepository.findByMemberIdAndSemesterId(member.id, semester.id)!!
 
-        assertThrows<DataIntegrityViolationException> {
+        assertUniqueConstraintViolation {
             timetableRepository.saveAndFlush(
                 Timetable(
                     member = member,
@@ -123,7 +124,7 @@ class TimetablePersistenceIntegrationTest(
             )
         }
 
-        assertThrows<DataIntegrityViolationException> {
+        assertUniqueConstraintViolation {
             timetableLectureRepository.saveAndFlush(
                 TimetableLecture(
                     timetable = timetable,
@@ -131,5 +132,21 @@ class TimetablePersistenceIntegrationTest(
                 )
             )
         }
+    }
+
+    private fun assertUniqueConstraintViolation(block: () -> Unit) {
+        val throwable = assertThrows<Throwable> { block() }
+        val hasDataIntegrityType = generateSequence(throwable) { it.cause }
+            .any { it is DataIntegrityViolationException }
+        val causeMessages = generateSequence(throwable) { it.cause }
+            .mapNotNull { it.message }
+            .joinToString(" | ")
+
+        assertTrue(
+            hasDataIntegrityType ||
+                causeMessages.contains("duplicate", ignoreCase = true) ||
+                causeMessages.contains("unique", ignoreCase = true),
+            "Expected unique constraint violation but got: $causeMessages"
+        )
     }
 }

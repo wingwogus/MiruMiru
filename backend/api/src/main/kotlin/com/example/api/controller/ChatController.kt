@@ -73,8 +73,10 @@ class ChatController(
             )
         )
 
+        val status = if (result.created) HttpStatus.CREATED else HttpStatus.OK
+
         return ResponseEntity
-            .status(HttpStatus.CREATED)
+            .status(status)
             .body(
                 ApiResponse.ok(
                     ChatResponses.RoomCreatedResponse(
@@ -84,6 +86,7 @@ class ChatController(
                         member2Id = result.member2Id,
                         isAnon1 = result.isAnon1,
                         isAnon2 = result.isAnon2,
+                        created = result.created,
                     )
                 )
             )

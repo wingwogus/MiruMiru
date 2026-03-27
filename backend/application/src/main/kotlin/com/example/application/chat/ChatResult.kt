@@ -30,6 +30,7 @@ sealed interface ChatResult {
         val member2Id: Long,
         val isAnon1: Boolean,
         val isAnon2: Boolean,
+        val created: Boolean,
     ) : ChatResult
 
     data class MessageSent(

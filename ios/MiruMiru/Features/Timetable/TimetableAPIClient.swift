@@ -2,12 +2,16 @@ import Foundation
 
 final class TimetableAPIClient: TimetableClientProtocol, @unchecked Sendable {
     private let apiClient: APIClient
-    private let tokenStore: TokenStore
+    private let authorizedExecutor: AuthorizedRequestExecutor
     private let encoder = JSONEncoder()
 
-    init(apiClient: APIClient, tokenStore: TokenStore) {
+    init(
+        apiClient: APIClient,
+        tokenStore: TokenStore,
+        authorizedExecutor: AuthorizedRequestExecutor? = nil
+    ) {
         self.apiClient = apiClient
-        self.tokenStore = tokenStore
+        self.authorizedExecutor = authorizedExecutor ?? AuthorizedRequestExecutor(apiClient: apiClient, tokenStore: tokenStore)
     }
 
     func fetchMemberContext() async throws -> TimetableMemberContext {
@@ -44,13 +48,10 @@ final class TimetableAPIClient: TimetableClientProtocol, @unchecked Sendable {
     }
 
     private func requestPayload<Response: Decodable>(path: String) async throws -> Response {
-        let accessToken = try readAccessToken()
-
         do {
-            let (data, _) = try await apiClient.send(
+            let (data, _) = try await authorizedExecutor.send(
                 path: path,
                 method: .get,
-                accessToken: accessToken
             )
             let envelope = try apiClient.decode(APIResponseEnvelope<Response>.self, from: data)
             guard envelope.success, let payload = envelope.data else {
@@ -71,14 +72,11 @@ final class TimetableAPIClient: TimetableClientProtocol, @unchecked Sendable {
         method: HTTPMethod,
         body: Data? = nil
     ) async throws {
-        let accessToken = try readAccessToken()
-
         do {
-            let (data, _) = try await apiClient.send(
+            let (data, _) = try await authorizedExecutor.send(
                 path: path,
                 method: method,
                 body: body,
-                accessToken: accessToken
             )
             let envelope = try apiClient.decode(APIResponseEnvelope<EmptyPayload>.self, from: data)
             guard envelope.success else {
@@ -90,20 +88,6 @@ final class TimetableAPIClient: TimetableClientProtocol, @unchecked Sendable {
             throw error
         } catch {
             throw TimetableClientError.unexpected
-        }
-    }
-
-    private func readAccessToken() throws -> String {
-        do {
-            guard let session = try tokenStore.readSession(),
-                  session.accessToken.isEmpty == false else {
-                throw TimetableClientError.invalidSession
-            }
-            return session.accessToken
-        } catch let error as TimetableClientError {
-            throw error
-        } catch {
-            throw TimetableClientError.invalidSession
         }
     }
 

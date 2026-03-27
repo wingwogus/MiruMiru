@@ -107,6 +107,7 @@ class TimetableQueryService(
 
             TimetableQueryResult.LectureItem(
                 id = lecture.id,
+                courseId = lecture.course.id,
                 code = lecture.code,
                 name = lecture.name,
                 professor = lecture.professor,

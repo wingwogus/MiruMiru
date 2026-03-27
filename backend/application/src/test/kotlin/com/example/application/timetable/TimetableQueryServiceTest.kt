@@ -2,6 +2,7 @@ package com.example.application.timetable
 
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
+import com.example.domain.course.Course
 import com.example.domain.lecture.Lecture
 import com.example.domain.lecture.LectureRepository
 import com.example.domain.lecture.LectureSchedule
@@ -117,6 +118,7 @@ class TimetableQueryServiceTest {
 
         assertEquals(timetable.id, result.timetableId)
         assertEquals("CS101", result.lectures.single().code)
+        assertEquals(25L, result.lectures.single().courseId)
         assertEquals("Computer Science", result.lectures.single().major!!.name)
         assertEquals("MONDAY", result.lectures.single().schedules.single().dayOfWeek)
     }
@@ -180,10 +182,20 @@ class TimetableQueryServiceTest {
             id = 20L,
             semester = semester,
             major = major,
+            course = course(university = semester.university),
             code = "CS101",
             name = "Introduction to Computer Science",
             professor = "Prof. Akiyama",
             credit = 3
+        )
+    }
+
+    private fun course(university: University): Course {
+        return Course(
+            id = 25L,
+            university = university,
+            code = "CS101",
+            name = "Introduction to Computer Science"
         )
     }
 

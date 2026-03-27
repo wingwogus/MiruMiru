@@ -19,6 +19,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.Mockito.`when`
 import java.util.Optional
 
@@ -105,7 +106,8 @@ class CommentWriteServiceTest {
         }
 
         assertEquals(ErrorCode.COMMENT_DEPTH_NOT_ALLOWED, exception.errorCode)
-        verify(commentRepository, never()).save(any(Comment::class.java))
+        verify(commentRepository).findByIdAndPostBoardUniversityId(child.id, university.id)
+        verifyNoMoreInteractions(commentRepository)
     }
 
     @Test
@@ -141,7 +143,8 @@ class CommentWriteServiceTest {
         }
 
         assertEquals(ErrorCode.COMMENT_NOT_FOUND, exception.errorCode)
-        verify(commentRepository, never()).save(any(Comment::class.java))
+        verify(commentRepository).findByIdAndPostBoardUniversityId(deletedParent.id, university.id)
+        verifyNoMoreInteractions(commentRepository)
     }
 
     @Test

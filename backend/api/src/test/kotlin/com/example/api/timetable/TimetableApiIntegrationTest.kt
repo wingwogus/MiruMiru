@@ -94,11 +94,14 @@ class TimetableApiIntegrationTest(
 
     @Test
     fun `get semester lectures returns seeded lecture catalog`() {
+        val cs101CourseId = lectureRepository.findBySemesterIdAndCode(semesterId, "CS101")!!.course.id
+
         val response = mockMvc.get("/api/v1/semesters/$semesterId/lectures") {
             header(HttpHeaders.AUTHORIZATION, "Bearer $accessToken")
         }.andReturn().response
 
         assertEquals(200, response.status)
+        assertTrue(response.contentAsString.contains("\"courseId\":$cs101CourseId"))
         assertTrue(response.contentAsString.contains("\"code\":\"CS101\""))
         assertTrue(response.contentAsString.contains("\"code\":\"MATH201\""))
         assertTrue(response.contentAsString.contains("\"name\":\"Computer Science\""))
@@ -108,6 +111,8 @@ class TimetableApiIntegrationTest(
 
     @Test
     fun `get my timetable returns seeded lectures for semester`() {
+        val cs101CourseId = lectureRepository.findBySemesterIdAndCode(semesterId, "CS101")!!.course.id
+
         val response = mockMvc.get("/api/v1/timetables/me") {
             header(HttpHeaders.AUTHORIZATION, "Bearer $accessToken")
             param("semesterId", semesterId.toString())
@@ -115,6 +120,7 @@ class TimetableApiIntegrationTest(
 
         assertEquals(200, response.status)
         assertTrue(response.contentAsString.contains("\"timetableId\":$timetableId"))
+        assertTrue(response.contentAsString.contains("\"courseId\":$cs101CourseId"))
         assertTrue(response.contentAsString.contains("\"code\":\"CS101\""))
         assertTrue(response.contentAsString.contains("\"majorId\":"))
     }

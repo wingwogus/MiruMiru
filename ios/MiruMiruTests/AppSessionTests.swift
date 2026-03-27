@@ -42,6 +42,25 @@ final class AppSessionTests: XCTestCase {
         XCTAssertEqual(session.state, .unauthenticated)
     }
 
+    func testBootstrapReissuesExpiredAccessTokenBeforeInvalidatingSession() async throws {
+        let authClient = MockAuthClient()
+        authClient.restoreResult = .failure(AuthError.invalidSession)
+        authClient.reissueResult = .success(
+            TokenPair(accessToken: "new-access", refreshToken: "new-refresh")
+        )
+        let tokenStore = InMemoryTokenStore()
+        tokenStore.storedSession = TokenPair(accessToken: "saved-access", refreshToken: "saved-refresh")
+        let session = AppSession(authClient: authClient, tokenStore: tokenStore)
+
+        await session.bootstrap()
+
+        XCTAssertEqual(authClient.lastRestoreToken, "saved-access")
+        XCTAssertEqual(authClient.lastReissueAccessToken, "saved-access")
+        XCTAssertEqual(authClient.lastReissueRefreshToken, "saved-refresh")
+        XCTAssertEqual(tokenStore.storedSession, TokenPair(accessToken: "new-access", refreshToken: "new-refresh"))
+        XCTAssertEqual(session.state, .authenticated)
+    }
+
     func testLoginSaveFailureRollsBackSession() async {
         let authClient = MockAuthClient()
         authClient.loginResult = .success(TokenPair(accessToken: "a", refreshToken: "r"))

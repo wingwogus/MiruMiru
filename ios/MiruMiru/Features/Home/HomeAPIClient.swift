@@ -2,11 +2,15 @@ import Foundation
 
 final class HomeAPIClient: HomeClientProtocol, @unchecked Sendable {
     private let apiClient: APIClient
-    private let tokenStore: TokenStore
+    private let authorizedExecutor: AuthorizedRequestExecutor
 
-    init(apiClient: APIClient, tokenStore: TokenStore) {
+    init(
+        apiClient: APIClient,
+        tokenStore: TokenStore,
+        authorizedExecutor: AuthorizedRequestExecutor? = nil
+    ) {
         self.apiClient = apiClient
-        self.tokenStore = tokenStore
+        self.authorizedExecutor = authorizedExecutor ?? AuthorizedRequestExecutor(apiClient: apiClient, tokenStore: tokenStore)
     }
 
     func fetchProfile() async throws -> HomeMemberProfile {
@@ -32,13 +36,10 @@ final class HomeAPIClient: HomeClientProtocol, @unchecked Sendable {
     }
 
     private func requestPayload<Response: Decodable>(path: String) async throws -> Response {
-        let accessToken = try readAccessToken()
-
         do {
-            let (data, _) = try await apiClient.send(
+            let (data, _) = try await authorizedExecutor.send(
                 path: path,
                 method: .get,
-                accessToken: accessToken
             )
             let envelope = try apiClient.decode(APIResponseEnvelope<Response>.self, from: data)
             guard envelope.success, let payload = envelope.data else {
@@ -51,20 +52,6 @@ final class HomeAPIClient: HomeClientProtocol, @unchecked Sendable {
             throw error
         } catch {
             throw HomeClientError.unexpected
-        }
-    }
-
-    private func readAccessToken() throws -> String {
-        do {
-            guard let session = try tokenStore.readSession(),
-                  session.accessToken.isEmpty == false else {
-                throw HomeClientError.invalidSession
-            }
-            return session.accessToken
-        } catch let error as HomeClientError {
-            throw error
-        } catch {
-            throw HomeClientError.invalidSession
         }
     }
 

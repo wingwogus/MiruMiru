@@ -31,7 +31,7 @@ class ChatQueryService(
 
     fun getMessages(query: ChatQuery.GetMessages): ChatQueryResult.Messages {
         val room = messageRoomRepository.findById(query.roomId).orElseThrow {
-            BusinessException(ErrorCode.RESOURCE_NOT_FOUND)
+            BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND)
         }
 
         if (!room.isParticipant(query.requesterId)) {
@@ -39,11 +39,12 @@ class ChatQueryService(
         }
 
         val limit = query.limit.coerceIn(1, 100)
-        val messages = if (query.beforeMessageId == null) {
+        val descendingMessages = if (query.beforeMessageId == null) {
             chatMessageReadRepository.findLatest(query.roomId, limit)
         } else {
             chatMessageReadRepository.findBefore(query.roomId, query.beforeMessageId, limit)
         }
+        val messages = descendingMessages.reversed()
 
         val requesterLastRead = room.getLastReadMessageId(query.requesterId)
         val otherId = room.otherMemberId(query.requesterId)
@@ -54,7 +55,7 @@ class ChatQueryService(
             messages = messages,
             requesterLastReadMessageId = requesterLastRead,
             otherLastReadMessageId = otherLastRead,
-            nextBeforeMessageId = messages.lastOrNull()?.id,
+            nextBeforeMessageId = descendingMessages.lastOrNull()?.id,
         )
     }
 }

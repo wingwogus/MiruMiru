@@ -85,7 +85,7 @@ class ChatService(
             BusinessException(ErrorCode.USER_NOT_FOUND)
         }
         val room = messageRoomRepository.findById(command.roomId).orElseThrow {
-            BusinessException(ErrorCode.RESOURCE_NOT_FOUND)
+            BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND)
         }
 
         if (!room.isParticipant(sender.id)) {
@@ -109,7 +109,8 @@ class ChatService(
                 type = ChatEventType.MESSAGE,
                 roomId = room.id,
                 message = ChatMessageEvent(
-                    messageId = message.id,
+                    id = message.id,
+                    roomId = room.id,
                     senderId = sender.id,
                     content = message.content,
                     createdAt = message.createdAt,
@@ -129,18 +130,25 @@ class ChatService(
         )
 
         return ChatResult.MessageSent(
-            messageId = message.id,
+            id = message.id,
             roomId = room.id,
+            senderId = sender.id,
+            content = message.content,
+            createdAt = message.createdAt,
         )
     }
 
     fun markRead(command: ChatCommand.MarkRead): ChatResult.ReadMarked {
         val room = messageRoomRepository.findById(command.roomId).orElseThrow {
-            BusinessException(ErrorCode.RESOURCE_NOT_FOUND)
+            BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND)
         }
 
         if (!room.isParticipant(command.readerId)) {
             throw BusinessException(ErrorCode.UNAUTHORIZED)
+        }
+
+        if (!chatMessageRepository.existsByIdAndRoomId(command.lastReadMessageId, room.id)) {
+            throw BusinessException(ErrorCode.CHAT_MESSAGE_NOT_FOUND)
         }
 
         room.updateLastReadMessageId(command.readerId, command.lastReadMessageId)

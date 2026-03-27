@@ -38,5 +38,7 @@ enum class ErrorCode(
     LECTURE_NOT_IN_SEMESTER("TIMETABLE_004", "error.lecture_not_in_semester", 400),
     TIMETABLE_LECTURE_NOT_FOUND("TIMETABLE_005", "error.timetable_lecture_not_found", 404),
     TIMETABLE_LECTURE_CONFLICT("TIMETABLE_006", "error.timetable_lecture_conflict", 409),
+    CHAT_ROOM_NOT_FOUND("CHAT_001", "error.chat_room_not_found", 404),
+    CHAT_MESSAGE_NOT_FOUND("CHAT_002", "error.chat_message_not_found", 404),
 
 }

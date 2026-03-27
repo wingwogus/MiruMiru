@@ -18,7 +18,8 @@ class RedisChatEventPublisherTest {
             type = ChatEventType.MESSAGE,
             roomId = 10L,
             message = ChatMessageEvent(
-                messageId = 99L,
+                id = 99L,
+                roomId = 10L,
                 senderId = 1L,
                 content = "hello",
                 createdAt = null,

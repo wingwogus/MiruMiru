@@ -26,7 +26,8 @@ class ChatRedisSubscriberTest {
             type = ChatEventType.MESSAGE,
             roomId = 42L,
             message = ChatMessageEvent(
-                messageId = 100L,
+                id = 100L,
+                roomId = 42L,
                 senderId = 2L,
                 content = "hello",
                 createdAt = null,

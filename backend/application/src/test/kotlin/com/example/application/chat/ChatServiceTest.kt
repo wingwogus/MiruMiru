@@ -394,8 +394,10 @@ class ChatServiceTest {
             )
         )
 
-        assertEquals(savedMessage.id, result.messageId)
+        assertEquals(savedMessage.id, result.id)
         assertEquals(room.id, result.roomId)
+        assertEquals(sender.id, result.senderId)
+        assertEquals(savedMessage.content, result.content)
 
         val eventTypes = chatEventPublisher.events.map { it.type }
         assertEquals(listOf(ChatEventType.MESSAGE, ChatEventType.UNREAD_COUNT), eventTypes)
@@ -412,6 +414,7 @@ class ChatServiceTest {
         val room = MessageRoom(id = 30L, post = post, member1 = reader, member2 = other)
 
         `when`(messageRoomRepository.findById(room.id)).thenReturn(Optional.of(room))
+        `when`(chatMessageRepository.existsByIdAndRoomId(55L, room.id)).thenReturn(true)
         `when`(messageRoomRepository.save(any(MessageRoom::class.java))).thenAnswer { it.getArgument(0) }
         `when`(chatMessageReadRepository.countUnread(room.id, reader.id, 55L)).thenReturn(0L)
 
@@ -428,6 +431,33 @@ class ChatServiceTest {
 
         val eventTypes = chatEventPublisher.events.map { it.type }
         assertEquals(listOf(ChatEventType.READ, ChatEventType.UNREAD_COUNT), eventTypes)
+    }
+
+    @Test
+    fun `mark read rejects message outside room`() {
+        val university = university()
+        val major = major(university)
+        val reader = member(id = 1L, university = university, major = major, email = "reader@tokyo.ac.jp")
+        val other = member(id = 2L, university = university, major = major, email = "other@tokyo.ac.jp")
+        val board = board(id = 10L, university = university)
+        val post = post(id = 20L, board = board, member = other, isAnonymous = false)
+        val room = MessageRoom(id = 30L, post = post, member1 = reader, member2 = other)
+
+        `when`(messageRoomRepository.findById(room.id)).thenReturn(Optional.of(room))
+        `when`(chatMessageRepository.existsByIdAndRoomId(999L, room.id)).thenReturn(false)
+
+        val exception = assertThrows(BusinessException::class.java) {
+            chatService.markRead(
+                ChatCommand.MarkRead(
+                    readerId = reader.id,
+                    roomId = room.id,
+                    lastReadMessageId = 999L,
+                )
+            )
+        }
+
+        assertEquals(ErrorCode.CHAT_MESSAGE_NOT_FOUND, exception.errorCode)
+        verify(messageRoomRepository, never()).save(any(MessageRoom::class.java))
     }
 
     private fun university(

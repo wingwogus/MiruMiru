@@ -1,5 +1,7 @@
 package com.example.application.chat
 
+import java.time.LocalDateTime
+
 sealed interface ChatResult {
 
     data class RoomCreated(
@@ -13,8 +15,11 @@ sealed interface ChatResult {
     ) : ChatResult
 
     data class MessageSent(
-        val messageId: Long,
+        val id: Long,
         val roomId: Long,
+        val senderId: Long,
+        val content: String,
+        val createdAt: LocalDateTime?,
     ) : ChatResult
 
     data class ReadMarked(

@@ -1,0 +1,1169 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MiruMiru Chat Duo Test</title>
+    <style>
+      :root {
+        --bg: #eef3f8;
+        --panel: #ffffff;
+        --line: #dde5ef;
+        --text: #1f2937;
+        --subtle: #6b7280;
+        --primary: #2563eb;
+        --primary-soft: #e8f0ff;
+        --danger: #dc2626;
+        --success: #15803d;
+        --chat-bg: #f4f6fb;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        padding: 20px;
+        background:
+          radial-gradient(circle at top, #fbfdff 0%, #eef3f8 52%, #e6edf7 100%);
+        color: var(--text);
+        font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, sans-serif;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+      }
+
+      .top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .hint {
+        margin-bottom: 16px;
+        color: var(--subtle);
+        font-size: 13px;
+      }
+
+      .hint code {
+        background: #f3f6fb;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 2px 6px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08);
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(120px, 1fr));
+        gap: 10px;
+        padding: 14px;
+        margin-bottom: 16px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .field label {
+        color: var(--subtle);
+        font-size: 12px;
+      }
+
+      input[type="text"],
+      input[type="password"],
+      input[type="number"] {
+        width: 100%;
+        height: 40px;
+        border: 1px solid #cfd8e3;
+        border-radius: 12px;
+        padding: 0 12px;
+        font-size: 14px;
+        background: #fff;
+      }
+
+      input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--primary);
+      }
+
+      button {
+        height: 40px;
+        border-radius: 12px;
+        border: 1px solid var(--primary);
+        background: var(--primary);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #fff;
+        border-color: #cfd8e3;
+        color: var(--text);
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 40px;
+      }
+
+      .duo {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .user {
+        overflow: hidden;
+      }
+
+      .user-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+        background: #f8fbff;
+        font-weight: 800;
+      }
+
+      .status {
+        color: var(--subtle);
+        font-size: 12px;
+      }
+
+      .auth {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto auto auto;
+        gap: 8px;
+        align-items: end;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .token {
+        padding: 0 14px 12px;
+        border-bottom: 1px solid var(--line);
+        color: var(--subtle);
+        font-size: 12px;
+      }
+
+      .token code {
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
+        background: #f2f5fb;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 2px 6px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+        min-height: 620px;
+      }
+
+      .rooms {
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--line);
+        background: #fbfcff;
+      }
+
+      .rooms-top {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        padding: 10px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .room-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        overflow: auto;
+      }
+
+      .room-item {
+        padding: 12px 10px;
+        border-bottom: 1px solid #edf1f6;
+        cursor: pointer;
+      }
+
+      .room-item.active {
+        background: var(--primary-soft);
+      }
+
+      .room-item:hover {
+        background: #f5f9ff;
+      }
+
+      .room-title {
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .room-sub {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--subtle);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .room-meta {
+        margin-top: 4px;
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 11px;
+        color: #94a3b8;
+      }
+
+      .badge {
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: #ef4444;
+        color: #fff;
+      }
+
+      .chat {
+        display: flex;
+        flex-direction: column;
+        background: var(--chat-bg);
+      }
+
+      .chat-head {
+        padding: 14px;
+        border-bottom: 1px solid var(--line);
+        background: #fff;
+      }
+
+      .chat-title {
+        font-weight: 800;
+        font-size: 16px;
+      }
+
+      .chat-subtitle {
+        margin-top: 4px;
+        color: var(--subtle);
+        font-size: 12px;
+      }
+
+      .messages {
+        flex: 1;
+        padding: 14px;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .empty {
+        margin: auto;
+        color: var(--subtle);
+        font-size: 13px;
+      }
+
+      .bubble-wrap {
+        display: flex;
+      }
+
+      .bubble-wrap.mine {
+        justify-content: flex-end;
+      }
+
+      .bubble-wrap.other {
+        justify-content: flex-start;
+      }
+
+      .bubble {
+        max-width: 80%;
+        border-radius: 16px;
+        padding: 10px 12px;
+        font-size: 14px;
+        line-height: 1.45;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+      }
+
+      .bubble.mine {
+        background: #3b82f6;
+        color: #fff;
+        border-bottom-right-radius: 6px;
+      }
+
+      .bubble.other {
+        background: #fff;
+        color: var(--text);
+        border: 1px solid #e5e7eb;
+        border-bottom-left-radius: 6px;
+      }
+
+      .bubble-meta {
+        margin-top: 6px;
+        font-size: 11px;
+        color: #94a3b8;
+      }
+
+      .composer {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 8px;
+        padding: 12px;
+        border-top: 1px solid var(--line);
+        background: #fff;
+      }
+
+      .composer input {
+        height: 42px;
+        border-radius: 999px;
+      }
+
+      .debug {
+        margin-top: 16px;
+        padding: 14px;
+      }
+
+      .debug summary {
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .log-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin: 10px 0 8px;
+      }
+
+      .log {
+        min-height: 180px;
+        max-height: 260px;
+        overflow: auto;
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        color: #dbeafe;
+        padding: 12px;
+        font-size: 12px;
+        white-space: pre-wrap;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      }
+
+      .good { color: #86efac; }
+      .bad { color: #fca5a5; }
+
+      @media (max-width: 1260px) {
+        .controls {
+          grid-template-columns: repeat(3, minmax(160px, 1fr));
+        }
+
+        .duo {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 840px) {
+        body {
+          padding: 10px;
+        }
+
+        .auth {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .rooms {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+          max-height: 260px;
+        }
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="top">
+      <h1>MiruMiru Chat Duo Test</h1>
+    </div>
+
+    <div class="hint">
+      로컬 시드:
+      <code>test@tokyo.ac.jp / password123!</code>,
+      <code>empty@tokyo.ac.jp / password123!</code>,
+      기본 <code>postId=1</code>.
+      게시글 작성자가 방을 만들면 보통 <code>partnerMemberId</code>가 필요합니다.
+    </div>
+
+    <section class="panel controls">
+      <div class="field">
+        <label>postId</label>
+        <input id="postId" type="number" value="1" />
+      </div>
+      <div class="field">
+        <label>partnerMemberId</label>
+        <input id="partnerMemberId" type="number" placeholder="비워두면 상대 로그인 ID 사용" />
+      </div>
+      <div class="field">
+        <label>requesterIsAnonymous</label>
+        <div class="checkbox-row">
+          <input id="requesterIsAnonymous" type="checkbox" />
+          <span>익명으로 방 생성</span>
+        </div>
+      </div>
+      <button id="createAsA">A로 방 만들기</button>
+      <button id="createAsB" class="secondary">B로 방 만들기</button>
+      <button id="refreshAll" class="secondary">양쪽 방 목록 새로고침</button>
+      <button id="markAllRead" class="secondary">현재 방 읽음 처리</button>
+    </section>
+
+    <section class="duo">
+      <article class="panel user">
+        <div class="user-head">
+          <div>유저 A 화면</div>
+          <div class="status"><b id="a_status">offline</b> · id <span id="a_me">-</span></div>
+        </div>
+        <div class="auth">
+          <div class="field">
+            <label>Email</label>
+            <input id="a_email" type="text" value="test@tokyo.ac.jp" />
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input id="a_pw" type="password" value="password123!" />
+          </div>
+          <button id="a_login">Login</button>
+          <button id="a_connect" class="secondary" disabled>Connect</button>
+          <button id="a_disconnect" class="secondary" disabled>Off</button>
+        </div>
+        <div class="token">token: <code id="a_token">-</code></div>
+        <div class="workspace">
+          <aside class="rooms">
+            <div class="rooms-top">
+              <input id="a_room_filter" type="text" placeholder="방 목록 필터" />
+              <button id="a_rooms_refresh" class="secondary">방 목록</button>
+            </div>
+            <ul id="a_rooms" class="room-list"></ul>
+          </aside>
+          <section class="chat">
+            <div class="chat-head">
+              <div class="chat-title" id="a_room_title">방을 선택해 주세요</div>
+              <div class="chat-subtitle" id="a_room_subtitle">WebSocket 연결 후 실시간 이벤트가 표시됩니다.</div>
+            </div>
+            <div id="a_messages" class="messages"></div>
+            <div class="composer">
+              <input id="a_msg_input" type="text" placeholder="메시지를 입력하세요" />
+              <button id="a_send" disabled>Send</button>
+              <button id="a_read" class="secondary" disabled>읽음</button>
+            </div>
+          </section>
+        </div>
+      </article>
+
+      <article class="panel user">
+        <div class="user-head">
+          <div>유저 B 화면</div>
+          <div class="status"><b id="b_status">offline</b> · id <span id="b_me">-</span></div>
+        </div>
+        <div class="auth">
+          <div class="field">
+            <label>Email</label>
+            <input id="b_email" type="text" value="empty@tokyo.ac.jp" />
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input id="b_pw" type="password" value="password123!" />
+          </div>
+          <button id="b_login">Login</button>
+          <button id="b_connect" class="secondary" disabled>Connect</button>
+          <button id="b_disconnect" class="secondary" disabled>Off</button>
+        </div>
+        <div class="token">token: <code id="b_token">-</code></div>
+        <div class="workspace">
+          <aside class="rooms">
+            <div class="rooms-top">
+              <input id="b_room_filter" type="text" placeholder="방 목록 필터" />
+              <button id="b_rooms_refresh" class="secondary">방 목록</button>
+            </div>
+            <ul id="b_rooms" class="room-list"></ul>
+          </aside>
+          <section class="chat">
+            <div class="chat-head">
+              <div class="chat-title" id="b_room_title">방을 선택해 주세요</div>
+              <div class="chat-subtitle" id="b_room_subtitle">WebSocket 연결 후 실시간 이벤트가 표시됩니다.</div>
+            </div>
+            <div id="b_messages" class="messages"></div>
+            <div class="composer">
+              <input id="b_msg_input" type="text" placeholder="메시지를 입력하세요" />
+              <button id="b_send" disabled>Send</button>
+              <button id="b_read" class="secondary" disabled>읽음</button>
+            </div>
+          </section>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel debug">
+      <details open>
+        <summary>Debug Log</summary>
+        <div class="log-actions">
+          <button id="clearLog" class="secondary">Clear</button>
+        </div>
+        <div id="log" class="log"></div>
+      </details>
+    </section>
+
+    <script>
+      const baseUrl = window.location.origin;
+
+      function el(id) {
+        return document.getElementById(id);
+      }
+
+      function nowLabel() {
+        return new Date().toLocaleTimeString('ko-KR', { hour12: false });
+      }
+
+      function logLine(message, type = '') {
+        const line = document.createElement('div');
+        line.textContent = `[${nowLabel()}] ${message}`;
+        if (type) {
+          line.className = type;
+        }
+
+        const node = el('log');
+        node.appendChild(line);
+        node.scrollTop = node.scrollHeight;
+      }
+
+      function safeJson(text) {
+        try {
+          return JSON.parse(text);
+        } catch {
+          return null;
+        }
+      }
+
+      function decodeJwtSubject(token) {
+        try {
+          const payload = token.split('.')[1];
+          if (!payload) return null;
+          const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+          const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+          const decoded = atob(padded);
+          const data = JSON.parse(decoded);
+          return data && data.sub ? Number(data.sub) : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function formatDateTime(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return new Intl.DateTimeFormat('ko-KR', {
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(date);
+      }
+
+      async function api(path, options = {}) {
+        const response = await fetch(baseUrl + path, {
+          method: options.method || 'GET',
+          headers: {
+            ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
+            ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+          },
+          body: options.body ? JSON.stringify(options.body) : undefined,
+        });
+
+        const text = await response.text();
+        const json = safeJson(text) || text;
+
+        if (!response.ok) {
+          const backendMessage =
+            (json && typeof json === 'object' && (
+              json.error && (json.error.message || json.error.code) ||
+              json.message ||
+              json.code
+            )) || '';
+          const suffix = backendMessage ? ` - ${backendMessage}` : '';
+          logLine(`${options.method || 'GET'} ${path} failed (${response.status})${suffix}`, 'bad');
+          throw new Error(`HTTP ${response.status}${suffix}`);
+        }
+
+        return json;
+      }
+
+      function createUser(prefix, label) {
+        return {
+          prefix,
+          label,
+          token: null,
+          memberId: null,
+          client: null,
+          connected: false,
+          rooms: [],
+          selectedRoomId: null,
+          roomMessages: {},
+          roomMeta: {},
+          roomSubscription: null,
+          unreadSubscription: null,
+          lastSentAt: 0,
+          lastSentContent: '',
+          isSending: false,
+        };
+      }
+
+      const users = {
+        a: createUser('a', 'A'),
+        b: createUser('b', 'B'),
+      };
+
+      function otherUser(user) {
+        return user.prefix === 'a' ? users.b : users.a;
+      }
+
+      function setStatus(user, text) {
+        el(`${user.prefix}_status`).textContent = text;
+      }
+
+      function updateButtons(user) {
+        const hasRoom = !!user.selectedRoomId;
+        el(`${user.prefix}_connect`).disabled = !user.token || user.connected;
+        el(`${user.prefix}_disconnect`).disabled = !user.connected;
+        el(`${user.prefix}_send`).disabled = !user.token || !hasRoom;
+        el(`${user.prefix}_read`).disabled = !user.token || !hasRoom;
+      }
+
+      function normalizeRoom(raw) {
+        return {
+          roomId: Number(raw.roomId),
+          postId: Number(raw.postId),
+          postTitle: raw.postTitle || '',
+          otherMemberId: Number(raw.otherMemberId),
+          lastMessageId: raw.lastMessageId ? Number(raw.lastMessageId) : null,
+          lastMessageContent: raw.lastMessageContent || '',
+          lastMessageCreatedAt: raw.lastMessageCreatedAt || null,
+          unreadCount: Number(raw.unreadCount || 0),
+          myLastReadMessageId: raw.myLastReadMessageId ? Number(raw.myLastReadMessageId) : null,
+          otherLastReadMessageId: raw.otherLastReadMessageId ? Number(raw.otherLastReadMessageId) : null,
+          isAnonMe: !!raw.isAnonMe,
+          isAnonOther: !!raw.isAnonOther,
+        };
+      }
+
+      function renderRooms(user) {
+        const list = el(`${user.prefix}_rooms`);
+        const filter = el(`${user.prefix}_room_filter`).value.trim().toLowerCase();
+        list.innerHTML = '';
+
+        const rooms = user.rooms.filter((room) => {
+          if (!filter) return true;
+          return room.postTitle.toLowerCase().includes(filter) || String(room.postId).includes(filter);
+        });
+
+        if (!rooms.length) {
+          const item = document.createElement('li');
+          item.className = 'room-item';
+          item.textContent = '방이 없습니다.';
+          list.appendChild(item);
+          return;
+        }
+
+        rooms.forEach((room) => {
+          const item = document.createElement('li');
+          item.className = `room-item${room.roomId === user.selectedRoomId ? ' active' : ''}`;
+          item.onclick = () => selectRoom(user, room.roomId);
+
+          const title = document.createElement('div');
+          title.className = 'room-title';
+          title.textContent = room.postTitle || `게시글 #${room.postId}`;
+
+          const sub = document.createElement('div');
+          sub.className = 'room-sub';
+          sub.textContent = room.lastMessageContent || '최근 메시지 없음';
+
+          const meta = document.createElement('div');
+          meta.className = 'room-meta';
+          const left = document.createElement('span');
+          left.textContent = `room=${room.roomId} · other=${room.otherMemberId}`;
+          const right = document.createElement('span');
+          if (room.unreadCount > 0) {
+            right.innerHTML = `<span class="badge">${room.unreadCount}</span>`;
+          } else {
+            right.textContent = formatDateTime(room.lastMessageCreatedAt);
+          }
+
+          meta.appendChild(left);
+          meta.appendChild(right);
+          item.appendChild(title);
+          item.appendChild(sub);
+          item.appendChild(meta);
+          list.appendChild(item);
+        });
+      }
+
+      function renderMessages(user) {
+        const roomId = user.selectedRoomId;
+        const node = el(`${user.prefix}_messages`);
+        node.innerHTML = '';
+
+        if (!roomId) {
+          const empty = document.createElement('div');
+          empty.className = 'empty';
+          empty.textContent = '왼쪽에서 방을 선택해 주세요.';
+          node.appendChild(empty);
+          return;
+        }
+
+        const messages = user.roomMessages[roomId] || [];
+        if (!messages.length) {
+          const empty = document.createElement('div');
+          empty.className = 'empty';
+          empty.textContent = '메시지가 없습니다.';
+          node.appendChild(empty);
+          return;
+        }
+
+        messages.forEach((message) => {
+          const mine = Number(message.senderId) === Number(user.memberId);
+          const wrap = document.createElement('div');
+          wrap.className = `bubble-wrap ${mine ? 'mine' : 'other'}`;
+
+          const bubble = document.createElement('div');
+          bubble.className = `bubble ${mine ? 'mine' : 'other'}`;
+          bubble.textContent = message.content;
+
+          const meta = document.createElement('div');
+          meta.className = 'bubble-meta';
+          meta.textContent = `#${message.id} · ${formatDateTime(message.createdAt)}`;
+
+          const stack = document.createElement('div');
+          stack.appendChild(bubble);
+          stack.appendChild(meta);
+          wrap.appendChild(stack);
+          node.appendChild(wrap);
+        });
+
+        node.scrollTop = node.scrollHeight;
+      }
+
+      function updateRoomHeader(user) {
+        if (!user.selectedRoomId) {
+          el(`${user.prefix}_room_title`).textContent = '방을 선택해 주세요';
+          el(`${user.prefix}_room_subtitle`).textContent = 'WebSocket 연결 후 실시간 이벤트가 표시됩니다.';
+          return;
+        }
+
+        const room = user.rooms.find((candidate) => candidate.roomId === user.selectedRoomId);
+        if (!room) {
+          el(`${user.prefix}_room_title`).textContent = `room #${user.selectedRoomId}`;
+          el(`${user.prefix}_room_subtitle`).textContent = '현재 방 정보가 없습니다.';
+          return;
+        }
+
+        el(`${user.prefix}_room_title`).textContent = room.postTitle || `게시글 #${room.postId}`;
+        el(`${user.prefix}_room_subtitle`).textContent =
+          `room=${room.roomId} · unread=${room.unreadCount} · myRead=${room.myLastReadMessageId || '-'} · otherRead=${room.otherLastReadMessageId || '-'}`;
+      }
+
+      function replaceRooms(user, rooms) {
+        user.rooms = rooms.slice().sort((a, b) => {
+          const aTime = a.lastMessageCreatedAt ? new Date(a.lastMessageCreatedAt).getTime() : 0;
+          const bTime = b.lastMessageCreatedAt ? new Date(b.lastMessageCreatedAt).getTime() : 0;
+          if (bTime !== aTime) return bTime - aTime;
+          return b.roomId - a.roomId;
+        });
+
+        if (user.selectedRoomId && !user.rooms.some((room) => room.roomId === user.selectedRoomId)) {
+          user.selectedRoomId = user.rooms[0] ? user.rooms[0].roomId : null;
+        }
+
+        renderRooms(user);
+        updateRoomHeader(user);
+      }
+
+      async function fetchRooms(user) {
+        if (!user.token) {
+          return;
+        }
+
+        const response = await api('/api/v1/message-rooms?limit=50', { token: user.token });
+        const rooms = ((response && response.data) || []).map(normalizeRoom);
+        replaceRooms(user, rooms);
+        logLine(`${user.label} fetched ${rooms.length} rooms`, 'good');
+      }
+
+      async function loadMessages(user, roomId) {
+        if (!user.token) {
+          return;
+        }
+
+        const response = await api(`/api/v1/message-rooms/${roomId}/messages?limit=100`, { token: user.token });
+        const data = response && response.data ? response.data : {};
+        user.roomMessages[roomId] = (data.messages || []).slice().reverse();
+        user.roomMeta[roomId] = data;
+        renderMessages(user);
+        updateRoomHeader(user);
+      }
+
+      function mergeMessage(user, roomId, message) {
+        const list = user.roomMessages[roomId] || [];
+        if (list.some((candidate) => Number(candidate.id) === Number(message.id))) {
+          return;
+        }
+        list.push(message);
+        list.sort((a, b) => Number(a.id) - Number(b.id));
+        user.roomMessages[roomId] = list;
+      }
+
+      function subscribeUnread(user) {
+        if (!user.client) return;
+        if (user.unreadSubscription) {
+          user.unreadSubscription.unsubscribe();
+        }
+
+        user.unreadSubscription = user.client.subscribe('/user/queue/unread', (frame) => {
+          const event = safeJson(frame.body);
+          if (!event || !event.unread) return;
+          const roomId = Number(event.roomId);
+          const unreadCount = Number(event.unread.unreadCount || 0);
+          const room = user.rooms.find((candidate) => candidate.roomId === roomId);
+          if (room) {
+            room.unreadCount = unreadCount;
+            renderRooms(user);
+            updateRoomHeader(user);
+          }
+          logLine(`${user.label} unread room=${roomId} -> ${unreadCount}`, 'good');
+        });
+      }
+
+      function subscribeRoom(user, roomId) {
+        if (!user.client || !roomId) return;
+        if (user.roomSubscription) {
+          user.roomSubscription.unsubscribe();
+        }
+
+        user.roomSubscription = user.client.subscribe(`/sub/chat/rooms/${roomId}`, (frame) => {
+            const event = safeJson(frame.body);
+            if (!event) return;
+
+            if (event.type === 'MESSAGE' && event.message) {
+              mergeMessage(user, roomId, {
+              id: Number(event.message.id),
+              roomId: Number(event.message.roomId),
+              senderId: Number(event.message.senderId),
+              content: event.message.content,
+              createdAt: event.message.createdAt,
+            });
+
+            const room = user.rooms.find((candidate) => candidate.roomId === roomId);
+            if (room) {
+              room.lastMessageId = Number(event.message.id);
+              room.lastMessageContent = event.message.content;
+              room.lastMessageCreatedAt = event.message.createdAt;
+            }
+
+            if (user.selectedRoomId === roomId) {
+              renderMessages(user);
+            }
+            renderRooms(user);
+            updateRoomHeader(user);
+            logLine(`${user.label} recv MESSAGE room=${roomId} message=${event.message.id}`, 'good');
+          }
+
+          if (event.type === 'READ' && event.read) {
+            const room = user.rooms.find((candidate) => candidate.roomId === roomId);
+            if (room) {
+              const readId = Number(event.read.lastReadMessageId);
+              const readerId = Number(event.read.readerId);
+              if (readerId === Number(user.memberId)) {
+                room.myLastReadMessageId = readId;
+              } else {
+                room.otherLastReadMessageId = readId;
+              }
+              updateRoomHeader(user);
+              renderRooms(user);
+            }
+            logLine(`${user.label} recv READ room=${roomId} reader=${event.read.readerId} last=${event.read.lastReadMessageId}`, 'good');
+          }
+        });
+      }
+
+      async function selectRoom(user, roomId) {
+        user.selectedRoomId = Number(roomId);
+        renderRooms(user);
+        updateButtons(user);
+        updateRoomHeader(user);
+        await loadMessages(user, user.selectedRoomId);
+        if (user.connected) {
+          subscribeRoom(user, user.selectedRoomId);
+        }
+      }
+
+      async function login(user) {
+        const email = el(`${user.prefix}_email`).value.trim();
+        const password = el(`${user.prefix}_pw`).value;
+        const response = await api('/api/v1/auth/login', {
+          method: 'POST',
+          body: { email, password },
+        });
+
+        const token = response && response.data ? response.data.accessToken : null;
+        if (!token) {
+          throw new Error('accessToken not found');
+        }
+
+        user.token = token;
+        user.memberId = decodeJwtSubject(token);
+        el(`${user.prefix}_token`).textContent = token;
+        el(`${user.prefix}_me`).textContent = user.memberId || '-';
+        setStatus(user, 'logged-in');
+        updateButtons(user);
+        await fetchRooms(user);
+        logLine(`${user.label} login success memberId=${user.memberId}`, 'good');
+      }
+
+      function connect(user) {
+        if (!user.token || user.connected) {
+          return;
+        }
+
+        const client = new StompJs.Client({
+          webSocketFactory: () => new SockJS(baseUrl + '/ws'),
+          connectHeaders: { Authorization: `Bearer ${user.token}` },
+          reconnectDelay: 0,
+          debug: () => {},
+        });
+
+        client.onConnect = () => {
+          user.client = client;
+          user.connected = true;
+          setStatus(user, 'connected');
+          updateButtons(user);
+          subscribeUnread(user);
+          if (user.selectedRoomId) {
+            subscribeRoom(user, user.selectedRoomId);
+          }
+          logLine(`${user.label} websocket connected`, 'good');
+        };
+
+        client.onStompError = (frame) => {
+          logLine(`${user.label} stomp error: ${frame.headers.message || 'unknown'}`, 'bad');
+        };
+
+        client.onWebSocketClose = () => {
+          user.connected = false;
+          setStatus(user, user.token ? 'logged-in' : 'offline');
+          updateButtons(user);
+          logLine(`${user.label} websocket closed`);
+        };
+
+        client.activate();
+      }
+
+      function disconnect(user) {
+        if (user.roomSubscription) {
+          user.roomSubscription.unsubscribe();
+          user.roomSubscription = null;
+        }
+        if (user.unreadSubscription) {
+          user.unreadSubscription.unsubscribe();
+          user.unreadSubscription = null;
+        }
+        if (user.client) {
+          user.client.deactivate();
+          user.client = null;
+        }
+        user.connected = false;
+        setStatus(user, user.token ? 'logged-in' : 'offline');
+        updateButtons(user);
+      }
+
+      async function createRoom(user) {
+        if (!user.token) {
+          throw new Error(`${user.label} is not logged in`);
+        }
+
+        const peer = otherUser(user);
+        const postId = Number(el('postId').value);
+        const explicitPartnerId = el('partnerMemberId').value ? Number(el('partnerMemberId').value) : null;
+        const fallbackPartnerId = explicitPartnerId || (peer && peer.memberId ? Number(peer.memberId) : null);
+
+        const body = {
+          postId,
+          requesterIsAnonymous: el('requesterIsAnonymous').checked,
+          ...(fallbackPartnerId ? { partnerMemberId: fallbackPartnerId } : {}),
+        };
+
+        const response = await api('/api/v1/message-rooms', {
+          method: 'POST',
+          token: user.token,
+          body,
+        });
+
+        const roomId = Number(response && response.data ? response.data.roomId : 0);
+        logLine(`${user.label} createRoom -> room=${roomId}`, 'good');
+        await fetchRooms(user);
+        if (peer && peer.token) {
+          await fetchRooms(peer);
+        }
+        if (roomId) {
+          await selectRoom(user, roomId);
+        }
+      }
+
+      async function sendMessage(user) {
+        const roomId = user.selectedRoomId;
+        if (!user.token || !roomId) {
+          return;
+        }
+
+        const input = el(`${user.prefix}_msg_input`);
+        const content = input.value.trim();
+        if (!content) {
+          return;
+        }
+
+        const nowMillis = Date.now();
+        if (user.isSending) {
+          return;
+        }
+
+        if (content === user.lastSentContent && nowMillis - user.lastSentAt < 350) {
+          return;
+        }
+
+        user.isSending = true;
+
+        try {
+          await api(`/api/v1/message-rooms/${roomId}/messages`, {
+            method: 'POST',
+            token: user.token,
+            body: { content },
+          });
+
+          user.lastSentAt = nowMillis;
+          user.lastSentContent = content;
+          input.value = '';
+          logLine(`${user.label} sendMessage room=${roomId}`, 'good');
+        } finally {
+          window.setTimeout(() => {
+            user.isSending = false;
+          }, 80);
+        }
+      }
+
+      async function markRead(user, silent = false) {
+        const roomId = user.selectedRoomId;
+        if (!user.token || !roomId) {
+          return;
+        }
+
+        const list = user.roomMessages[roomId] || [];
+        const last = list[list.length - 1];
+        if (!last) {
+          return;
+        }
+
+        await api(`/api/v1/message-rooms/${roomId}/read`, {
+          method: 'PATCH',
+          token: user.token,
+          body: { lastReadMessageId: Number(last.id) },
+        });
+
+        const room = user.rooms.find((candidate) => candidate.roomId === roomId);
+        if (room) {
+          room.myLastReadMessageId = Number(last.id);
+          room.unreadCount = 0;
+        }
+        renderRooms(user);
+        updateRoomHeader(user);
+        if (!silent) {
+          logLine(`${user.label} markRead room=${roomId} last=${last.id}`, 'good');
+        }
+      }
+
+      function bindUser(user) {
+        el(`${user.prefix}_login`).onclick = () => login(user).catch((error) => logLine(`${user.label} login failed: ${error.message}`, 'bad'));
+        el(`${user.prefix}_connect`).onclick = () => connect(user);
+        el(`${user.prefix}_disconnect`).onclick = () => disconnect(user);
+        el(`${user.prefix}_rooms_refresh`).onclick = () => fetchRooms(user).catch((error) => logLine(`${user.label} rooms failed: ${error.message}`, 'bad'));
+        el(`${user.prefix}_send`).onclick = () => sendMessage(user).catch((error) => logLine(`${user.label} send failed: ${error.message}`, 'bad'));
+        el(`${user.prefix}_read`).onclick = () => markRead(user).catch((error) => logLine(`${user.label} read failed: ${error.message}`, 'bad'));
+        el(`${user.prefix}_room_filter`).oninput = () => renderRooms(user);
+        el(`${user.prefix}_msg_input`).addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter') return;
+          event.preventDefault();
+          if (event.isComposing || event.keyCode === 229) return;
+          if (event.repeat) return;
+          sendMessage(user).catch((error) => logLine(`${user.label} send failed: ${error.message}`, 'bad'));
+        });
+        updateButtons(user);
+        renderRooms(user);
+        renderMessages(user);
+      }
+
+      bindUser(users.a);
+      bindUser(users.b);
+
+      el('createAsA').onclick = () => createRoom(users.a).catch((error) => logLine(`A create room failed: ${error.message}`, 'bad'));
+      el('createAsB').onclick = () => createRoom(users.b).catch((error) => logLine(`B create room failed: ${error.message}`, 'bad'));
+      el('refreshAll').onclick = () => {
+        Promise.all([
+          fetchRooms(users.a).catch((error) => logLine(`A rooms failed: ${error.message}`, 'bad')),
+          fetchRooms(users.b).catch((error) => logLine(`B rooms failed: ${error.message}`, 'bad')),
+        ]);
+      };
+      el('markAllRead').onclick = () => {
+        Promise.all([
+          markRead(users.a, true).catch((error) => logLine(`A read failed: ${error.message}`, 'bad')),
+          markRead(users.b, true).catch((error) => logLine(`B read failed: ${error.message}`, 'bad')),
+        ]);
+      };
+      el('clearLog').onclick = () => {
+        el('log').innerHTML = '';
+      };
+    </script>
+  </body>
+</html>

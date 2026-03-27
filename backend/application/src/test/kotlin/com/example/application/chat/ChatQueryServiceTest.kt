@@ -79,6 +79,13 @@ class ChatQueryServiceTest {
         `when`(chatMessageReadRepository.findBefore(room.id, 100L, 20)).thenReturn(
             listOf(
                 ChatQueryResult.MessageSummary(
+                    id = 91L,
+                    roomId = room.id,
+                    senderId = 1L,
+                    content = "newer message",
+                    createdAt = LocalDateTime.of(2026, 3, 28, 1, 1),
+                ),
+                ChatQueryResult.MessageSummary(
                     id = 90L,
                     roomId = room.id,
                     senderId = 2L,
@@ -98,8 +105,9 @@ class ChatQueryServiceTest {
         )
 
         assertEquals(room.id, result.roomId)
-        assertEquals(1, result.messages.size)
+        assertEquals(2, result.messages.size)
         assertEquals(90L, result.messages.first().id)
+        assertEquals(91L, result.messages.last().id)
         assertEquals(90L, result.nextBeforeMessageId)
     }
 
@@ -120,6 +128,24 @@ class ChatQueryServiceTest {
         }
 
         assertEquals(ErrorCode.UNAUTHORIZED, exception.errorCode)
+    }
+
+    @Test
+    fun `get messages returns chat room not found when room is missing`() {
+        `when`(messageRoomRepository.findById(999L)).thenReturn(Optional.empty())
+
+        val exception = assertThrows(BusinessException::class.java) {
+            chatQueryService.getMessages(
+                ChatQuery.GetMessages(
+                    requesterId = 1L,
+                    roomId = 999L,
+                    beforeMessageId = null,
+                    limit = 30,
+                )
+            )
+        }
+
+        assertEquals(ErrorCode.CHAT_ROOM_NOT_FOUND, exception.errorCode)
     }
 
     private fun room(member1Id: Long, member2Id: Long): MessageRoom {

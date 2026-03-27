@@ -22,3 +22,6 @@ Thumbs.db
 .kotlin/
 .vscode/
 .omx/
+
+# --- Local env for docker compose ---
+.env

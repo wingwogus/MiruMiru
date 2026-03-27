@@ -30,16 +30,16 @@ Right-click package → Refactor → Rename (Shift + F6)
 Imports will update automatically.
 
 2️⃣ Configure Your Own Database
-The template uses H2 for easy execution.
-Replace it with your actual DB (MySQL/PostgreSQL/etc)
+Local profile uses PostgreSQL.
+You can override credentials via env vars.
 
 src/main/resources/application-local.yml:
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/your_db
-    username: your_user
-    password: your_password
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:postgresql://localhost:5432/MiruMiru
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
 
 3️⃣ Replace JWT Secret Key
 A sample secret is included.
@@ -72,3 +72,21 @@ Runs with the application-local profile by default.
 ⭐ Official Method: Gradle bootRun
 ./gradlew :api:bootRun
 
+🐳 One-click Dev (Docker Compose)
+Run PostgreSQL + Redis + API in one command:
+
+1) (Optional) copy env template
+cp ../.env.example ../.env
+
+2) start everything
+docker compose -f ../compose.yml up --build
+
+Then open:
+- Swagger: http://localhost:8080/swagger-ui/index.html
+- Chat test page: http://localhost:8080/chat-test.html
+
+
+🧹 Local DB Reset (DROP SCHEMA)
+If your local `MiruMiru` DB has old tables/data:
+
+PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -p 5432 -U $POSTGRES_USER -d MiruMiru -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"

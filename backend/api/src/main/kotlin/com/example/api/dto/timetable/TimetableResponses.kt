@@ -55,6 +55,7 @@ object TimetableResponses {
 
     data class LectureItem(
         val id: Long,
+        val courseId: Long,
         val code: String,
         val name: String,
         val professor: String,
@@ -66,6 +67,7 @@ object TimetableResponses {
             fun from(result: TimetableQueryResult.LectureItem): LectureItem {
                 return LectureItem(
                     id = result.id,
+                    courseId = result.courseId,
                     code = result.code,
                     name = result.name,
                     professor = result.professor,

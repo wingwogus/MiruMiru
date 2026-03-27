@@ -7,6 +7,7 @@ private enum BoardsRoute: Hashable {
 
 struct BoardsRootView: View {
     @ObservedObject private var session: AppSession
+    @ObservedObject private var syncStore: BoardsSyncStore
     @StateObject private var viewModel: BoardsViewModel
     @Binding private var isTabBarHidden: Bool
     @Binding private var pendingPostId: Int64?
@@ -18,11 +19,13 @@ struct BoardsRootView: View {
     init(
         session: AppSession,
         client: BoardsClientProtocol,
+        syncStore: BoardsSyncStore,
         isTabBarHidden: Binding<Bool> = .constant(false),
         pendingPostId: Binding<Int64?> = .constant(nil),
         isActive: Bool = true
     ) {
         self.session = session
+        self.syncStore = syncStore
         self.client = client
         self._isTabBarHidden = isTabBarHidden
         self._pendingPostId = pendingPostId
@@ -34,6 +37,7 @@ struct BoardsRootView: View {
         NavigationStack(path: $path) {
             BoardsHomeView(
                 viewModel: viewModel,
+                syncStore: syncStore,
                 onBoardTap: { board in
                     path.append(.board(board))
                 },
@@ -47,6 +51,7 @@ struct BoardsRootView: View {
                     BoardFeedView(
                         session: session,
                         client: client,
+                        syncStore: syncStore,
                         board: board,
                         onPostTap: { postId in
                             path.append(.post(postId))
@@ -56,6 +61,7 @@ struct BoardsRootView: View {
                     PostDetailView(
                         session: session,
                         client: client,
+                        syncStore: syncStore,
                         postId: postId
                     )
                 }
@@ -89,6 +95,11 @@ struct BoardsRootView: View {
         .onChange(of: viewModel.invalidateStateIfNeeded()) { _, shouldInvalidate in
             guard shouldInvalidate else { return }
             session.invalidateSession()
+        }
+        .onChange(of: viewModel.hotPostsSnapshotForSync()) { _, hotPosts in
+            if let hotPosts {
+                syncStore.ingestHotPosts(hotPosts)
+            }
         }
     }
 
@@ -155,6 +166,28 @@ final class BoardsViewModel: ObservableObject {
         return false
     }
 
+    func hotPostsSnapshotForSync() -> [HotPostSummary]? {
+        switch state {
+        case let .loaded(content):
+            return content.hotPosts
+        case .empty:
+            return []
+        default:
+            return nil
+        }
+    }
+
+    func displayHotPosts(using syncStore: BoardsSyncStore, query: String) -> [HotPostSummary] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        let projectedHotPosts = syncStore.projectHotPosts(hotPosts)
+        guard trimmed.isEmpty == false else { return projectedHotPosts }
+
+        return projectedHotPosts.filter {
+            $0.title.localizedCaseInsensitiveContains(trimmed)
+                || $0.boardName.localizedCaseInsensitiveContains(trimmed)
+        }
+    }
+
     private func load() async {
         state = .loading
 
@@ -203,6 +236,7 @@ final class BoardsViewModel: ObservableObject {
 
 private struct BoardsHomeView: View {
     @ObservedObject var viewModel: BoardsViewModel
+    @ObservedObject var syncStore: BoardsSyncStore
     let onBoardTap: (BoardSummary) -> Void
     let onHotPostTap: (Int64) -> Void
 
@@ -246,7 +280,7 @@ private struct BoardsHomeView: View {
 
     @ViewBuilder
     private var loadedContent: some View {
-        let hotPosts = viewModel.filteredHotPosts(query: query)
+        let hotPosts = viewModel.displayHotPosts(using: syncStore, query: query)
         let sections = viewModel.filteredSections(query: query)
 
         if hotPosts.isEmpty == false {
@@ -354,6 +388,7 @@ final class BoardFeedViewModel: ObservableObject {
 
 private struct BoardFeedView: View {
     @ObservedObject private var session: AppSession
+    @ObservedObject private var syncStore: BoardsSyncStore
     @StateObject private var viewModel: BoardFeedViewModel
     private let client: BoardsClientProtocol
     let onPostTap: (Int64) -> Void
@@ -363,10 +398,12 @@ private struct BoardFeedView: View {
     init(
         session: AppSession,
         client: BoardsClientProtocol,
+        syncStore: BoardsSyncStore,
         board: BoardSummary,
         onPostTap: @escaping (Int64) -> Void
     ) {
         self.session = session
+        self.syncStore = syncStore
         self.client = client
         self.onPostTap = onPostTap
         _viewModel = StateObject(wrappedValue: BoardFeedViewModel(client: client, board: board))
@@ -399,7 +436,7 @@ private struct BoardFeedView: View {
                     )
                     .padding(.top, 24)
                 case let .loaded(posts):
-                    ForEach(posts) { post in
+                    ForEach(syncStore.projectBoardPosts(posts)) { post in
                         Button {
                             onPostTap(post.id)
                         } label: {
@@ -459,11 +496,13 @@ final class PostDetailViewModel: ObservableObject {
     @Published var didDeletePost = false
 
     private let client: BoardsClientProtocol
+    private let syncStore: BoardsSyncStore
     private let postId: Int64
     private var hasLoaded = false
 
-    init(client: BoardsClientProtocol, postId: Int64) {
+    init(client: BoardsClientProtocol, syncStore: BoardsSyncStore, postId: Int64) {
         self.client = client
+        self.syncStore = syncStore
         self.postId = postId
     }
 
@@ -481,6 +520,29 @@ final class PostDetailViewModel: ObservableObject {
         guard case let .loaded(detail) = state, isSubmitting == false else { return }
         isSubmitting = true
         actionMessage = nil
+        let updatedIsLiked = detail.isLikedByMe == false
+        let updatedLikeCount = max(0, detail.likeCount + (updatedIsLiked ? 1 : -1))
+        state = .loaded(
+            PostDetailContent(
+                postId: detail.postId,
+                boardId: detail.boardId,
+                boardCode: detail.boardCode,
+                boardName: detail.boardName,
+                title: detail.title,
+                content: detail.content,
+                authorDisplayName: detail.authorDisplayName,
+                isAnonymous: detail.isAnonymous,
+                isMine: detail.isMine,
+                isLikedByMe: updatedIsLiked,
+                likeCount: updatedLikeCount,
+                commentCount: detail.commentCount,
+                comments: detail.comments,
+                images: detail.images,
+                createdAt: detail.createdAt,
+                updatedAt: detail.updatedAt
+            )
+        )
+        syncStore.setLikeCount(postId: detail.postId, likeCount: updatedLikeCount)
 
         do {
             if detail.isLikedByMe {
@@ -488,10 +550,16 @@ final class PostDetailViewModel: ObservableObject {
             } else {
                 try await client.likePost(postId: detail.postId)
             }
-            await load()
+            Task {
+                await syncStore.refreshHotPosts(using: client)
+            }
         } catch let error as BoardsClientError {
+            state = .loaded(detail)
+            syncStore.setLikeCount(postId: detail.postId, likeCount: detail.likeCount)
             handleActionError(error)
         } catch {
+            state = .loaded(detail)
+            syncStore.setLikeCount(postId: detail.postId, likeCount: detail.likeCount)
             actionMessage = BoardsFailure.unexpected.message
         }
 
@@ -547,6 +615,10 @@ final class PostDetailViewModel: ObservableObject {
 
         do {
             try await client.deletePost(postId: postId)
+            syncStore.markDeleted(postId: postId)
+            Task {
+                await syncStore.refreshHotPosts(using: client)
+            }
             didDeletePost = true
         } catch let error as BoardsClientError {
             handleActionError(error)
@@ -621,10 +693,11 @@ private struct PostDetailView: View {
     init(
         session: AppSession,
         client: BoardsClientProtocol,
+        syncStore: BoardsSyncStore,
         postId: Int64
     ) {
         self.session = session
-        _viewModel = StateObject(wrappedValue: PostDetailViewModel(client: client, postId: postId))
+        _viewModel = StateObject(wrappedValue: PostDetailViewModel(client: client, syncStore: syncStore, postId: postId))
     }
 
     var body: some View {
@@ -1740,19 +1813,22 @@ struct BoardsRootView_Previews: PreviewProvider {
         Group {
             BoardsRootView(
                 session: PreviewFactory.makeSession(state: .authenticated),
-                client: PreviewBoardsClient(scenario: .loaded)
+                client: PreviewBoardsClient(scenario: .loaded),
+                syncStore: BoardsSyncStore()
             )
             .previewDisplayName("Boards Home - Loaded")
 
             BoardsRootView(
                 session: PreviewFactory.makeSession(state: .authenticated),
-                client: PreviewBoardsClient(scenario: .empty)
+                client: PreviewBoardsClient(scenario: .empty),
+                syncStore: BoardsSyncStore()
             )
             .previewDisplayName("Boards Home - Empty")
 
             BoardFeedView(
                 session: PreviewFactory.makeSession(state: .authenticated),
                 client: PreviewBoardsClient(scenario: .loaded),
+                syncStore: BoardsSyncStore(),
                 board: PreviewBoardsData.freeBoard,
                 onPostTap: { _ in }
             )
@@ -1761,6 +1837,7 @@ struct BoardsRootView_Previews: PreviewProvider {
             PostDetailView(
                 session: PreviewFactory.makeSession(state: .authenticated),
                 client: PreviewBoardsClient(scenario: .loaded),
+                syncStore: BoardsSyncStore(),
                 postId: 2001
             )
             .previewDisplayName("Post Detail - Loaded")

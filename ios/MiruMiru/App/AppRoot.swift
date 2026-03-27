@@ -2,9 +2,11 @@ import SwiftUI
 
 struct AppRoot: View {
     @ObservedObject var session: AppSession
+    @StateObject private var boardsSyncStore = BoardsSyncStore()
     private let homeClient: HomeClientProtocol
     private let timetableClient: TimetableClientProtocol
     private let boardsClient: BoardsClientProtocol
+    private let courseReviewsClient: CourseReviewsClientProtocol
     @State private var authRoute: AuthRoute = .login
     @State private var loginPrefillEmail = ""
 
@@ -12,12 +14,14 @@ struct AppRoot: View {
         session: AppSession,
         homeClient: HomeClientProtocol,
         timetableClient: TimetableClientProtocol,
-        boardsClient: BoardsClientProtocol
+        boardsClient: BoardsClientProtocol,
+        courseReviewsClient: CourseReviewsClientProtocol
     ) {
         self.session = session
         self.homeClient = homeClient
         self.timetableClient = timetableClient
         self.boardsClient = boardsClient
+        self.courseReviewsClient = courseReviewsClient
     }
 
     var body: some View {
@@ -32,7 +36,9 @@ struct AppRoot: View {
                     session: session,
                     homeClient: homeClient,
                     timetableClient: timetableClient,
-                    boardsClient: boardsClient
+                    boardsClient: boardsClient,
+                    courseReviewsClient: courseReviewsClient,
+                    boardsSyncStore: boardsSyncStore
                 )
             }
         }
@@ -41,6 +47,9 @@ struct AppRoot: View {
         .onChange(of: session.state) { _, newState in
             if newState == .unauthenticated || newState == .invalidSession {
                 authRoute = .login
+            }
+            if newState != .authenticated {
+                boardsSyncStore.reset()
             }
         }
     }
@@ -107,7 +116,8 @@ struct AppRoot_Previews: PreviewProvider {
                 session: PreviewFactory.makeSession(state: .unauthenticated),
                 homeClient: PreviewHomeClient.loaded(),
                 timetableClient: PreviewTimetableClient.loaded(),
-                boardsClient: PreviewBoardsClient(scenario: .loaded)
+                boardsClient: PreviewBoardsClient(scenario: .loaded),
+                courseReviewsClient: PreviewCourseReviewsClient.loaded()
             )
             .previewDisplayName("AppRoot Login")
 
@@ -115,7 +125,8 @@ struct AppRoot_Previews: PreviewProvider {
                 session: PreviewFactory.makeSession(state: .authenticated),
                 homeClient: PreviewHomeClient.loaded(),
                 timetableClient: PreviewTimetableClient.loaded(),
-                boardsClient: PreviewBoardsClient(scenario: .loaded)
+                boardsClient: PreviewBoardsClient(scenario: .loaded),
+                courseReviewsClient: PreviewCourseReviewsClient.loaded()
             )
             .previewDisplayName("AppRoot Home")
         }

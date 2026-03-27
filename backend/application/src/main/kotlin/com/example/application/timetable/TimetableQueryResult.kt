@@ -22,6 +22,7 @@ object TimetableQueryResult {
 
     data class LectureItem(
         val id: Long,
+        val courseId: Long,
         val code: String,
         val name: String,
         val professor: String,

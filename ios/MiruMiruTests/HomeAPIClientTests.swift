@@ -84,23 +84,66 @@ final class HomeAPIClientTests: XCTestCase {
         XCTAssertTrue(timetable.lectures.isEmpty)
     }
 
-    func testFetchProfileMapsUnauthorizedToInvalidSession() async {
-        let client = makeClient(
-            tokenStore: tokenStore(),
-            expectedPath: "/api/v1/members/me",
-            responseBody: """
-            {
-              "success": false,
-              "data": null,
-              "error": {
-                "code": "AUTH_001",
-                "message": "Unauthorized",
-                "detail": null
-              }
+    func testFetchProfileMapsFailedReissueToInvalidSession() async {
+        let store = tokenStore()
+        MockURLProtocol.requestHandler = { request in
+            let path = try XCTUnwrap(request.url?.path)
+
+            if path == "/api/v1/members/me" {
+                let response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 401,
+                    httpVersion: nil,
+                    headerFields: ["Content-Type": "application/json"]
+                )!
+                return (response, Data("""
+                {
+                  "success": false,
+                  "data": null,
+                  "error": {
+                    "code": "AUTH_001",
+                    "message": "Unauthorized",
+                    "detail": null
+                  }
+                }
+                """.utf8))
             }
-            """,
-            statusCode: 401
+
+            if path == "/api/v1/auth/reissue" {
+                let response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 401,
+                    httpVersion: nil,
+                    headerFields: ["Content-Type": "application/json"]
+                )!
+                return (response, Data("""
+                {
+                  "success": false,
+                  "data": null,
+                  "error": {
+                    "code": "AUTH_001",
+                    "message": "Unauthorized",
+                    "detail": null
+                  }
+                }
+                """.utf8))
+            }
+
+            XCTFail("Unexpected path: \(path)")
+            throw URLError(.badURL)
+        }
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let apiClient = APIClient(
+            environment: AppEnvironment(
+                apiBaseURL: URL(string: "http://localhost")!,
+                enforcesAcademicSuffixValidation: true
+            ),
+            session: session
         )
+        let client = HomeAPIClient(apiClient: apiClient, tokenStore: store)
 
         do {
             _ = try await client.fetchProfile()
@@ -110,6 +153,319 @@ final class HomeAPIClientTests: XCTestCase {
         } catch {
             XCTFail("Unexpected error: \(error)")
         }
+    }
+
+    func testFetchProfileReissuesExpiredAccessTokenAndRetriesRequest() async throws {
+        let store = tokenStore()
+        var membersMeCalls = 0
+
+        MockURLProtocol.requestHandler = { request in
+            let path = try XCTUnwrap(request.url?.path)
+            let response: HTTPURLResponse
+            let body: Data
+
+            switch path {
+            case "/api/v1/members/me":
+                membersMeCalls += 1
+                if membersMeCalls == 1 {
+                    XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer preview-access")
+                    response = HTTPURLResponse(
+                        url: request.url!,
+                        statusCode: 401,
+                        httpVersion: nil,
+                        headerFields: ["Content-Type": "application/json"]
+                    )!
+                    body = Data("""
+                    {
+                      "success": false,
+                      "data": null,
+                      "error": {
+                        "code": "AUTH_001",
+                        "message": "Unauthorized",
+                        "detail": null
+                      }
+                    }
+                    """.utf8)
+                } else {
+                    XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer refreshed-access")
+                    response = HTTPURLResponse(
+                        url: request.url!,
+                        statusCode: 200,
+                        httpVersion: nil,
+                        headerFields: ["Content-Type": "application/json"]
+                    )!
+                    body = Data("""
+                    {
+                      "success": true,
+                      "data": {
+                        "memberId": 1,
+                        "email": "test@tokyo.ac.jp",
+                        "nickname": "test-user",
+                        "university": {
+                          "universityId": 10,
+                          "name": "The University of Tokyo",
+                          "emailDomain": "tokyo.ac.jp"
+                        },
+                        "major": {
+                          "majorId": 20,
+                          "code": "CS",
+                          "name": "Computer Science"
+                        }
+                      },
+                      "error": null
+                    }
+                    """.utf8)
+                }
+            case "/api/v1/auth/reissue":
+                let requestBody = try XCTUnwrap(request.httpBody)
+                let decoded = try JSONDecoder().decode(ReissueRequest.self, from: requestBody)
+                XCTAssertEqual(decoded, ReissueRequest(accessToken: "preview-access", refreshToken: "preview-refresh"))
+                response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: nil,
+                    headerFields: ["Content-Type": "application/json"]
+                )!
+                body = Data("""
+                {
+                  "success": true,
+                  "data": {
+                    "accessToken": "refreshed-access",
+                    "refreshToken": "refreshed-refresh"
+                  },
+                  "error": null
+                }
+                """.utf8)
+            default:
+                XCTFail("Unexpected path: \(path)")
+                throw URLError(.badURL)
+            }
+
+            return (response, body)
+        }
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let apiClient = APIClient(
+            environment: AppEnvironment(
+                apiBaseURL: URL(string: "http://localhost")!,
+                enforcesAcademicSuffixValidation: true
+            ),
+            session: session
+        )
+        let client = HomeAPIClient(apiClient: apiClient, tokenStore: store)
+
+        let profile = try await client.fetchProfile()
+
+        XCTAssertEqual(membersMeCalls, 2)
+        XCTAssertEqual(profile.nickname, "test-user")
+        XCTAssertEqual(store.storedSession, TokenPair(accessToken: "refreshed-access", refreshToken: "refreshed-refresh"))
+    }
+
+    func testConcurrentClientsShareSingleReissueFlow() async throws {
+        let store = tokenStore()
+        let state = ConcurrentRefreshState()
+
+        MockURLProtocol.requestHandler = { request in
+            let path = try XCTUnwrap(request.url?.path)
+            let response: HTTPURLResponse
+            let body: Data
+
+            switch path {
+            case "/api/v1/members/me":
+                let authorization = request.value(forHTTPHeaderField: "Authorization")
+                if authorization == "Bearer preview-access" {
+                    state.recordInitialMemberRequest()
+                    response = HTTPURLResponse(
+                        url: request.url!,
+                        statusCode: 401,
+                        httpVersion: nil,
+                        headerFields: ["Content-Type": "application/json"]
+                    )!
+                    body = Data("""
+                    {
+                      "success": false,
+                      "data": null,
+                      "error": {
+                        "code": "AUTH_001",
+                        "message": "Unauthorized",
+                        "detail": null
+                      }
+                    }
+                    """.utf8)
+                } else {
+                    XCTAssertEqual(authorization, "Bearer refreshed-access")
+                    state.recordRetriedMemberRequest()
+                    response = HTTPURLResponse(
+                        url: request.url!,
+                        statusCode: 200,
+                        httpVersion: nil,
+                        headerFields: ["Content-Type": "application/json"]
+                    )!
+                    body = Data("""
+                    {
+                      "success": true,
+                      "data": {
+                        "memberId": 1,
+                        "email": "test@tokyo.ac.jp",
+                        "nickname": "test-user",
+                        "university": {
+                          "universityId": 10,
+                          "name": "The University of Tokyo",
+                          "emailDomain": "tokyo.ac.jp"
+                        },
+                        "major": {
+                          "majorId": 20,
+                          "code": "CS",
+                          "name": "Computer Science"
+                        }
+                      },
+                      "error": null
+                    }
+                    """.utf8)
+                }
+            case "/api/v1/auth/reissue":
+                state.recordReissueRequest()
+                let requestBody = try XCTUnwrap(request.httpBody)
+                let decoded = try JSONDecoder().decode(ReissueRequest.self, from: requestBody)
+                XCTAssertEqual(decoded, ReissueRequest(accessToken: "preview-access", refreshToken: "preview-refresh"))
+                response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: nil,
+                    headerFields: ["Content-Type": "application/json"]
+                )!
+                body = Data("""
+                {
+                  "success": true,
+                  "data": {
+                    "accessToken": "refreshed-access",
+                    "refreshToken": "refreshed-refresh"
+                  },
+                  "error": null
+                }
+                """.utf8)
+            default:
+                XCTFail("Unexpected path: \(path)")
+                throw URLError(.badURL)
+            }
+
+            return (response, body)
+        }
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let apiClient = APIClient(
+            environment: AppEnvironment(
+                apiBaseURL: URL(string: "http://localhost")!,
+                enforcesAcademicSuffixValidation: true
+            ),
+            session: session
+        )
+        let sharedExecutor = AuthorizedRequestExecutor(apiClient: apiClient, tokenStore: store)
+        let firstClient = HomeAPIClient(
+            apiClient: apiClient,
+            tokenStore: store,
+            authorizedExecutor: sharedExecutor
+        )
+        let secondClient = HomeAPIClient(
+            apiClient: apiClient,
+            tokenStore: store,
+            authorizedExecutor: sharedExecutor
+        )
+
+        async let firstProfile = firstClient.fetchProfile()
+        async let secondProfile = secondClient.fetchProfile()
+        let profiles = try await [firstProfile, secondProfile]
+
+        XCTAssertEqual(profiles.map(\.nickname), ["test-user", "test-user"])
+        XCTAssertEqual(state.initialMemberRequestCount, 2)
+        XCTAssertEqual(state.reissuedRequestCount, 1)
+        XCTAssertEqual(state.retriedMemberRequestCount, 2)
+        XCTAssertEqual(store.storedSession, TokenPair(accessToken: "refreshed-access", refreshToken: "refreshed-refresh"))
+    }
+
+    func testFetchProfileMapsReissuePersistenceFailureToInvalidSession() async {
+        let store = tokenStore()
+        store.shouldFailOnSave = true
+        var membersMeCalls = 0
+
+        MockURLProtocol.requestHandler = { request in
+            let path = try XCTUnwrap(request.url?.path)
+            let response: HTTPURLResponse
+            let body: Data
+
+            switch path {
+            case "/api/v1/members/me":
+                membersMeCalls += 1
+                XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer preview-access")
+                response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 401,
+                    httpVersion: nil,
+                    headerFields: ["Content-Type": "application/json"]
+                )!
+                body = Data("""
+                {
+                  "success": false,
+                  "data": null,
+                  "error": {
+                    "code": "AUTH_001",
+                    "message": "Unauthorized",
+                    "detail": null
+                  }
+                }
+                """.utf8)
+            case "/api/v1/auth/reissue":
+                response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: nil,
+                    headerFields: ["Content-Type": "application/json"]
+                )!
+                body = Data("""
+                {
+                  "success": true,
+                  "data": {
+                    "accessToken": "refreshed-access",
+                    "refreshToken": "refreshed-refresh"
+                  },
+                  "error": null
+                }
+                """.utf8)
+            default:
+                XCTFail("Unexpected path: \(path)")
+                throw URLError(.badURL)
+            }
+
+            return (response, body)
+        }
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let apiClient = APIClient(
+            environment: AppEnvironment(
+                apiBaseURL: URL(string: "http://localhost")!,
+                enforcesAcademicSuffixValidation: true
+            ),
+            session: session
+        )
+        let client = HomeAPIClient(apiClient: apiClient, tokenStore: store)
+
+        do {
+            _ = try await client.fetchProfile()
+            XCTFail("Expected invalid session")
+        } catch let error as HomeClientError {
+            XCTAssertEqual(error, .invalidSession)
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+
+        XCTAssertEqual(membersMeCalls, 1)
+        XCTAssertNil(store.storedSession)
     }
 
     private func makeClient(
@@ -148,5 +504,36 @@ final class HomeAPIClientTests: XCTestCase {
         let store = InMemoryTokenStore()
         store.storedSession = TokenPair(accessToken: "preview-access", refreshToken: "preview-refresh")
         return store
+    }
+}
+
+private final class ConcurrentRefreshState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _initialMemberRequestCount = 0
+    private var _retriedMemberRequestCount = 0
+    private var _reissuedRequestCount = 0
+
+    var initialMemberRequestCount: Int {
+        lock.withLock { _initialMemberRequestCount }
+    }
+
+    var retriedMemberRequestCount: Int {
+        lock.withLock { _retriedMemberRequestCount }
+    }
+
+    var reissuedRequestCount: Int {
+        lock.withLock { _reissuedRequestCount }
+    }
+
+    func recordInitialMemberRequest() {
+        lock.withLock { _initialMemberRequestCount += 1 }
+    }
+
+    func recordRetriedMemberRequest() {
+        lock.withLock { _retriedMemberRequestCount += 1 }
+    }
+
+    func recordReissueRequest() {
+        lock.withLock { _reissuedRequestCount += 1 }
     }
 }

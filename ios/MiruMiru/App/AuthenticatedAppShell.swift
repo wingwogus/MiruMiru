@@ -4,13 +4,16 @@ enum AuthenticatedTab: Hashable {
     case home
     case timetable
     case boards
+    case reviews
 }
 
 struct AuthenticatedAppShell: View {
     @ObservedObject private var session: AppSession
+    @ObservedObject private var boardsSyncStore: BoardsSyncStore
     private let homeClient: HomeClientProtocol
     private let timetableClient: TimetableClientProtocol
     private let boardsClient: BoardsClientProtocol
+    private let courseReviewsClient: CourseReviewsClientProtocol
     @State private var selectedTab: AuthenticatedTab = .home
     @State private var isTabBarHidden = false
     @State private var pendingBoardsPostId: Int64?
@@ -19,12 +22,16 @@ struct AuthenticatedAppShell: View {
         session: AppSession,
         homeClient: HomeClientProtocol,
         timetableClient: TimetableClientProtocol,
-        boardsClient: BoardsClientProtocol
+        boardsClient: BoardsClientProtocol,
+        courseReviewsClient: CourseReviewsClientProtocol,
+        boardsSyncStore: BoardsSyncStore
     ) {
         self.session = session
+        self.boardsSyncStore = boardsSyncStore
         self.homeClient = homeClient
         self.timetableClient = timetableClient
         self.boardsClient = boardsClient
+        self.courseReviewsClient = courseReviewsClient
     }
 
     var body: some View {
@@ -32,6 +39,7 @@ struct AuthenticatedAppShell: View {
             HomeView(
                 session: session,
                 client: homeClient,
+                boardsSyncStore: boardsSyncStore,
                 isActive: selectedTab == .home,
                 onSemesterTap: {
                     selectedTab = .timetable
@@ -60,6 +68,7 @@ struct AuthenticatedAppShell: View {
             BoardsRootView(
                 session: session,
                 client: boardsClient,
+                syncStore: boardsSyncStore,
                 isTabBarHidden: $isTabBarHidden,
                 pendingPostId: $pendingBoardsPostId,
                 isActive: selectedTab == .boards
@@ -67,6 +76,16 @@ struct AuthenticatedAppShell: View {
             .opacity(selectedTab == .boards ? 1 : 0)
             .allowsHitTesting(selectedTab == .boards)
             .accessibilityHidden(selectedTab != .boards)
+
+            CourseReviewsRootView(
+                session: session,
+                client: courseReviewsClient,
+                isTabBarHidden: $isTabBarHidden,
+                isActive: selectedTab == .reviews
+            )
+            .opacity(selectedTab == .reviews ? 1 : 0)
+            .allowsHitTesting(selectedTab == .reviews)
+            .accessibilityHidden(selectedTab != .reviews)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if isTabBarHidden == false {
@@ -75,8 +94,13 @@ struct AuthenticatedAppShell: View {
         }
         .animation(.easeInOut(duration: 0.18), value: isTabBarHidden)
         .onChange(of: selectedTab) { _, newValue in
-            if newValue != .boards {
+            if newValue != .boards, newValue != .reviews {
                 isTabBarHidden = false
+            }
+        }
+        .onChange(of: session.state) { _, newState in
+            if newState != .authenticated {
+                boardsSyncStore.reset()
             }
         }
     }
@@ -89,8 +113,7 @@ private struct AuthenticatedTabBar: View {
         .init(systemImage: "house.fill", title: "Home", tab: .home),
         .init(systemImage: "calendar", title: "Timetable", tab: .timetable),
         .init(systemImage: "list.bullet.rectangle.portrait", title: "Boards", tab: .boards),
-        .init(systemImage: "star.bubble", title: "Reviews", tab: nil),
-        .init(systemImage: "briefcase", title: "Career", tab: nil)
+        .init(systemImage: "star.fill", title: "Reviews", tab: .reviews)
     ]
 
     var body: some View {
@@ -99,8 +122,7 @@ private struct AuthenticatedTabBar: View {
                 Spacer()
 
                 Button {
-                    guard let tab = item.tab else { return }
-                    selectedTab = tab
+                    selectedTab = item.tab
                 } label: {
                     VStack(spacing: 6) {
                         Image(systemName: item.systemImage)
@@ -115,7 +137,6 @@ private struct AuthenticatedTabBar: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .disabled(item.tab == nil)
 
                 Spacer()
             }
@@ -142,9 +163,9 @@ private struct AuthenticatedTabBarItem: Identifiable {
     let id: String
     let systemImage: String
     let title: String
-    let tab: AuthenticatedTab?
+    let tab: AuthenticatedTab
 
-    init(systemImage: String, title: String, tab: AuthenticatedTab?) {
+    init(systemImage: String, title: String, tab: AuthenticatedTab) {
         self.id = title
         self.systemImage = systemImage
         self.title = title
@@ -158,7 +179,9 @@ struct AuthenticatedAppShell_Previews: PreviewProvider {
             session: PreviewFactory.makeSession(state: .authenticated),
             homeClient: PreviewHomeClient.loaded(),
             timetableClient: PreviewTimetableClient.loaded(),
-            boardsClient: PreviewBoardsClient(scenario: .loaded)
+            boardsClient: PreviewBoardsClient(scenario: .loaded),
+            courseReviewsClient: PreviewCourseReviewsClient.loaded(),
+            boardsSyncStore: BoardsSyncStore()
         )
     }
 }

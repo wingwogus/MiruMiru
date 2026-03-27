@@ -38,5 +38,8 @@ enum class ErrorCode(
     LECTURE_NOT_IN_SEMESTER("TIMETABLE_004", "error.lecture_not_in_semester", 400),
     TIMETABLE_LECTURE_NOT_FOUND("TIMETABLE_005", "error.timetable_lecture_not_found", 404),
     TIMETABLE_LECTURE_CONFLICT("TIMETABLE_006", "error.timetable_lecture_conflict", 409),
-
+    COURSE_NOT_FOUND("COURSE_001", "error.course_not_found", 404),
+    COURSE_REVIEW_NOT_FOUND("COURSE_002", "error.course_review_not_found", 404),
+    COURSE_REVIEW_ALREADY_EXISTS("COURSE_003", "error.course_review_already_exists", 409),
+    COURSE_REVIEW_TARGET_NOT_FOUND("COURSE_004", "error.course_review_target_not_found", 404)
 }

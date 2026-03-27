@@ -2,12 +2,16 @@ import Foundation
 
 final class BoardsAPIClient: BoardsClientProtocol, @unchecked Sendable {
     private let apiClient: APIClient
-    private let tokenStore: TokenStore
+    private let authorizedExecutor: AuthorizedRequestExecutor
     private let encoder = JSONEncoder()
 
-    init(apiClient: APIClient, tokenStore: TokenStore) {
+    init(
+        apiClient: APIClient,
+        tokenStore: TokenStore,
+        authorizedExecutor: AuthorizedRequestExecutor? = nil
+    ) {
         self.apiClient = apiClient
-        self.tokenStore = tokenStore
+        self.authorizedExecutor = authorizedExecutor ?? AuthorizedRequestExecutor(apiClient: apiClient, tokenStore: tokenStore)
     }
 
     func fetchBoards() async throws -> [BoardSummary] {
@@ -82,14 +86,11 @@ final class BoardsAPIClient: BoardsClientProtocol, @unchecked Sendable {
         method: HTTPMethod = .get,
         body: Data? = nil
     ) async throws -> Response {
-        let accessToken = try readAccessToken()
-
         do {
-            let (data, _) = try await apiClient.send(
+            let (data, _) = try await authorizedExecutor.send(
                 path: path,
                 method: method,
                 body: body,
-                accessToken: accessToken
             )
             let envelope = try apiClient.decode(APIResponseEnvelope<Response>.self, from: data)
             guard envelope.success, let payload = envelope.data else {
@@ -106,13 +107,10 @@ final class BoardsAPIClient: BoardsClientProtocol, @unchecked Sendable {
     }
 
     private func sendEmpty(path: String, method: HTTPMethod) async throws {
-        let accessToken = try readAccessToken()
-
         do {
-            let (data, _) = try await apiClient.send(
+            let (data, _) = try await authorizedExecutor.send(
                 path: path,
                 method: method,
-                accessToken: accessToken
             )
             let envelope = try apiClient.decode(APIResponseEnvelope<EmptyPayload>.self, from: data)
             guard envelope.success else {
@@ -124,20 +122,6 @@ final class BoardsAPIClient: BoardsClientProtocol, @unchecked Sendable {
             throw error
         } catch {
             throw BoardsClientError.unexpected
-        }
-    }
-
-    private func readAccessToken() throws -> String {
-        do {
-            guard let session = try tokenStore.readSession(),
-                  session.accessToken.isEmpty == false else {
-                throw BoardsClientError.invalidSession
-            }
-            return session.accessToken
-        } catch let error as BoardsClientError {
-            throw error
-        } catch {
-            throw BoardsClientError.invalidSession
         }
     }
 
@@ -345,4 +329,3 @@ private extension BoardsAPIClient {
         let commentId: Int64
     }
 }
-

@@ -3,6 +3,7 @@ import Foundation
 
 final class MockAuthClient: AuthClientProtocol, @unchecked Sendable {
     var loginResult: Result<TokenPair, Error> = .failure(AuthError.unexpected)
+    var reissueResult: Result<TokenPair, Error> = .failure(AuthError.invalidSession)
     var sendEmailCodeResult: Result<Void, Error> = .success(())
     var verifyEmailCodeResult: Result<Void, Error> = .success(())
     var fetchMajorsResult: Result<[MajorOption], Error> = .success([])
@@ -10,6 +11,8 @@ final class MockAuthClient: AuthClientProtocol, @unchecked Sendable {
     var signUpResult: Result<Void, Error> = .success(())
     var restoreResult: Result<Void, Error> = .success(())
     private(set) var lastLoginEmail: String?
+    private(set) var lastReissueAccessToken: String?
+    private(set) var lastReissueRefreshToken: String?
     private(set) var lastSendEmailCodeEmail: String?
     private(set) var lastVerifyEmailCodeEmail: String?
     private(set) var lastVerifyEmailCodeValue: String?
@@ -23,6 +26,17 @@ final class MockAuthClient: AuthClientProtocol, @unchecked Sendable {
     func login(email: String, password: String) async throws -> TokenPair {
         lastLoginEmail = email
         switch loginResult {
+        case let .success(tokens):
+            return tokens
+        case let .failure(error):
+            throw error
+        }
+    }
+
+    func reissue(accessToken: String, refreshToken: String) async throws -> TokenPair {
+        lastReissueAccessToken = accessToken
+        lastReissueRefreshToken = refreshToken
+        switch reissueResult {
         case let .success(tokens):
             return tokens
         case let .failure(error):
@@ -158,6 +172,133 @@ final class MockTimetableClient: TimetableClientProtocol, @unchecked Sendable {
     func removeLecture(semesterId: Int64, lectureId: Int64) async throws {
         removedPayloads.append((semesterId, lectureId))
         try removeLectureResult.get()
+    }
+}
+
+final class MockBoardsClient: BoardsClientProtocol, @unchecked Sendable {
+    var boardsResult: Result<[BoardSummary], Error> = .success([])
+    var hotPostsResult: Result<[HotPostSummary], Error> = .success([])
+    var boardPostsResult: Result<[BoardPostSummary], Error> = .success([])
+    var postDetailResult: Result<PostDetailContent, Error> = .failure(BoardsClientError.unexpected)
+    var createPostResult: Result<Int64, Error> = .success(1)
+    var likePostResult: Result<Void, Error> = .success(())
+    var unlikePostResult: Result<Void, Error> = .success(())
+    var createCommentResult: Result<Int64, Error> = .success(1)
+    var deleteCommentResult: Result<Void, Error> = .success(())
+    var deletePostResult: Result<Void, Error> = .success(())
+
+    private(set) var fetchedBoardPostsIds: [Int64] = []
+    private(set) var fetchedPostDetailIds: [Int64] = []
+    private(set) var createdPostBoardIds: [Int64] = []
+    private(set) var likedPostIds: [Int64] = []
+    private(set) var unlikedPostIds: [Int64] = []
+    private(set) var deletedCommentIds: [Int64] = []
+    private(set) var deletedPostIds: [Int64] = []
+    private(set) var fetchHotPostsCallCount = 0
+
+    func fetchBoards() async throws -> [BoardSummary] {
+        try boardsResult.get()
+    }
+
+    func fetchHotPosts() async throws -> [HotPostSummary] {
+        fetchHotPostsCallCount += 1
+        return try hotPostsResult.get()
+    }
+
+    func fetchBoardPosts(boardId: Int64) async throws -> [BoardPostSummary] {
+        fetchedBoardPostsIds.append(boardId)
+        return try boardPostsResult.get()
+    }
+
+    func fetchPostDetail(postId: Int64) async throws -> PostDetailContent {
+        fetchedPostDetailIds.append(postId)
+        return try postDetailResult.get()
+    }
+
+    func createPost(boardId: Int64, input: CreatePostInput) async throws -> Int64 {
+        createdPostBoardIds.append(boardId)
+        return try createPostResult.get()
+    }
+
+    func likePost(postId: Int64) async throws {
+        likedPostIds.append(postId)
+        try likePostResult.get()
+    }
+
+    func unlikePost(postId: Int64) async throws {
+        unlikedPostIds.append(postId)
+        try unlikePostResult.get()
+    }
+
+    func createComment(postId: Int64, input: CreateCommentInput) async throws -> Int64 {
+        try createCommentResult.get()
+    }
+
+    func deleteComment(commentId: Int64) async throws {
+        deletedCommentIds.append(commentId)
+        try deleteCommentResult.get()
+    }
+
+    func deletePost(postId: Int64) async throws {
+        deletedPostIds.append(postId)
+        try deletePostResult.get()
+    }
+}
+
+final class MockCourseReviewsClient: CourseReviewsClientProtocol, @unchecked Sendable {
+    var feedResult: Result<CourseReviewFeedPage, Error> = .failure(CourseReviewsClientError.unexpected)
+    var targetSearchResult: Result<CourseReviewTargetPage, Error> = .failure(CourseReviewsClientError.unexpected)
+    var detailResult: Result<CourseReviewPage, Error> = .failure(CourseReviewsClientError.unexpected)
+    var myReviewResult: Result<CourseReviewEntry, Error> = .failure(CourseReviewsClientError.reviewNotFound)
+    var createResult: Result<Int64, Error> = .success(1)
+    var updateResult: Result<Int64, Error> = .success(1)
+    var deleteResult: Result<Void, Error> = .success(())
+
+    private(set) var requestedFeedPage: Int?
+    private(set) var requestedQuery: String?
+    private(set) var requestedDetailTargetId: Int64?
+    private(set) var requestedMyReviewTargetId: Int64?
+    private(set) var createdTargetId: Int64?
+    private(set) var createdPayload: CourseReviewUpsertRequest?
+    private(set) var updatedTargetId: Int64?
+    private(set) var updatedPayload: CourseReviewUpsertRequest?
+    private(set) var deletedTargetId: Int64?
+
+    func fetchReviewFeed(page: Int, size: Int) async throws -> CourseReviewFeedPage {
+        requestedFeedPage = page
+        return try feedResult.get()
+    }
+
+    func fetchReviewTargets(query: String, page: Int, size: Int) async throws -> CourseReviewTargetPage {
+        requestedQuery = query
+        return try targetSearchResult.get()
+    }
+
+    func fetchTargetReviews(targetId: Int64, page: Int, size: Int) async throws -> CourseReviewPage {
+        requestedDetailTargetId = targetId
+        return try detailResult.get()
+    }
+
+    func fetchMyReview(targetId: Int64) async throws -> CourseReviewEntry {
+        requestedMyReviewTargetId = targetId
+        return try myReviewResult.get()
+    }
+
+    func createReview(targetId: Int64, request: CourseReviewUpsertRequest) async throws -> Int64 {
+        createdTargetId = targetId
+        createdPayload = request
+        return try createResult.get()
+    }
+
+    func updateMyReview(targetId: Int64, request: CourseReviewUpsertRequest) async throws -> Int64 {
+        updatedTargetId = targetId
+        updatedPayload = request
+        return try updateResult.get()
+    }
+
+    func deleteMyReview(targetId: Int64) async throws {
+        deletedTargetId = targetId
+        try deleteResult.get()
     }
 }
 

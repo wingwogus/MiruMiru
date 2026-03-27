@@ -23,3 +23,7 @@ jwt:
 redis:
   host: ${REDIS_HOST}
   port: ${REDIS_PORT}
+
+chat:
+  redis:
+    enabled: true

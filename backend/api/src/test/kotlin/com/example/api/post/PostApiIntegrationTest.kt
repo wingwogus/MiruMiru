@@ -34,7 +34,7 @@ import org.springframework.test.web.servlet.post
     ]
 )
 @AutoConfigureMockMvc
-@ActiveProfiles("local")
+@ActiveProfiles("local", "test")
 class PostApiIntegrationTest(
     @Autowired private val mockMvc: MockMvc,
     @Autowired private val memberRepository: MemberRepository,

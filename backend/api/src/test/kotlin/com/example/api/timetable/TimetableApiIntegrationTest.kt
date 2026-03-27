@@ -32,7 +32,7 @@ import org.springframework.test.web.servlet.post
     ]
 )
 @AutoConfigureMockMvc
-@ActiveProfiles("local")
+@ActiveProfiles("local", "test")
 class TimetableApiIntegrationTest(
     @Autowired private val mockMvc: MockMvc,
     @Autowired private val lectureRepository: LectureRepository,

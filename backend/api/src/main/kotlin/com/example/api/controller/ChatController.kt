@@ -5,6 +5,7 @@ import com.example.api.dto.chat.ChatRequests
 import com.example.api.dto.chat.ChatResponses
 import com.example.application.chat.ChatCommand
 import com.example.application.chat.ChatQuery
+import com.example.application.chat.ChatQueryService
 import com.example.application.chat.ChatService
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/message-rooms")
 class ChatController(
     private val chatService: ChatService,
+    private val chatQueryService: ChatQueryService,
 ) {
 
     @GetMapping
@@ -27,7 +29,7 @@ class ChatController(
     ): ResponseEntity<ApiResponse<List<ChatResponses.RoomSummaryResponse>>> {
         val requesterId = userId.toLongOrNull() ?: throw BusinessException(ErrorCode.UNAUTHORIZED)
 
-        val result = chatService.getMyRooms(
+        val result = chatQueryService.getMyRooms(
             ChatQuery.GetMyRooms(
                 requesterId = requesterId,
                 limit = params.limit,
@@ -100,7 +102,7 @@ class ChatController(
     ): ResponseEntity<ApiResponse<ChatResponses.MessagesResponse>> {
         val requesterId = userId.toLongOrNull() ?: throw BusinessException(ErrorCode.UNAUTHORIZED)
 
-        val result = chatService.getMessages(
+        val result = chatQueryService.getMessages(
             ChatQuery.GetMessages(
                 requesterId = requesterId,
                 roomId = roomId,

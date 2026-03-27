@@ -1,5 +1,7 @@
-package com.example.domain.chat
+package com.example.application.chat.read
 
+import com.example.domain.chat.QChatMessage
+import com.example.domain.chat.QMessageRoom
 import com.querydsl.core.types.Projections
 import com.querydsl.core.types.dsl.CaseBuilder
 import com.querydsl.jpa.JPAExpressions
@@ -7,11 +9,11 @@ import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.stereotype.Repository
 
 @Repository
-class MessageRoomQueryRepositoryImpl(
+class ChatRoomReadRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
-) : MessageRoomQueryRepository {
+) : ChatRoomReadRepository {
 
-    override fun findMyRooms(memberId: Long, limit: Int): List<MessageRoomSummary> {
+    override fun findMyRooms(memberId: Long, limit: Int): List<ChatQueryResult.RoomSummary> {
         val room = QMessageRoom.messageRoom
         val msg = QChatMessage.chatMessage
         val lastMsg = QChatMessage("lastMsg")
@@ -52,13 +54,12 @@ class MessageRoomQueryRepositoryImpl(
         return queryFactory
             .select(
                 Projections.constructor(
-                    MessageRoomSummary::class.java,
+                    ChatQueryResult.RoomSummary::class.java,
                     room.id,
                     room.post.id,
                     room.post.title,
                     otherMemberId,
                     lastMsg.id,
-                    lastMsg.sender.id,
                     lastMsg.content,
                     lastMsg.createdAt,
                     unreadCase.sum().coalesce(0L),
@@ -86,7 +87,6 @@ class MessageRoomQueryRepositoryImpl(
                 room.isAnon1,
                 room.isAnon2,
                 lastMsg.id,
-                lastMsg.sender.id,
                 lastMsg.content,
                 lastMsg.createdAt,
             )

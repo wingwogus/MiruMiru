@@ -3,6 +3,7 @@ package com.example.application.chat
 import com.example.application.chat.event.ChatEvent
 import com.example.application.chat.event.ChatEventPublisher
 import com.example.application.chat.event.ChatEventType
+import com.example.application.chat.read.ChatMessageReadRepository
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
 import com.example.domain.board.Board
@@ -35,6 +36,7 @@ class ChatServiceTest {
     private lateinit var memberRepository: MemberRepository
     private lateinit var messageRoomRepository: MessageRoomRepository
     private lateinit var chatMessageRepository: ChatMessageRepository
+    private lateinit var chatMessageReadRepository: ChatMessageReadRepository
     private lateinit var chatEventPublisher: RecordingChatEventPublisher
     private lateinit var chatService: ChatService
 
@@ -44,12 +46,14 @@ class ChatServiceTest {
         memberRepository = mock(MemberRepository::class.java)
         messageRoomRepository = mock(MessageRoomRepository::class.java)
         chatMessageRepository = mock(ChatMessageRepository::class.java)
+        chatMessageReadRepository = mock(ChatMessageReadRepository::class.java)
         chatEventPublisher = RecordingChatEventPublisher()
         chatService = ChatService(
             postRepository = postRepository,
             memberRepository = memberRepository,
             messageRoomRepository = messageRoomRepository,
             chatMessageRepository = chatMessageRepository,
+            chatMessageReadRepository = chatMessageReadRepository,
             chatEventPublisher = chatEventPublisher,
         )
     }
@@ -380,7 +384,7 @@ class ChatServiceTest {
         `when`(memberRepository.findById(sender.id)).thenReturn(Optional.of(sender))
         `when`(messageRoomRepository.findById(room.id)).thenReturn(Optional.of(room))
         `when`(chatMessageRepository.save(any(ChatMessage::class.java))).thenReturn(savedMessage)
-        `when`(chatMessageRepository.countUnread(room.id, receiver.id, null)).thenReturn(1L)
+        `when`(chatMessageReadRepository.countUnread(room.id, receiver.id, null)).thenReturn(1L)
 
         val result = chatService.sendMessage(
             ChatCommand.SendMessage(
@@ -409,7 +413,7 @@ class ChatServiceTest {
 
         `when`(messageRoomRepository.findById(room.id)).thenReturn(Optional.of(room))
         `when`(messageRoomRepository.save(any(MessageRoom::class.java))).thenAnswer { it.getArgument(0) }
-        `when`(chatMessageRepository.countUnread(room.id, reader.id, 55L)).thenReturn(0L)
+        `when`(chatMessageReadRepository.countUnread(room.id, reader.id, 55L)).thenReturn(0L)
 
         val result = chatService.markRead(
             ChatCommand.MarkRead(

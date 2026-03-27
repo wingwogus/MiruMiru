@@ -1,5 +1,6 @@
 package com.example.application.chat
 
+import com.example.application.chat.read.ChatMessageReadRepository
 import com.example.application.chat.event.ChatEvent
 import com.example.application.chat.event.ChatEventPublisher
 import com.example.application.chat.event.ChatEventType
@@ -26,6 +27,7 @@ class ChatService(
     private val memberRepository: MemberRepository,
     private val messageRoomRepository: MessageRoomRepository,
     private val chatMessageRepository: ChatMessageRepository,
+    private val chatMessageReadRepository: ChatMessageReadRepository,
     private val chatEventPublisher: ChatEventPublisher,
 ) {
 
@@ -100,7 +102,7 @@ class ChatService(
 
         val receiverId = room.otherMemberId(sender.id)
         val receiverLastReadId = room.getLastReadMessageId(receiverId)
-        val unreadCount = chatMessageRepository.countUnread(room.id, receiverId, receiverLastReadId)
+        val unreadCount = chatMessageReadRepository.countUnread(room.id, receiverId, receiverLastReadId)
 
         chatEventPublisher.publish(
             ChatEvent(
@@ -144,7 +146,7 @@ class ChatService(
         room.updateLastReadMessageId(command.readerId, command.lastReadMessageId)
         val savedRoom = messageRoomRepository.save(room)
 
-        val unreadCount = chatMessageRepository.countUnread(
+        val unreadCount = chatMessageReadRepository.countUnread(
             roomId = savedRoom.id,
             memberId = command.readerId,
             lastReadMessageId = savedRoom.getLastReadMessageId(command.readerId),
@@ -177,61 +179,6 @@ class ChatService(
             readerId = command.readerId,
             lastReadMessageId = command.lastReadMessageId,
             unreadCount = unreadCount,
-        )
-    }
-
-    @Transactional(readOnly = true)
-    fun getMyRooms(query: ChatQuery.GetMyRooms): ChatResult.Rooms {
-        val limit = query.limit.coerceIn(1, 100)
-        val rooms = messageRoomRepository.findMyRooms(query.requesterId, limit)
-
-        return ChatResult.Rooms(
-            rooms = rooms.map {
-                ChatResult.RoomSummary(
-                    roomId = it.roomId,
-                    postId = it.postId,
-                    postTitle = it.postTitle,
-                    otherMemberId = it.otherMemberId,
-                    lastMessageId = it.lastMessageId,
-                    lastMessageContent = it.lastMessageContent,
-                    lastMessageCreatedAt = it.lastMessageCreatedAt,
-                    unreadCount = it.unreadCount,
-                    myLastReadMessageId = it.myLastReadMessageId?.takeIf { id -> id > 0 },
-                    otherLastReadMessageId = it.otherLastReadMessageId?.takeIf { id -> id > 0 },
-                    isAnonMe = it.isAnonMe,
-                    isAnonOther = it.isAnonOther,
-                )
-            }
-        )
-    }
-
-    @Transactional(readOnly = true)
-    fun getMessages(query: ChatQuery.GetMessages): ChatResult.Messages {
-        val room = messageRoomRepository.findById(query.roomId).orElseThrow {
-            BusinessException(ErrorCode.RESOURCE_NOT_FOUND)
-        }
-
-        if (!room.isParticipant(query.requesterId)) {
-            throw BusinessException(ErrorCode.UNAUTHORIZED)
-        }
-
-        val limit = query.limit.coerceIn(1, 100)
-        val messages = if (query.beforeMessageId == null) {
-            chatMessageRepository.findLatest(query.roomId, limit)
-        } else {
-            chatMessageRepository.findBefore(query.roomId, query.beforeMessageId, limit)
-        }
-
-        val requesterLastRead = room.getLastReadMessageId(query.requesterId)
-        val otherId = room.otherMemberId(query.requesterId)
-        val otherLastRead = room.getLastReadMessageId(otherId)
-
-        return ChatResult.Messages(
-            roomId = room.id,
-            messages = messages,
-            requesterLastReadMessageId = requesterLastRead,
-            otherLastReadMessageId = otherLastRead,
-            nextBeforeMessageId = messages.lastOrNull()?.id,
         )
     }
 

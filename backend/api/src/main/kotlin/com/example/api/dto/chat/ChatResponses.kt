@@ -1,6 +1,6 @@
 package com.example.api.dto.chat
 
-import com.example.domain.chat.ChatMessageSummary
+import com.example.application.chat.read.ChatQueryResult
 import java.time.LocalDateTime
 
 class ChatResponses {
@@ -37,7 +37,7 @@ class ChatResponses {
         val createdAt: LocalDateTime?,
     ) {
         companion object {
-            fun from(summary: ChatMessageSummary): MessageDto =
+            fun from(summary: ChatQueryResult.MessageSummary): MessageDto =
                 MessageDto(
                     id = summary.id,
                     senderId = summary.senderId,

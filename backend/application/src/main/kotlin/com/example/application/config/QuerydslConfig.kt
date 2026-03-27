@@ -1,4 +1,4 @@
-package com.example.domain.config
+package com.example.application.config
 
 import com.querydsl.jpa.impl.JPAQueryFactory
 import jakarta.persistence.EntityManager
@@ -13,4 +13,3 @@ class QuerydslConfig(
     @Bean
     fun jpaQueryFactory(): JPAQueryFactory = JPAQueryFactory(entityManager)
 }
-

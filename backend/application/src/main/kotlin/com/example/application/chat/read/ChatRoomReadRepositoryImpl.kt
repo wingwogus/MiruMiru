@@ -13,7 +13,7 @@ class ChatRoomReadRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
 ) : ChatRoomReadRepository {
 
-    override fun findMyRooms(memberId: Long, limit: Int): List<ChatQueryResult.RoomSummary> {
+    override fun findMyRooms(memberId: Long, limit: Int): List<ChatQueryResult.RoomSummaryRow> {
         val room = QMessageRoom.messageRoom
         val msg = QChatMessage.chatMessage
         val lastMsg = QChatMessage("lastMsg")
@@ -26,6 +26,10 @@ class ChatRoomReadRepositoryImpl(
         val otherMemberId = CaseBuilder()
             .`when`(room.member1.id.eq(memberId)).then(room.member2.id)
             .otherwise(room.member1.id)
+
+        val otherMemberNickname = CaseBuilder()
+            .`when`(room.member1.id.eq(memberId)).then(room.member2.nickname)
+            .otherwise(room.member1.nickname)
 
         val myLastReadId = CaseBuilder()
             .`when`(room.member1.id.eq(memberId)).then(room.member1LastReadMessageId.coalesce(0L))
@@ -54,11 +58,12 @@ class ChatRoomReadRepositoryImpl(
         return queryFactory
             .select(
                 Projections.constructor(
-                    ChatQueryResult.RoomSummary::class.java,
+                    ChatQueryResult.RoomSummaryRow::class.java,
                     room.id,
                     room.post.id,
                     room.post.title,
                     otherMemberId,
+                    otherMemberNickname,
                     lastMsg.id,
                     lastMsg.content,
                     lastMsg.createdAt,
@@ -82,6 +87,8 @@ class ChatRoomReadRepositoryImpl(
                 room.post.title,
                 room.member1.id,
                 room.member2.id,
+                room.member1.nickname,
+                room.member2.nickname,
                 room.member1LastReadMessageId,
                 room.member2LastReadMessageId,
                 room.isAnon1,

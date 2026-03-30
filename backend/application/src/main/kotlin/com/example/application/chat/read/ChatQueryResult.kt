@@ -3,11 +3,29 @@ package com.example.application.chat.read
 import java.time.LocalDateTime
 
 class ChatQueryResult {
-    data class RoomSummary(
+    data class RoomSummaryRow(
         val roomId: Long,
         val postId: Long,
         val postTitle: String,
         val otherMemberId: Long,
+        val otherMemberNickname: String,
+        val lastMessageId: Long?,
+        val lastMessageContent: String?,
+        val lastMessageCreatedAt: LocalDateTime?,
+        val unreadCount: Long,
+        val myLastReadMessageId: Long?,
+        val otherLastReadMessageId: Long?,
+        val isAnonMe: Boolean,
+        val isAnonOther: Boolean,
+    )
+
+    data class RoomSummary(
+        val roomId: Long,
+        val postId: Long,
+        val postTitle: String,
+        val roomTitle: String,
+        val otherMemberId: Long,
+        val counterpartDisplayName: String,
         val lastMessageId: Long?,
         val lastMessageContent: String?,
         val lastMessageCreatedAt: LocalDateTime?,

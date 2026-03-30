@@ -5,6 +5,7 @@ import com.example.application.chat.read.ChatQueryResult
 import com.example.application.chat.read.ChatRoomReadRepository
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
+import com.example.application.post.PostAnonymousService
 import com.example.domain.board.Board
 import com.example.domain.chat.MessageRoom
 import com.example.domain.chat.MessageRoomRepository
@@ -25,6 +26,7 @@ class ChatQueryServiceTest {
     private lateinit var messageRoomRepository: MessageRoomRepository
     private lateinit var chatRoomReadRepository: ChatRoomReadRepository
     private lateinit var chatMessageReadRepository: ChatMessageReadRepository
+    private lateinit var postAnonymousService: PostAnonymousService
     private lateinit var chatQueryService: ChatQueryService
 
     @BeforeEach
@@ -32,10 +34,12 @@ class ChatQueryServiceTest {
         messageRoomRepository = mock(MessageRoomRepository::class.java)
         chatRoomReadRepository = mock(ChatRoomReadRepository::class.java)
         chatMessageReadRepository = mock(ChatMessageReadRepository::class.java)
+        postAnonymousService = mock(PostAnonymousService::class.java)
         chatQueryService = ChatQueryService(
             messageRoomRepository = messageRoomRepository,
             chatRoomReadRepository = chatRoomReadRepository,
             chatMessageReadRepository = chatMessageReadRepository,
+            postAnonymousService = postAnonymousService,
         )
     }
 
@@ -43,11 +47,12 @@ class ChatQueryServiceTest {
     fun `get my rooms normalizes zero read markers to null`() {
         `when`(chatRoomReadRepository.findMyRooms(1L, 30)).thenReturn(
             listOf(
-                ChatQueryResult.RoomSummary(
+                ChatQueryResult.RoomSummaryRow(
                     roomId = 10L,
                     postId = 20L,
                     postTitle = "seed post",
                     otherMemberId = 2L,
+                    otherMemberNickname = "user-2",
                     lastMessageId = 99L,
                     lastMessageContent = "hi",
                     lastMessageCreatedAt = LocalDateTime.of(2026, 3, 28, 0, 0),
@@ -59,6 +64,9 @@ class ChatQueryServiceTest {
                 )
             )
         )
+        `when`(postAnonymousService.getAnonNumbersByPostIds(listOf(20L))).thenReturn(
+            mapOf((20L to 2L) to 2)
+        )
 
         val result = chatQueryService.getMyRooms(
             ChatQuery.GetMyRooms(
@@ -68,6 +76,8 @@ class ChatQueryServiceTest {
         )
 
         assertEquals(1, result.rooms.size)
+        assertEquals("seed post", result.rooms.first().roomTitle)
+        assertEquals("user-2", result.rooms.first().counterpartDisplayName)
         assertEquals(null, result.rooms.first().myLastReadMessageId)
         assertEquals(55L, result.rooms.first().otherLastReadMessageId)
     }

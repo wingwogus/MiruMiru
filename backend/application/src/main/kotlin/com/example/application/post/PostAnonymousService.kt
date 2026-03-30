@@ -42,4 +42,14 @@ class PostAnonymousService(
         return postAnonymousMappingRepository.findAllByPostId(postId)
             .associate { mapping -> mapping.member.id to mapping.anonNumber }
     }
+
+    @Transactional(readOnly = true)
+    fun getAnonNumbersByPostIds(postIds: Collection<Long>): Map<Pair<Long, Long>, Int> {
+        if (postIds.isEmpty()) {
+            return emptyMap()
+        }
+
+        return postAnonymousMappingRepository.findAllByPostIdIn(postIds.distinct())
+            .associate { mapping -> (mapping.post.id to mapping.member.id) to mapping.anonNumber }
+    }
 }

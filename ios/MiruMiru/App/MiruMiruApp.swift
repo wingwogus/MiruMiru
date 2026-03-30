@@ -7,6 +7,8 @@ struct MiruMiruApp: App {
     private let timetableClient: TimetableClientProtocol
     private let boardsClient: BoardsClientProtocol
     private let courseReviewsClient: CourseReviewsClientProtocol
+    private let messagesClient: MessagesClientProtocol
+    private let messagesRealtimeClient: MessagesRealtimeClientProtocol
 
     init() {
         let environment = AppEnvironment.live()
@@ -37,6 +39,15 @@ struct MiruMiruApp: App {
             tokenStore: tokenStore,
             authorizedExecutor: authorizedExecutor
         )
+        messagesClient = MessagesAPIClient(
+            apiClient: apiClient,
+            tokenStore: tokenStore,
+            authorizedExecutor: authorizedExecutor
+        )
+        messagesRealtimeClient = MessagesRealtimeClient(
+            environment: environment,
+            tokenStore: tokenStore
+        )
         _session = StateObject(
             wrappedValue: AppSession(
                 authClient: authClient,
@@ -52,7 +63,9 @@ struct MiruMiruApp: App {
                 homeClient: homeClient,
                 timetableClient: timetableClient,
                 boardsClient: boardsClient,
-                courseReviewsClient: courseReviewsClient
+                courseReviewsClient: courseReviewsClient,
+                messagesClient: messagesClient,
+                messagesRealtimeClient: messagesRealtimeClient
             )
                 .task {
                     await session.bootstrap()

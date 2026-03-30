@@ -9,12 +9,14 @@ import com.example.application.chat.event.ChatReadEvent
 import com.example.application.chat.event.ChatUnreadCountEvent
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
+import com.example.application.post.PostAnonymousService
 import com.example.domain.chat.ChatMessage
 import com.example.domain.chat.ChatMessageRepository
 import com.example.domain.chat.MessageRoom
 import com.example.domain.chat.MessageRoomRepository
 import com.example.domain.member.Member
 import com.example.domain.member.MemberRepository
+import com.example.domain.post.Post
 import com.example.domain.post.PostRepository
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
@@ -26,9 +28,12 @@ class ChatService(
     private val postRepository: PostRepository,
     private val memberRepository: MemberRepository,
     private val messageRoomRepository: MessageRoomRepository,
+    private val chatRoomCreateTxService: ChatRoomCreateTxService,
+    private val chatRoomRecoveryService: ChatRoomRecoveryService,
     private val chatMessageRepository: ChatMessageRepository,
     private val chatMessageReadRepository: ChatMessageReadRepository,
     private val chatEventPublisher: ChatEventPublisher,
+    private val postAnonymousService: PostAnonymousService,
 ) {
 
     fun createRoom(command: ChatCommand.CreateRoom): ChatResult.RoomCreated {
@@ -56,7 +61,14 @@ class ChatService(
         )
 
         if (existingRoom != null) {
-            return toRoomCreatedResult(existingRoom, requester.id, otherMember.id, created = false)
+            val anonNumbersByMemberId = ensureChatAnonNumbers(existingRoom, post)
+            return toRoomCreatedResult(
+                room = existingRoom,
+                requester = requester,
+                otherMember = otherMember,
+                anonNumbersByMemberId = anonNumbersByMemberId,
+                created = false,
+            )
         }
 
         val room = MessageRoom(
@@ -66,17 +78,38 @@ class ChatService(
             isAnon1 = normalizedPair.isAnon1,
             isAnon2 = normalizedPair.isAnon2,
         )
+        val anonNumbersByMemberId = ensureChatAnonNumbers(room, post)
 
         return try {
-            val saved = messageRoomRepository.save(room)
-            toRoomCreatedResult(saved, requester.id, otherMember.id, created = true)
+            val saved = chatRoomCreateTxService.create(
+                ChatRoomCreateTxService.CreateRequest(
+                    postId = post.id,
+                    member1Id = normalizedPair.member1.id,
+                    member2Id = normalizedPair.member2.id,
+                    isAnon1 = normalizedPair.isAnon1,
+                    isAnon2 = normalizedPair.isAnon2,
+                )
+            )
+            toRoomCreatedResult(
+                room = saved,
+                requester = requester,
+                otherMember = otherMember,
+                anonNumbersByMemberId = anonNumbersByMemberId,
+                created = true,
+            )
         } catch (_: DataIntegrityViolationException) {
-            val concurrentRoom = messageRoomRepository.findByPostIdAndMember1IdAndMember2Id(
+            val concurrentRoom = chatRoomRecoveryService.findExisting(
                 postId = post.id,
                 member1Id = normalizedPair.member1.id,
                 member2Id = normalizedPair.member2.id,
-            ) ?: throw BusinessException(ErrorCode.INTERNAL_ERROR)
-            toRoomCreatedResult(concurrentRoom, requester.id, otherMember.id, created = false)
+            )
+            toRoomCreatedResult(
+                room = concurrentRoom,
+                requester = requester,
+                otherMember = otherMember,
+                anonNumbersByMemberId = anonNumbersByMemberId,
+                created = false,
+            )
         }
     }
 
@@ -238,20 +271,44 @@ class ChatService(
 
     private fun toRoomCreatedResult(
         room: MessageRoom,
-        requesterId: Long,
-        otherMemberId: Long,
+        requester: Member,
+        otherMember: Member,
+        anonNumbersByMemberId: Map<Long, Int>,
         created: Boolean,
     ): ChatResult.RoomCreated {
-        val requesterIsMember1 = room.member1.id == requesterId
+        val requesterIsMember1 = room.member1.id == requester.id
+        val otherMemberIsAnonymous = if (requesterIsMember1) room.isAnon2 else room.isAnon1
         return ChatResult.RoomCreated(
             roomId = room.id,
             postId = room.post.id,
-            member1Id = requesterId,
-            member2Id = otherMemberId,
+            member1Id = requester.id,
+            member2Id = otherMember.id,
+            roomTitle = room.post.title,
+            counterpartDisplayName = if (otherMemberIsAnonymous) {
+                anonNumbersByMemberId[otherMember.id]
+                    ?.let { anonNumber -> "익명 $anonNumber" }
+                    ?: "익명"
+            } else {
+                otherMember.nickname
+            },
             isAnon1 = if (requesterIsMember1) room.isAnon1 else room.isAnon2,
             isAnon2 = if (requesterIsMember1) room.isAnon2 else room.isAnon1,
             created = created,
         )
+    }
+
+    private fun ensureChatAnonNumbers(room: MessageRoom, post: Post): Map<Long, Int> {
+        val anonNumbersByMemberId = mutableMapOf<Long, Int>()
+
+        if (room.isAnon1) {
+            anonNumbersByMemberId[room.member1.id] = postAnonymousService.getOrCreateAnonNumber(post, room.member1)
+        }
+
+        if (room.isAnon2) {
+            anonNumbersByMemberId[room.member2.id] = postAnonymousService.getOrCreateAnonNumber(post, room.member2)
+        }
+
+        return anonNumbersByMemberId
     }
 
     private data class NormalizedParticipants(

@@ -9,6 +9,8 @@ sealed interface ChatResult {
         val postId: Long,
         val member1Id: Long,
         val member2Id: Long,
+        val roomTitle: String,
+        val counterpartDisplayName: String,
         val isAnon1: Boolean,
         val isAnon2: Boolean,
         val created: Boolean,

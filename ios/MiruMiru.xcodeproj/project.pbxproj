@@ -65,6 +65,7 @@
 		B0000000000000000000007B /* Boards/BoardsSyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000007C /* Boards/BoardsSyncStore.swift */; };
 		B0000000000000000000007D /* BoardsSyncStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000007E /* BoardsSyncStoreTests.swift */; };
 		B0000000000000000000007F /* PostDetailViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000080 /* PostDetailViewModelTests.swift */; };
+		B00000000000000000000081 /* Messages/MessagesFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000082 /* Messages/MessagesFeature.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -149,6 +150,7 @@
 		B0000000000000000000007C /* Boards/BoardsSyncStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boards/BoardsSyncStore.swift; sourceTree = "<group>"; };
 		B0000000000000000000007E /* BoardsSyncStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardsSyncStoreTests.swift; sourceTree = "<group>"; };
 		B00000000000000000000080 /* PostDetailViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailViewModelTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000082 /* Messages/MessagesFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Messages/MessagesFeature.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -235,6 +237,7 @@
 				B0000000000000000000007A /* Boards/BoardsFeature.swift */,
 				B0000000000000000000007C /* Boards/BoardsSyncStore.swift */,
 				B0000000000000000000006A /* CourseReviews/CourseReviewsFeature.swift */,
+				B00000000000000000000082 /* Messages/MessagesFeature.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -489,6 +492,7 @@
 				B00000000000000000000077 /* Boards/BoardsFeature.swift in Sources */,
 				B0000000000000000000007B /* Boards/BoardsSyncStore.swift in Sources */,
 				B00000000000000000000069 /* CourseReviews/CourseReviewsFeature.swift in Sources */,
+				B00000000000000000000081 /* Messages/MessagesFeature.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

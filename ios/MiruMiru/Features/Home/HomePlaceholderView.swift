@@ -8,6 +8,7 @@ struct HomeView: View {
     private let onSemesterTap: () -> Void
     private let onBoardsTap: () -> Void
     private let onTrendingPostTap: (Int64) -> Void
+    @State private var showLogoutPrompt = false
 
     init(
         session: AppSession,
@@ -45,7 +46,10 @@ struct HomeView: View {
                         HomeLoadingCard()
                 case let .loaded(content):
                     let trendingPosts = boardsSyncStore.projectHotPosts(content.trendingPosts)
-                    HomeHeaderSection(profile: content.profile)
+                    HomeHeaderSection(
+                        profile: content.profile,
+                        onLogoutTap: { showLogoutPrompt = true }
+                    )
                     TodayClassesSection(
                         semesterTitle: content.semesterTitle,
                         rows: content.todayClasses,
@@ -60,7 +64,10 @@ struct HomeView: View {
                     }
                 case let .empty(content):
                     let trendingPosts = boardsSyncStore.projectHotPosts(content.trendingPosts)
-                    HomeHeaderSection(profile: content.profile)
+                    HomeHeaderSection(
+                        profile: content.profile,
+                        onLogoutTap: { showLogoutPrompt = true }
+                    )
                     HomeEmptyCard(
                         title: content.state.title,
                         message: content.state.message,
@@ -95,6 +102,18 @@ struct HomeView: View {
                 if let hotPosts {
                     boardsSyncStore.ingestHotPosts(hotPosts)
                 }
+            }
+            .confirmationDialog(
+                "Log out of MiruMiru?",
+                isPresented: $showLogoutPrompt,
+                titleVisibility: .visible
+            ) {
+                Button("Log Out", role: .destructive) {
+                    session.logoutToLogin()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("You'll need to sign in again to access your campus features.")
             }
         }
     }
@@ -182,6 +201,7 @@ struct HomeView: View {
 
 private struct HomeHeaderSection: View {
     let profile: HomeMemberProfile
+    let onLogoutTap: () -> Void
 
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
@@ -206,21 +226,14 @@ private struct HomeHeaderSection: View {
 
             Spacer(minLength: 16)
 
-            Button {} label: {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: "bell.fill")
-                        .font(.system(size: 21, weight: .semibold))
-                        .foregroundStyle(Color(red: 0.30, green: 0.38, blue: 0.52))
-                        .frame(width: 42, height: 42)
-
-                    Circle()
-                        .fill(AuthPalette.primaryStart)
-                        .frame(width: 8, height: 8)
-                        .offset(x: -6, y: 6)
-                }
+            Button(action: onLogoutTap) {
+                Image(systemName: "rectangle.portrait.and.arrow.right")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(Color(red: 0.30, green: 0.38, blue: 0.52))
+                    .frame(width: 42, height: 42)
             }
             .buttonStyle(.plain)
-            .accessibilityHidden(true)
+            .accessibilityLabel("Log out")
         }
     }
 }

@@ -680,7 +680,9 @@
           roomId: Number(raw.roomId),
           postId: Number(raw.postId),
           postTitle: raw.postTitle || '',
+          roomTitle: raw.roomTitle || raw.postTitle || '',
           otherMemberId: Number(raw.otherMemberId),
+          counterpartDisplayName: raw.counterpartDisplayName || '',
           lastMessageId: raw.lastMessageId ? Number(raw.lastMessageId) : null,
           lastMessageContent: raw.lastMessageContent || '',
           lastMessageCreatedAt: raw.lastMessageCreatedAt || null,
@@ -699,7 +701,9 @@
 
         const rooms = user.rooms.filter((room) => {
           if (!filter) return true;
-          return room.postTitle.toLowerCase().includes(filter) || String(room.postId).includes(filter);
+          return room.roomTitle.toLowerCase().includes(filter)
+            || room.counterpartDisplayName.toLowerCase().includes(filter)
+            || String(room.postId).includes(filter);
         });
 
         if (!rooms.length) {
@@ -717,11 +721,13 @@
 
           const title = document.createElement('div');
           title.className = 'room-title';
-          title.textContent = room.postTitle || `게시글 #${room.postId}`;
+          title.textContent = room.roomTitle || `게시글 #${room.postId}`;
 
           const sub = document.createElement('div');
           sub.className = 'room-sub';
-          sub.textContent = room.lastMessageContent || '최근 메시지 없음';
+          sub.textContent = room.counterpartDisplayName
+            ? `${room.counterpartDisplayName} · ${room.lastMessageContent || '최근 메시지 없음'}`
+            : (room.lastMessageContent || '최근 메시지 없음');
 
           const meta = document.createElement('div');
           meta.className = 'room-meta';
@@ -802,9 +808,9 @@
           return;
         }
 
-        el(`${user.prefix}_room_title`).textContent = room.postTitle || `게시글 #${room.postId}`;
+        el(`${user.prefix}_room_title`).textContent = room.roomTitle || `게시글 #${room.postId}`;
         el(`${user.prefix}_room_subtitle`).textContent =
-          `room=${room.roomId} · unread=${room.unreadCount} · myRead=${room.myLastReadMessageId || '-'} · otherRead=${room.otherLastReadMessageId || '-'}`;
+          `${room.counterpartDisplayName || '상대 표시 이름 없음'} · room=${room.roomId} · unread=${room.unreadCount} · myRead=${room.myLastReadMessageId || '-'} · otherRead=${room.otherLastReadMessageId || '-'}`;
       }
 
       function replaceRooms(user, rooms) {

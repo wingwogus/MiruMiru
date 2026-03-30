@@ -11,6 +11,7 @@ struct BoardsRootView: View {
     @StateObject private var viewModel: BoardsViewModel
     @Binding private var isTabBarHidden: Bool
     @Binding private var pendingPostId: Int64?
+    private let onStartChat: (MessageStartRequest) -> Void
     private let client: BoardsClientProtocol
     private let isActive: Bool
 
@@ -22,6 +23,7 @@ struct BoardsRootView: View {
         syncStore: BoardsSyncStore,
         isTabBarHidden: Binding<Bool> = .constant(false),
         pendingPostId: Binding<Int64?> = .constant(nil),
+        onStartChat: @escaping (MessageStartRequest) -> Void = { _ in },
         isActive: Bool = true
     ) {
         self.session = session
@@ -29,6 +31,7 @@ struct BoardsRootView: View {
         self.client = client
         self._isTabBarHidden = isTabBarHidden
         self._pendingPostId = pendingPostId
+        self.onStartChat = onStartChat
         self.isActive = isActive
         _viewModel = StateObject(wrappedValue: BoardsViewModel(client: client))
     }
@@ -62,7 +65,8 @@ struct BoardsRootView: View {
                         session: session,
                         client: client,
                         syncStore: syncStore,
-                        postId: postId
+                        postId: postId,
+                        onStartChat: onStartChat
                     )
                 }
             }
@@ -689,14 +693,19 @@ private struct PostDetailView: View {
     @State private var replyTarget: PostCommentItem?
     @State private var commentDeletionTarget: PostCommentItem?
     @State private var showDeletePostPrompt = false
+    @State private var showStartChatSheet = false
+    @State private var requesterIsAnonymousForChat = false
+    private let onStartChat: (MessageStartRequest) -> Void
 
     init(
         session: AppSession,
         client: BoardsClientProtocol,
         syncStore: BoardsSyncStore,
-        postId: Int64
+        postId: Int64,
+        onStartChat: @escaping (MessageStartRequest) -> Void = { _ in }
     ) {
         self.session = session
+        self.onStartChat = onStartChat
         _viewModel = StateObject(wrappedValue: PostDetailViewModel(client: client, syncStore: syncStore, postId: postId))
     }
 
@@ -840,43 +849,82 @@ private struct PostDetailView: View {
         } message: {
             Text("This action can't be undone.")
         }
+        .sheet(isPresented: $showStartChatSheet) {
+            if case let .loaded(detail) = viewModel.state {
+                StartChatSheet(
+                    postTitle: detail.title,
+                    postIsAnonymous: detail.isAnonymous,
+                    requesterIsAnonymous: $requesterIsAnonymousForChat,
+                    onClose: {
+                        showStartChatSheet = false
+                    },
+                    onStart: {
+                        showStartChatSheet = false
+                        onStartChat(
+                            MessageStartRequest(
+                                postId: detail.postId,
+                                postTitle: detail.title,
+                                postIsAnonymous: detail.isAnonymous,
+                                requesterIsAnonymous: requesterIsAnonymousForChat
+                            )
+                        )
+                    }
+                )
+                .presentationDetents([.fraction(0.6)])
+                .presentationDragIndicator(.visible)
+            }
+        }
     }
 
     private func postHeader(_ detail: PostDetailContent) -> some View {
-        HStack(alignment: .center, spacing: 12) {
-            Circle()
-                .fill(Color(red: 0.95, green: 0.96, blue: 0.98))
-                .frame(width: 48, height: 48)
-                .overlay {
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundStyle(Color(red: 0.60, green: 0.64, blue: 0.72))
+        Button {
+            guard detail.isMine == false else { return }
+            requesterIsAnonymousForChat = false
+            showStartChatSheet = true
+        } label: {
+            HStack(alignment: .center, spacing: 12) {
+                Circle()
+                    .fill(Color(red: 0.95, green: 0.96, blue: 0.98))
+                    .frame(width: 48, height: 48)
+                    .overlay {
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundStyle(Color(red: 0.60, green: 0.64, blue: 0.72))
+                    }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(detail.authorDisplayName)
+                        .font(AppFont.bold(18, relativeTo: .headline))
+                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+
+                    Text(detail.relativeCreatedAt)
+                        .font(AppFont.medium(14, relativeTo: .subheadline))
+                        .foregroundStyle(Color(red: 0.52, green: 0.58, blue: 0.68))
                 }
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(detail.authorDisplayName)
-                    .font(AppFont.bold(18, relativeTo: .headline))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                Spacer()
 
-                Text(detail.relativeCreatedAt)
-                    .font(AppFont.medium(14, relativeTo: .subheadline))
-                    .foregroundStyle(Color(red: 0.52, green: 0.58, blue: 0.68))
-            }
+                if detail.isMine == false {
+                    Image(systemName: "message")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(AuthPalette.primaryStart)
+                }
 
-            Spacer()
-
-            if detail.isAnonymous {
-                Text("ANON")
-                    .font(AppFont.bold(12, relativeTo: .caption))
-                    .foregroundStyle(AuthPalette.primaryStart)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(AuthPalette.primaryStart.opacity(0.12))
-                    )
+                if detail.isAnonymous {
+                    Text("ANON")
+                        .font(AppFont.bold(12, relativeTo: .caption))
+                        .foregroundStyle(AuthPalette.primaryStart)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(AuthPalette.primaryStart.opacity(0.12))
+                        )
+                }
             }
         }
+        .buttonStyle(.plain)
+        .disabled(detail.isMine)
     }
 
     private func postActions(_ detail: PostDetailContent) -> some View {
@@ -1678,6 +1726,89 @@ private struct WritePostMetaChip: View {
                 .font(AppFont.medium(15, relativeTo: .subheadline))
         }
         .foregroundStyle(Color(red: 0.42, green: 0.49, blue: 0.62))
+    }
+}
+
+private struct StartChatSheet: View {
+    let postTitle: String
+    let postIsAnonymous: Bool
+    @Binding var requesterIsAnonymous: Bool
+    let onClose: () -> Void
+    let onStart: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Start Conversation")
+                        .font(AppFont.extraBold(28, relativeTo: .title2))
+                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+
+                    Text("This conversation will be linked to the post below.")
+                        .font(AppFont.medium(16, relativeTo: .body))
+                        .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                }
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("POST")
+                        .font(AppFont.bold(13, relativeTo: .caption))
+                        .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.65))
+                        .tracking(1.6)
+
+                    Text(postTitle)
+                        .font(AppFont.bold(18, relativeTo: .headline))
+                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if postIsAnonymous {
+                        Text("The post author is anonymous in this thread.")
+                            .font(AppFont.medium(14, relativeTo: .caption))
+                            .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                    }
+                }
+                .padding(18)
+                .background(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .fill(Color.white)
+                        .shadow(color: Color.black.opacity(0.05), radius: 12, y: 3)
+                )
+
+                Toggle(isOn: $requesterIsAnonymous) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Send as Anonymous")
+                            .font(AppFont.bold(17, relativeTo: .headline))
+                            .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+
+                        Text("Your identity will stay hidden in this conversation.")
+                            .font(AppFont.medium(14, relativeTo: .caption))
+                            .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                    }
+                }
+                .tint(AuthPalette.primaryStart)
+
+                Spacer()
+
+                PrimaryActionButton(
+                    title: "Send Message",
+                    isLoading: false,
+                    isDisabled: false,
+                    height: 58,
+                    cornerRadius: 18,
+                    action: onStart
+                )
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 24)
+            .background(BoardsBackgroundView())
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Close", action: onClose)
+                        .font(AppFont.medium(16, relativeTo: .body))
+                        .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                }
+            }
+        }
     }
 }
 

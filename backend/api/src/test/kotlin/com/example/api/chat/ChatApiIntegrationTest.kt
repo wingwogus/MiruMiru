@@ -79,6 +79,8 @@ class ChatApiIntegrationTest(
 
         assertEquals(201, createResponse.status)
         assertTrue(createResponse.contentAsString.contains("\"created\":true"))
+        assertTrue(createResponse.contentAsString.contains("\"roomTitle\":\"Best lunch near campus?\""))
+        assertTrue(createResponse.contentAsString.contains("\"counterpartDisplayName\":\"익명 1\""))
 
         val roomId = extractId(createResponse.contentAsString, "roomId")
 
@@ -96,6 +98,7 @@ class ChatApiIntegrationTest(
         assertEquals(200, duplicateResponse.status)
         assertTrue(duplicateResponse.contentAsString.contains("\"created\":false"))
         assertTrue(duplicateResponse.contentAsString.contains("\"roomId\":$roomId"))
+        assertTrue(duplicateResponse.contentAsString.contains("\"counterpartDisplayName\":\"익명 1\""))
     }
 
     @Test
@@ -138,6 +141,8 @@ class ChatApiIntegrationTest(
 
         assertEquals(200, ownerRoomsResponse.status)
         assertTrue(ownerRoomsResponse.contentAsString.contains("\"roomId\":$roomId"))
+        assertTrue(ownerRoomsResponse.contentAsString.contains("\"roomTitle\":\"Best lunch near campus?\""))
+        assertTrue(ownerRoomsResponse.contentAsString.contains("\"counterpartDisplayName\":\"익명 2\""))
         assertTrue(ownerRoomsResponse.contentAsString.contains("\"unreadCount\":2"))
 
         val messagesResponse = mockMvc.get("/api/v1/message-rooms/$roomId/messages") {

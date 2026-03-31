@@ -1,26 +1,29 @@
-package com.example.domain.chat
+package com.example.application.chat.read
 
+import com.example.domain.chat.QChatMessage
 import com.querydsl.core.types.Projections
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.stereotype.Repository
 
 @Repository
-class ChatMessageQueryRepositoryImpl(
+class ChatMessageReadRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
-) : ChatMessageQueryRepository {
+) : ChatMessageReadRepository {
 
-    override fun findLatest(roomId: Long, limit: Int): List<ChatMessageSummary> {
+    override fun findLatest(roomId: Long, limit: Int): List<ChatQueryResult.MessageSummary> {
         val message = QChatMessage.chatMessage
 
         return queryFactory
-            .select(Projections.constructor(
-                ChatMessageSummary::class.java,
-                message.id,
-                message.room.id,
-                message.sender.id,
-                message.content,
-                message.createdAt,
-            ))
+            .select(
+                Projections.constructor(
+                    ChatQueryResult.MessageSummary::class.java,
+                    message.id,
+                    message.room.id,
+                    message.sender.id,
+                    message.content,
+                    message.createdAt,
+                )
+            )
             .from(message)
             .where(message.room.id.eq(roomId))
             .orderBy(message.id.desc())
@@ -28,18 +31,20 @@ class ChatMessageQueryRepositoryImpl(
             .fetch()
     }
 
-    override fun findBefore(roomId: Long, beforeMessageId: Long, limit: Int): List<ChatMessageSummary> {
+    override fun findBefore(roomId: Long, beforeMessageId: Long, limit: Int): List<ChatQueryResult.MessageSummary> {
         val message = QChatMessage.chatMessage
 
         return queryFactory
-            .select(Projections.constructor(
-                ChatMessageSummary::class.java,
-                message.id,
-                message.room.id,
-                message.sender.id,
-                message.content,
-                message.createdAt,
-            ))
+            .select(
+                Projections.constructor(
+                    ChatQueryResult.MessageSummary::class.java,
+                    message.id,
+                    message.room.id,
+                    message.sender.id,
+                    message.content,
+                    message.createdAt,
+                )
+            )
             .from(message)
             .where(
                 message.room.id.eq(roomId),

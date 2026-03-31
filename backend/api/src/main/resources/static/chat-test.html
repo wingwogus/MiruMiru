@@ -821,8 +821,8 @@
         el(`${user.prefix}_disconnect`).disabled = !user.connected;
 
         const selected = !!user.selectedRoomId;
-        el(`${user.prefix}_send`).disabled = !user.connected || !selected;
-        el(`${user.prefix}_read`).disabled = !user.connected || !selected;
+        el(`${user.prefix}_send`).disabled = !user.token || !selected;
+        el(`${user.prefix}_read`).disabled = !user.token || !selected;
       }
 
       function queueRefreshRooms(user) {
@@ -1070,7 +1070,7 @@
             const room = Number(event.roomId);
             const list = user.messagesByRoom[room] || [];
             const incoming = {
-              id: Number(event.message.messageId),
+              id: Number(event.message.id),
               senderId: Number(event.message.senderId),
               content: event.message.content,
               createdAt: event.message.createdAt || new Date().toISOString(),
@@ -1086,7 +1086,7 @@
               setRoomTitle(user);
 
               if (incoming.senderId !== Number(user.memberId)) {
-                markRead(user, { roomId: room, silent: true, reason: 'auto-live' });
+                void markRead(user, { roomId: room, silent: true, reason: 'auto-live' });
               }
             }
 
@@ -1230,12 +1230,12 @@
         setRoomTitle(user);
         if (user.connected) subscribeRoom(user, user.selectedRoomId);
         await loadMessages(user, user.selectedRoomId);
-        markRead(user, { roomId: user.selectedRoomId, silent: true, reason: 'auto-enter' });
+        void markRead(user, { roomId: user.selectedRoomId, silent: true, reason: 'auto-enter' });
         updateButtons(user);
       }
 
-      function sendMessage(user) {
-        if (!user.connected || !user.client || !user.selectedRoomId) return;
+      async function sendMessage(user) {
+        if (!user.token || !user.selectedRoomId) return;
         if (user.isSending) return;
 
         const input = el(`${user.prefix}_msg_input`);
@@ -1248,22 +1248,24 @@
         }
 
         user.isSending = true;
-        user.client.publish({
-          destination: `/pub/chat/rooms/${user.selectedRoomId}/send`,
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ content }),
-        });
-
-        user.lastSentAt = nowMillis;
-        user.lastSentContent = content;
-        input.value = '';
-        setTimeout(() => { user.isSending = false; }, 80);
-        logLine(`${user.label} send room=${user.selectedRoomId}`, 'good');
+        try {
+          await api(`/api/v1/message-rooms/${user.selectedRoomId}/messages`, {
+            method: 'POST',
+            token: user.token,
+            body: { content },
+          });
+          user.lastSentAt = nowMillis;
+          user.lastSentContent = content;
+          input.value = '';
+          logLine(`${user.label} send room=${user.selectedRoomId}`, 'good');
+        } finally {
+          setTimeout(() => { user.isSending = false; }, 80);
+        }
       }
 
-      function markRead(user, options = {}) {
+      async function markRead(user, options = {}) {
         const roomId = Number(options.roomId ?? user.selectedRoomId);
-        if (!user.connected || !user.client || !roomId) return false;
+        if (!user.token || !roomId) return false;
 
         const list = user.messagesByRoom[roomId] || [];
         if (!list.length) return false;
@@ -1274,10 +1276,10 @@
 
         if (Number(last.id) <= myLastRead) return false;
 
-        user.client.publish({
-          destination: `/pub/chat/rooms/${roomId}/read`,
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ lastReadMessageId: Number(last.id) }),
+        await api(`/api/v1/message-rooms/${roomId}/read`, {
+          method: 'PATCH',
+          token: user.token,
+          body: { lastReadMessageId: Number(last.id) },
         });
 
         updateRoomState(user, roomId, {
@@ -1333,15 +1335,17 @@
         el(`${user.prefix}_connect`).onclick = () => connect(user);
         el(`${user.prefix}_disconnect`).onclick = () => disconnect(user);
         el(`${user.prefix}_rooms_refresh`).onclick = () => fetchRooms(user).catch((error) => logLine(`${user.label} rooms failed: ${error.message}`, 'bad'));
-        el(`${user.prefix}_send`).onclick = () => sendMessage(user);
-        el(`${user.prefix}_read`).onclick = () => markRead(user);
+        el(`${user.prefix}_send`).onclick = () =>
+          sendMessage(user).catch((error) => logLine(`${user.label} send failed: ${error.message}`, 'bad'));
+        el(`${user.prefix}_read`).onclick = () =>
+          markRead(user).catch((error) => logLine(`${user.label} read failed: ${error.message}`, 'bad'));
 
         el(`${user.prefix}_msg_input`).addEventListener('keydown', (event) => {
           if (event.key !== 'Enter') return;
           event.preventDefault();
           if (event.isComposing || event.keyCode === 229) return;
           if (event.repeat) return;
-          sendMessage(user);
+          sendMessage(user).catch((error) => logLine(`${user.label} send failed: ${error.message}`, 'bad'));
         });
       }
 

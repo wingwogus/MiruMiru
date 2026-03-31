@@ -1,6 +1,7 @@
 package com.example.api.dto.chat
 
-import com.example.domain.chat.ChatMessageSummary
+import com.example.application.chat.ChatResult
+import com.example.application.chat.read.ChatQueryResult
 import java.time.LocalDateTime
 
 class ChatResponses {
@@ -30,26 +31,37 @@ class ChatResponses {
         val created: Boolean,
     )
 
-    data class MessageDto(
+    data class ChatMessagePayload(
         val id: Long,
+        val roomId: Long,
         val senderId: Long,
         val content: String,
         val createdAt: LocalDateTime?,
     ) {
         companion object {
-            fun from(summary: ChatMessageSummary): MessageDto =
-                MessageDto(
+            fun from(summary: ChatQueryResult.MessageSummary): ChatMessagePayload =
+                ChatMessagePayload(
                     id = summary.id,
+                    roomId = summary.roomId,
                     senderId = summary.senderId,
                     content = summary.content,
                     createdAt = summary.createdAt,
+                )
+
+            fun from(result: ChatResult.MessageSent): ChatMessagePayload =
+                ChatMessagePayload(
+                    id = result.id,
+                    roomId = result.roomId,
+                    senderId = result.senderId,
+                    content = result.content,
+                    createdAt = result.createdAt,
                 )
         }
     }
 
     data class MessagesResponse(
         val roomId: Long,
-        val messages: List<MessageDto>,
+        val messages: List<ChatMessagePayload>,
         val requesterLastReadMessageId: Long?,
         val otherLastReadMessageId: Long?,
         val nextBeforeMessageId: Long?,

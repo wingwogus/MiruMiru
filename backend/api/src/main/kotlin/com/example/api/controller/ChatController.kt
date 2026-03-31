@@ -5,6 +5,7 @@ import com.example.api.dto.chat.ChatRequests
 import com.example.api.dto.chat.ChatResponses
 import com.example.application.chat.ChatCommand
 import com.example.application.chat.ChatQuery
+import com.example.application.chat.ChatQueryService
 import com.example.application.chat.ChatService
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/message-rooms")
 class ChatController(
     private val chatService: ChatService,
+    private val chatQueryService: ChatQueryService,
 ) {
 
     @GetMapping
@@ -27,7 +29,7 @@ class ChatController(
     ): ResponseEntity<ApiResponse<List<ChatResponses.RoomSummaryResponse>>> {
         val requesterId = userId.toLongOrNull() ?: throw BusinessException(ErrorCode.UNAUTHORIZED)
 
-        val result = chatService.getMyRooms(
+        val result = chatQueryService.getMyRooms(
             ChatQuery.GetMyRooms(
                 requesterId = requesterId,
                 limit = params.limit,
@@ -100,7 +102,7 @@ class ChatController(
     ): ResponseEntity<ApiResponse<ChatResponses.MessagesResponse>> {
         val requesterId = userId.toLongOrNull() ?: throw BusinessException(ErrorCode.UNAUTHORIZED)
 
-        val result = chatService.getMessages(
+        val result = chatQueryService.getMessages(
             ChatQuery.GetMessages(
                 requesterId = requesterId,
                 roomId = roomId,
@@ -113,7 +115,7 @@ class ChatController(
             ApiResponse.ok(
                 ChatResponses.MessagesResponse(
                     roomId = result.roomId,
-                    messages = result.messages.map(ChatResponses.MessageDto::from),
+                    messages = result.messages.map(ChatResponses.ChatMessagePayload::from),
                     requesterLastReadMessageId = result.requesterLastReadMessageId,
                     otherLastReadMessageId = result.otherLastReadMessageId,
                     nextBeforeMessageId = result.nextBeforeMessageId,
@@ -156,11 +158,11 @@ class ChatController(
         @AuthenticationPrincipal userId: String,
         @PathVariable roomId: Long,
         @Valid @RequestBody request: ChatRequests.SendMessageRequest,
-    ): ResponseEntity<ApiResponse<Unit>> {
+    ): ResponseEntity<ApiResponse<ChatResponses.ChatMessagePayload>> {
         val senderId = userId.toLongOrNull() ?: throw BusinessException(ErrorCode.UNAUTHORIZED)
         val content = request.content ?: throw BusinessException(ErrorCode.INVALID_INPUT)
 
-        chatService.sendMessage(
+        val result = chatService.sendMessage(
             ChatCommand.SendMessage(
                 senderId = senderId,
                 roomId = roomId,
@@ -168,6 +170,6 @@ class ChatController(
             )
         )
 
-        return ResponseEntity.ok(ApiResponse.empty(Unit))
+        return ResponseEntity.ok(ApiResponse.ok(ChatResponses.ChatMessagePayload.from(result)))
     }
 }

@@ -16,6 +16,10 @@ class WebSocketAuthChannelInterceptor(
         val accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor::class.java)
             ?: return message
 
+        if (accessor.command == StompCommand.SEND) {
+            return null
+        }
+
         if (accessor.command != StompCommand.CONNECT) {
             return message
         }
@@ -34,4 +38,3 @@ class WebSocketAuthChannelInterceptor(
         return message
     }
 }
-

@@ -30,6 +30,7 @@ class ChatService(
     private val chatMessageRepository: ChatMessageRepository,
     private val commentRepository: CommentRepository,
     private val chatBlockRepository: ChatBlockRepository,
+    private val chatQueryService: ChatQueryService,
     private val chatEventPublisher: ChatEventPublisher,
 ) {
 
@@ -137,14 +138,15 @@ class ChatService(
         )
 
         val receiverLastReadId = room.getLastReadMessageId(receiverId)
-        val unreadCount = chatMessageRepository.countUnread(room.id, receiverId, receiverLastReadId)
+        val unreadCount = chatQueryService.countUnread(room.id, receiverId, receiverLastReadId)
 
         chatEventPublisher.publish(
             ChatEvent(
                 type = ChatEventType.MESSAGE,
                 roomId = room.id,
                 message = ChatMessageEvent(
-                    messageId = message.id,
+                    id = message.id,
+                    roomId = room.id,
                     senderId = sender.id,
                     content = message.content,
                     createdAt = message.createdAt,
@@ -164,8 +166,11 @@ class ChatService(
         )
 
         return ChatResult.MessageSent(
-            messageId = message.id,
+            id = message.id,
             roomId = room.id,
+            senderId = sender.id,
+            content = message.content,
+            createdAt = message.createdAt,
         )
     }
 
@@ -181,7 +186,7 @@ class ChatService(
         room.updateLastReadMessageId(command.readerId, command.lastReadMessageId)
         val savedRoom = messageRoomRepository.save(room)
 
-        val unreadCount = chatMessageRepository.countUnread(
+        val unreadCount = chatQueryService.countUnread(
             roomId = savedRoom.id,
             memberId = command.readerId,
             lastReadMessageId = savedRoom.getLastReadMessageId(command.readerId),
@@ -214,61 +219,6 @@ class ChatService(
             readerId = command.readerId,
             lastReadMessageId = command.lastReadMessageId,
             unreadCount = unreadCount,
-        )
-    }
-
-    @Transactional(readOnly = true)
-    fun getMyRooms(query: ChatQuery.GetMyRooms): ChatResult.Rooms {
-        val limit = query.limit.coerceIn(1, 100)
-        val rooms = messageRoomRepository.findMyRooms(query.requesterId, limit)
-
-        return ChatResult.Rooms(
-            rooms = rooms.map {
-                ChatResult.RoomSummary(
-                    roomId = it.roomId,
-                    postId = it.postId,
-                    postTitle = it.postTitle,
-                    otherMemberId = it.otherMemberId,
-                    lastMessageId = it.lastMessageId,
-                    lastMessageContent = it.lastMessageContent,
-                    lastMessageCreatedAt = it.lastMessageCreatedAt,
-                    unreadCount = it.unreadCount,
-                    myLastReadMessageId = it.myLastReadMessageId?.takeIf { id -> id > 0 },
-                    otherLastReadMessageId = it.otherLastReadMessageId?.takeIf { id -> id > 0 },
-                    isAnonMe = it.isAnonMe,
-                    isAnonOther = it.isAnonOther,
-                )
-            }
-        )
-    }
-
-    @Transactional(readOnly = true)
-    fun getMessages(query: ChatQuery.GetMessages): ChatResult.Messages {
-        val room = messageRoomRepository.findById(query.roomId).orElseThrow {
-            BusinessException(ErrorCode.RESOURCE_NOT_FOUND)
-        }
-
-        if (!room.isParticipant(query.requesterId)) {
-            throw BusinessException(ErrorCode.UNAUTHORIZED)
-        }
-
-        val limit = query.limit.coerceIn(1, 100)
-        val messages = if (query.beforeMessageId == null) {
-            chatMessageRepository.findLatest(query.roomId, limit)
-        } else {
-            chatMessageRepository.findBefore(query.roomId, query.beforeMessageId, limit)
-        }
-
-        val requesterLastRead = room.getLastReadMessageId(query.requesterId)
-        val otherId = room.otherMemberId(query.requesterId)
-        val otherLastRead = room.getLastReadMessageId(otherId)
-
-        return ChatResult.Messages(
-            roomId = room.id,
-            messages = messages,
-            requesterLastReadMessageId = requesterLastRead,
-            otherLastReadMessageId = otherLastRead,
-            nextBeforeMessageId = messages.lastOrNull()?.id,
         )
     }
 

@@ -38,6 +38,7 @@ class ChatServiceTest {
     private lateinit var chatMessageRepository: ChatMessageRepository
     private lateinit var commentRepository: CommentRepository
     private lateinit var chatBlockRepository: ChatBlockRepository
+    private lateinit var chatQueryService: ChatQueryService
     private lateinit var chatEventPublisher: RecordingChatEventPublisher
     private lateinit var chatService: ChatService
 
@@ -49,6 +50,7 @@ class ChatServiceTest {
         chatMessageRepository = mock(ChatMessageRepository::class.java)
         commentRepository = mock(CommentRepository::class.java)
         chatBlockRepository = mock(ChatBlockRepository::class.java)
+        chatQueryService = mock(ChatQueryService::class.java)
         chatEventPublisher = RecordingChatEventPublisher()
         chatService = ChatService(
             postRepository = postRepository,
@@ -57,6 +59,7 @@ class ChatServiceTest {
             chatMessageRepository = chatMessageRepository,
             commentRepository = commentRepository,
             chatBlockRepository = chatBlockRepository,
+            chatQueryService = chatQueryService,
             chatEventPublisher = chatEventPublisher,
         )
     }
@@ -263,7 +266,7 @@ class ChatServiceTest {
         `when`(messageRoomRepository.findById(room.id)).thenReturn(Optional.of(room))
         `when`(chatBlockRepository.existsByMember1IdAndMember2Id(sender.id, receiver.id)).thenReturn(false)
         `when`(chatMessageRepository.save(any(ChatMessage::class.java))).thenReturn(savedMessage)
-        `when`(chatMessageRepository.countUnread(room.id, receiver.id, null)).thenReturn(1L)
+        `when`(chatQueryService.countUnread(room.id, receiver.id, null)).thenReturn(1L)
 
         val result = chatService.sendMessage(
             ChatCommand.SendMessage(
@@ -273,7 +276,7 @@ class ChatServiceTest {
             )
         )
 
-        assertEquals(savedMessage.id, result.messageId)
+        assertEquals(savedMessage.id, result.id)
         assertEquals(room.id, result.roomId)
 
         val eventTypes = chatEventPublisher.events.map { it.type }
@@ -292,7 +295,7 @@ class ChatServiceTest {
 
         `when`(messageRoomRepository.findById(room.id)).thenReturn(Optional.of(room))
         `when`(messageRoomRepository.save(any(MessageRoom::class.java))).thenAnswer { it.getArgument(0) }
-        `when`(chatMessageRepository.countUnread(room.id, reader.id, 55L)).thenReturn(0L)
+        `when`(chatQueryService.countUnread(room.id, reader.id, 55L)).thenReturn(0L)
 
         val result = chatService.markRead(
             ChatCommand.MarkRead(

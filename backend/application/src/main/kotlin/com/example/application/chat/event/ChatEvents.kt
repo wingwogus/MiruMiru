@@ -17,7 +17,8 @@ data class ChatEvent(
 )
 
 data class ChatMessageEvent(
-    val messageId: Long,
+    val id: Long,
+    val roomId: Long,
     val senderId: Long,
     val content: String,
     val createdAt: LocalDateTime?,
@@ -32,4 +33,3 @@ data class ChatUnreadCountEvent(
     val memberId: Long,
     val unreadCount: Long,
 )
-

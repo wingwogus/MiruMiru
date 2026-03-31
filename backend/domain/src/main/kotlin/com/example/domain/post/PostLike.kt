@@ -1,6 +1,6 @@
 package com.example.domain.post
 
-import com.example.domain.common.CreatedTimeEntity
+import com.example.domain.common.BaseTimeEntity
 import com.example.domain.member.Member
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -37,4 +37,4 @@ class PostLike(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     val member: Member
-) : CreatedTimeEntity()
+) : BaseTimeEntity()

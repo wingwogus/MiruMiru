@@ -1,6 +1,6 @@
 package com.example.domain.chat
 
-import com.example.domain.common.AuditableEntity
+import com.example.domain.common.BaseTimeEntity
 import com.example.domain.member.Member
 import com.example.domain.post.Post
 import jakarta.persistence.Column
@@ -43,7 +43,7 @@ class MessageRoom(
 
     @Column(name = "member_2_last_read_id")
     var member2LastReadMessageId: Long? = null,
-) : AuditableEntity() {
+) : BaseTimeEntity() {
 
     fun isParticipant(memberId: Long): Boolean = member1.id == memberId || member2.id == memberId
 
@@ -75,4 +75,3 @@ class MessageRoom(
         throw IllegalArgumentException("Not a room participant")
     }
 }
-

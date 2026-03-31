@@ -1,6 +1,6 @@
 package com.example.domain.chat
 
-import com.example.domain.common.CreatedTimeEntity
+import com.example.domain.common.BaseTimeEntity
 import com.example.domain.member.Member
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -43,5 +43,4 @@ class ChatBlock(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "blocked_by_id", nullable = false)
     val blockedBy: Member,
-) : CreatedTimeEntity()
-
+) : BaseTimeEntity()

@@ -1,6 +1,6 @@
 package com.example.domain.chat
 
-import com.example.domain.common.CreatedTimeEntity
+import com.example.domain.common.BaseTimeEntity
 import com.example.domain.member.Member
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -45,5 +45,4 @@ class ChatReport(
 
     @Column(columnDefinition = "TEXT")
     val detail: String? = null,
-) : CreatedTimeEntity()
-
+) : BaseTimeEntity()

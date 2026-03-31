@@ -1,6 +1,6 @@
 package com.example.domain.chat
 
-import com.example.domain.common.AuditableEntity
+import com.example.domain.common.BaseTimeEntity
 import com.example.domain.member.Member
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -31,5 +31,4 @@ class ChatMessage(
     @Lob
     @Column(nullable = false)
     val content: String,
-) : AuditableEntity()
-
+) : BaseTimeEntity()

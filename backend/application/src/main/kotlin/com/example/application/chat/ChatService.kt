@@ -9,13 +9,17 @@ import com.example.application.chat.event.ChatUnreadCountEvent
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
 import com.example.domain.chat.ChatMessage
+import com.example.domain.chat.ChatBlockRepository
 import com.example.domain.chat.ChatMessageRepository
 import com.example.domain.chat.MessageRoom
 import com.example.domain.chat.MessageRoomRepository
+import com.example.domain.comment.CommentRepository
 import com.example.domain.member.MemberRepository
 import com.example.domain.post.PostRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.math.max
+import kotlin.math.min
 
 @Service
 @Transactional
@@ -24,6 +28,8 @@ class ChatService(
     private val memberRepository: MemberRepository,
     private val messageRoomRepository: MessageRoomRepository,
     private val chatMessageRepository: ChatMessageRepository,
+    private val commentRepository: CommentRepository,
+    private val chatBlockRepository: ChatBlockRepository,
     private val chatEventPublisher: ChatEventPublisher,
 ) {
 
@@ -35,22 +41,31 @@ class ChatService(
             BusinessException(ErrorCode.RESOURCE_NOT_FOUND)
         }
 
-        val otherMember = if (post.member.id == requester.id) {
-            val partnerId = command.partnerMemberId
+        val partnerId = when {
+            post.member.id == requester.id -> command.partnerMemberId
                 ?: throw BusinessException(
                     ErrorCode.INVALID_INPUT,
                     customMessage = "partner_member_id_required_for_post_owner"
                 )
+            command.partnerMemberId != null -> command.partnerMemberId
+            else -> post.member.id
+        }
 
-            if (partnerId == requester.id) {
-                throw BusinessException(ErrorCode.INVALID_INPUT, customMessage = "cannot_create_room_with_self")
-            }
+        if (partnerId == requester.id) {
+            throw BusinessException(ErrorCode.INVALID_INPUT, customMessage = "cannot_create_room_with_self")
+        }
 
-            memberRepository.findById(partnerId).orElseThrow {
-                BusinessException(ErrorCode.USER_NOT_FOUND)
-            }
-        } else {
-            post.member
+        val otherMember = memberRepository.findById(partnerId).orElseThrow {
+            BusinessException(ErrorCode.USER_NOT_FOUND)
+        }
+
+        validateSameUniversity(requesterUniversityId = requester.university.id, partnerUniversityId = otherMember.university.id)
+        validatePostUniversity(postUniversityId = post.board.university.id, requesterUniversityId = requester.university.id)
+        validatePostParticipant(postId = post.id, postAuthorId = post.member.id, memberId = requester.id, role = "requester")
+        validatePostParticipant(postId = post.id, postAuthorId = post.member.id, memberId = otherMember.id, role = "partner")
+
+        if (isBlockedBetween(requester.id, otherMember.id)) {
+            throw BusinessException(ErrorCode.FORBIDDEN, customMessage = "chat_blocked_between_members")
         }
 
         val existingRoom = messageRoomRepository.findByPostIdAndMember1IdAndMember2Id(
@@ -108,6 +123,11 @@ class ChatService(
             throw BusinessException(ErrorCode.UNAUTHORIZED)
         }
 
+        val receiverId = room.otherMemberId(sender.id)
+        if (isBlockedBetween(sender.id, receiverId)) {
+            throw BusinessException(ErrorCode.FORBIDDEN, customMessage = "chat_blocked_between_members")
+        }
+
         val message = chatMessageRepository.save(
             ChatMessage(
                 room = room,
@@ -116,7 +136,6 @@ class ChatService(
             )
         )
 
-        val receiverId = room.otherMemberId(sender.id)
         val receiverLastReadId = room.getLastReadMessageId(receiverId)
         val unreadCount = chatMessageRepository.countUnread(room.id, receiverId, receiverLastReadId)
 
@@ -251,5 +270,35 @@ class ChatService(
             otherLastReadMessageId = otherLastRead,
             nextBeforeMessageId = messages.lastOrNull()?.id,
         )
+    }
+
+    private fun validateSameUniversity(requesterUniversityId: Long, partnerUniversityId: Long) {
+        if (requesterUniversityId != partnerUniversityId) {
+            throw BusinessException(ErrorCode.FORBIDDEN, customMessage = "cross_university_chat_not_allowed")
+        }
+    }
+
+    private fun validatePostUniversity(postUniversityId: Long, requesterUniversityId: Long) {
+        if (postUniversityId != requesterUniversityId) {
+            throw BusinessException(ErrorCode.FORBIDDEN, customMessage = "post_university_mismatch")
+        }
+    }
+
+    private fun validatePostParticipant(postId: Long, postAuthorId: Long, memberId: Long, role: String) {
+        val isAuthor = postAuthorId == memberId
+        val hasCommented = commentRepository.existsByPostIdAndMemberId(postId, memberId)
+        if (!isAuthor && !hasCommented) {
+            throw BusinessException(
+                ErrorCode.FORBIDDEN,
+                customMessage = "chat_participant_required",
+                detail = mapOf("role" to role)
+            )
+        }
+    }
+
+    private fun isBlockedBetween(memberAId: Long, memberBId: Long): Boolean {
+        val first = min(memberAId, memberBId)
+        val second = max(memberAId, memberBId)
+        return chatBlockRepository.existsByMember1IdAndMember2Id(first, second)
     }
 }

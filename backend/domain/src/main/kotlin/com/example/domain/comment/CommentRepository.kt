@@ -11,4 +11,5 @@ interface CommentRepository : JpaRepository<Comment, Long> {
     fun findByIdAndPostBoardUniversityId(commentId: Long, universityId: Long): Comment?
 
     fun findAllByPostIdIn(postIds: List<Long>): List<Comment>
+    fun existsByPostIdAndMemberId(postId: Long, memberId: Long): Boolean
 }

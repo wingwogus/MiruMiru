@@ -7,9 +7,11 @@ import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
 import com.example.domain.board.Board
 import com.example.domain.chat.ChatMessage
+import com.example.domain.chat.ChatBlockRepository
 import com.example.domain.chat.ChatMessageRepository
 import com.example.domain.chat.MessageRoom
 import com.example.domain.chat.MessageRoomRepository
+import com.example.domain.comment.CommentRepository
 import com.example.domain.major.Major
 import com.example.domain.member.Member
 import com.example.domain.member.MemberRepository
@@ -34,6 +36,8 @@ class ChatServiceTest {
     private lateinit var memberRepository: MemberRepository
     private lateinit var messageRoomRepository: MessageRoomRepository
     private lateinit var chatMessageRepository: ChatMessageRepository
+    private lateinit var commentRepository: CommentRepository
+    private lateinit var chatBlockRepository: ChatBlockRepository
     private lateinit var chatEventPublisher: RecordingChatEventPublisher
     private lateinit var chatService: ChatService
 
@@ -43,12 +47,16 @@ class ChatServiceTest {
         memberRepository = mock(MemberRepository::class.java)
         messageRoomRepository = mock(MessageRoomRepository::class.java)
         chatMessageRepository = mock(ChatMessageRepository::class.java)
+        commentRepository = mock(CommentRepository::class.java)
+        chatBlockRepository = mock(ChatBlockRepository::class.java)
         chatEventPublisher = RecordingChatEventPublisher()
         chatService = ChatService(
             postRepository = postRepository,
             memberRepository = memberRepository,
             messageRoomRepository = messageRoomRepository,
             chatMessageRepository = chatMessageRepository,
+            commentRepository = commentRepository,
+            chatBlockRepository = chatBlockRepository,
             chatEventPublisher = chatEventPublisher,
         )
     }
@@ -73,6 +81,8 @@ class ChatServiceTest {
         `when`(memberRepository.findById(owner.id)).thenReturn(Optional.of(owner))
         `when`(postRepository.findById(post.id)).thenReturn(Optional.of(post))
         `when`(memberRepository.findById(partner.id)).thenReturn(Optional.of(partner))
+        `when`(commentRepository.existsByPostIdAndMemberId(post.id, partner.id)).thenReturn(true)
+        `when`(chatBlockRepository.existsByMember1IdAndMember2Id(owner.id, partner.id)).thenReturn(false)
         `when`(messageRoomRepository.save(any(MessageRoom::class.java))).thenReturn(savedRoom)
 
         val result = chatService.createRoom(
@@ -137,6 +147,8 @@ class ChatServiceTest {
         `when`(memberRepository.findById(owner.id)).thenReturn(Optional.of(owner))
         `when`(postRepository.findById(post.id)).thenReturn(Optional.of(post))
         `when`(memberRepository.findById(partner.id)).thenReturn(Optional.of(partner))
+        `when`(commentRepository.existsByPostIdAndMemberId(post.id, partner.id)).thenReturn(true)
+        `when`(chatBlockRepository.existsByMember1IdAndMember2Id(owner.id, partner.id)).thenReturn(false)
         `when`(
             messageRoomRepository.findByPostIdAndMember1IdAndMember2Id(
                 post.id,
@@ -164,25 +176,29 @@ class ChatServiceTest {
     }
 
     @Test
-    fun `create room by non owner always targets post author`() {
+    fun `create room by non owner allows participant partner`() {
         val university = university()
         val major = major(university)
         val owner = member(id = 1L, university = university, major = major, email = "owner@tokyo.ac.jp")
         val requester = member(id = 3L, university = university, major = major, email = "requester@tokyo.ac.jp")
-        val arbitraryPartner = member(id = 2L, university = university, major = major, email = "other@tokyo.ac.jp")
+        val participantPartner = member(id = 2L, university = university, major = major, email = "other@tokyo.ac.jp")
         val board = board(id = 10L, university = university)
         val post = post(id = 20L, board = board, member = owner, isAnonymous = true)
         val savedRoom = MessageRoom(
             id = 31L,
             post = post,
             member1 = requester,
-            member2 = owner,
+            member2 = participantPartner,
             isAnon1 = true,
             isAnon2 = true,
         )
 
         `when`(memberRepository.findById(requester.id)).thenReturn(Optional.of(requester))
         `when`(postRepository.findById(post.id)).thenReturn(Optional.of(post))
+        `when`(memberRepository.findById(participantPartner.id)).thenReturn(Optional.of(participantPartner))
+        `when`(commentRepository.existsByPostIdAndMemberId(post.id, requester.id)).thenReturn(true)
+        `when`(commentRepository.existsByPostIdAndMemberId(post.id, participantPartner.id)).thenReturn(true)
+        `when`(chatBlockRepository.existsByMember1IdAndMember2Id(participantPartner.id, requester.id)).thenReturn(false)
         `when`(messageRoomRepository.save(any(MessageRoom::class.java))).thenReturn(savedRoom)
 
         val result = chatService.createRoom(
@@ -190,15 +206,17 @@ class ChatServiceTest {
                 requesterId = requester.id,
                 postId = post.id,
                 requesterIsAnonymous = true,
-                partnerMemberId = arbitraryPartner.id,
+                partnerMemberId = participantPartner.id,
             )
         )
 
-        assertEquals(owner.id, result.member2Id)
+        assertEquals(participantPartner.id, result.member2Id)
         assertEquals(true, result.created)
-        verify(memberRepository, never()).findById(arbitraryPartner.id)
-        verify(messageRoomRepository, times(1))
-            .findByPostIdAndMember1IdAndMember2Id(eq(post.id), eq(requester.id), eq(owner.id))
+        verify(messageRoomRepository, times(1)).findByPostIdAndMember1IdAndMember2Id(
+            eq(post.id),
+            eq(requester.id),
+            eq(participantPartner.id)
+        )
     }
 
     @Test
@@ -243,6 +261,7 @@ class ChatServiceTest {
 
         `when`(memberRepository.findById(sender.id)).thenReturn(Optional.of(sender))
         `when`(messageRoomRepository.findById(room.id)).thenReturn(Optional.of(room))
+        `when`(chatBlockRepository.existsByMember1IdAndMember2Id(sender.id, receiver.id)).thenReturn(false)
         `when`(chatMessageRepository.save(any(ChatMessage::class.java))).thenReturn(savedMessage)
         `when`(chatMessageRepository.countUnread(room.id, receiver.id, null)).thenReturn(1L)
 
@@ -288,6 +307,65 @@ class ChatServiceTest {
 
         val eventTypes = chatEventPublisher.events.map { it.type }
         assertEquals(listOf(ChatEventType.READ, ChatEventType.UNREAD_COUNT), eventTypes)
+    }
+
+    @Test
+    fun `create room fails when requester is not post participant`() {
+        val university = university()
+        val major = major(university)
+        val owner = member(id = 1L, university = university, major = major, email = "owner@tokyo.ac.jp")
+        val requester = member(id = 3L, university = university, major = major, email = "requester@tokyo.ac.jp")
+        val partner = member(id = 2L, university = university, major = major, email = "partner@tokyo.ac.jp")
+        val board = board(id = 10L, university = university)
+        val post = post(id = 20L, board = board, member = owner, isAnonymous = true)
+
+        `when`(memberRepository.findById(requester.id)).thenReturn(Optional.of(requester))
+        `when`(memberRepository.findById(partner.id)).thenReturn(Optional.of(partner))
+        `when`(postRepository.findById(post.id)).thenReturn(Optional.of(post))
+        `when`(commentRepository.existsByPostIdAndMemberId(post.id, requester.id)).thenReturn(false)
+
+        val exception = assertThrows(BusinessException::class.java) {
+            chatService.createRoom(
+                ChatCommand.CreateRoom(
+                    requesterId = requester.id,
+                    postId = post.id,
+                    requesterIsAnonymous = false,
+                    partnerMemberId = partner.id,
+                )
+            )
+        }
+
+        assertEquals(ErrorCode.FORBIDDEN, exception.errorCode)
+        assertEquals("chat_participant_required", exception.customMessage)
+    }
+
+    @Test
+    fun `send message fails when users are blocked`() {
+        val university = university()
+        val major = major(university)
+        val sender = member(id = 1L, university = university, major = major, email = "sender@tokyo.ac.jp")
+        val receiver = member(id = 2L, university = university, major = major, email = "receiver@tokyo.ac.jp")
+        val board = board(id = 10L, university = university)
+        val post = post(id = 20L, board = board, member = receiver, isAnonymous = false)
+        val room = MessageRoom(id = 30L, post = post, member1 = sender, member2 = receiver)
+
+        `when`(memberRepository.findById(sender.id)).thenReturn(Optional.of(sender))
+        `when`(messageRoomRepository.findById(room.id)).thenReturn(Optional.of(room))
+        `when`(chatBlockRepository.existsByMember1IdAndMember2Id(sender.id, receiver.id)).thenReturn(true)
+
+        val exception = assertThrows(BusinessException::class.java) {
+            chatService.sendMessage(
+                ChatCommand.SendMessage(
+                    senderId = sender.id,
+                    roomId = room.id,
+                    content = "blocked",
+                )
+            )
+        }
+
+        assertEquals(ErrorCode.FORBIDDEN, exception.errorCode)
+        assertEquals("chat_blocked_between_members", exception.customMessage)
+        verify(chatMessageRepository, never()).save(any(ChatMessage::class.java))
     }
 
     private fun university(): University =

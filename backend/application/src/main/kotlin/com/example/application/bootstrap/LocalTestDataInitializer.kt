@@ -39,7 +39,7 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 
 @Component
-@Profile("local")
+@Profile("local", "docker")
 @Transactional
 class LocalTestDataInitializer(
     private val universityRepository: UniversityRepository,

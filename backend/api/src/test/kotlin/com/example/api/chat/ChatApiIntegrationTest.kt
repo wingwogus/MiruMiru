@@ -43,6 +43,7 @@ class ChatApiIntegrationTest(
 ) {
     private lateinit var ownerAccessToken: String
     private lateinit var requesterAccessToken: String
+    private var explicitPartnerId: Long = 0L
     private var seededPostId: Long = 0L
     private var secondPostId: Long = 0L
 
@@ -50,8 +51,10 @@ class ChatApiIntegrationTest(
     fun setUp() {
         val owner = memberRepository.findByEmail("test@tokyo.ac.jp")!!
         val requester = memberRepository.findByEmail("empty@tokyo.ac.jp")!!
+        val explicitPartner = memberRepository.findByEmail("partner@tokyo.ac.jp")!!
         ownerAccessToken = tokenProvider.createAccessToken(owner.id, owner.role)
         requesterAccessToken = tokenProvider.createAccessToken(requester.id, requester.role)
+        explicitPartnerId = explicitPartner.id
         val freeBoardId = boardRepository.findByUniversityIdAndCode(owner.university.id, "free")!!.id
         val generalBoardId = boardRepository.findByUniversityIdAndCode(owner.university.id, "general")!!.id
         seededPostId = postRepository.findByBoardIdAndTitle(freeBoardId, "Best lunch near campus?")!!.id
@@ -200,6 +203,25 @@ class ChatApiIntegrationTest(
 
         assertEquals(404, invalidReadResponse.status)
         assertTrue(invalidReadResponse.contentAsString.contains("CHAT_002"))
+    }
+
+    @Test
+    fun `create room allows explicit partner selection without comment participation`() {
+        val response = mockMvc.post("/api/v1/message-rooms") {
+            header(HttpHeaders.AUTHORIZATION, "Bearer $requesterAccessToken")
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "postId": $seededPostId,
+                  "requesterIsAnonymous": true,
+                  "partnerMemberId": $explicitPartnerId
+                }
+            """.trimIndent()
+        }.andReturn().response
+
+        assertEquals(201, response.status)
+        assertTrue(response.contentAsString.contains("\"member2Id\":$explicitPartnerId"))
+        assertTrue(response.contentAsString.contains("\"created\":true"))
     }
 
     private fun createRoom(postId: Long, requesterIsAnonymous: Boolean = true): Long {

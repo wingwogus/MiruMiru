@@ -245,6 +245,78 @@ final class MockBoardsClient: BoardsClientProtocol, @unchecked Sendable {
     }
 }
 
+final class MockMessagesClient: MessagesClientProtocol, @unchecked Sendable {
+    var viewerResult: Result<MessagesViewer, Error> = .success(MessagesViewer(memberId: 1, displayName: "Tester"))
+    var roomsResult: Result<[MessageRoomSummary], Error> = .success([])
+    var blockedMemberIdsResult: Result<Set<Int64>, Error> = .success([])
+    var createRoomResult: Result<MessageRoomCreated, Error> = .failure(MessagesClientError.unexpected)
+    var messagesResult: Result<MessagesPage, Error> = .success(MessagesPage(roomId: 1, messages: [], myLastReadMessageId: nil, otherLastReadMessageId: nil, nextBeforeMessageId: nil))
+    var sendMessageResult: Result<MessageItem, Error> = .failure(MessagesClientError.unexpected)
+    var markReadResult: Result<Int, Error> = .success(0)
+    var blockResult: Result<Void, Error> = .success(())
+    var unblockResult: Result<Void, Error> = .success(())
+    var reportResult: Result<Void, Error> = .success(())
+
+    private(set) var lastCreateRoomRequest: (postId: Int64, requesterIsAnonymous: Bool, partnerMemberId: Int64?)?
+    private(set) var blockedMemberIds: [Int64] = []
+    private(set) var unblockedMemberIds: [Int64] = []
+    private(set) var reportPayloads: [(targetMemberId: Int64, roomId: Int64, reason: String, detail: String?)] = []
+    private(set) var sentPayloads: [(roomId: Int64, content: String)] = []
+
+    func fetchViewer() async throws -> MessagesViewer {
+        try viewerResult.get()
+    }
+
+    func fetchRooms(limit: Int) async throws -> [MessageRoomSummary] {
+        try roomsResult.get()
+    }
+
+    func fetchBlockedMemberIds() async throws -> Set<Int64> {
+        try blockedMemberIdsResult.get()
+    }
+
+    func createRoom(postId: Int64, requesterIsAnonymous: Bool, partnerMemberId: Int64?) async throws -> MessageRoomCreated {
+        lastCreateRoomRequest = (postId, requesterIsAnonymous, partnerMemberId)
+        return try createRoomResult.get()
+    }
+
+    func fetchMessages(roomId: Int64, beforeMessageId: Int64?, limit: Int) async throws -> MessagesPage {
+        try messagesResult.get()
+    }
+
+    func sendMessage(roomId: Int64, content: String) async throws -> MessageItem {
+        sentPayloads.append((roomId, content))
+        return try sendMessageResult.get()
+    }
+
+    func markRead(roomId: Int64, lastReadMessageId: Int64) async throws -> Int {
+        try markReadResult.get()
+    }
+
+    func blockMember(targetMemberId: Int64) async throws {
+        blockedMemberIds.append(targetMemberId)
+        try blockResult.get()
+    }
+
+    func unblockMember(targetMemberId: Int64) async throws {
+        unblockedMemberIds.append(targetMemberId)
+        try unblockResult.get()
+    }
+
+    func reportMember(targetMemberId: Int64, roomId: Int64, reason: String, detail: String?) async throws {
+        reportPayloads.append((targetMemberId, roomId, reason, detail))
+        try reportResult.get()
+    }
+}
+
+actor MockMessagesRealtimeClient: MessagesRealtimeClientProtocol {
+    func activate() async {}
+    func deactivate() async {}
+    func ensureUnreadSubscription() async {}
+    func subscribeToRoom(_ roomId: Int64) async {}
+    func unsubscribeFromRoom(_ roomId: Int64) async {}
+}
+
 final class MockCourseReviewsClient: CourseReviewsClientProtocol, @unchecked Sendable {
     var feedResult: Result<CourseReviewFeedPage, Error> = .failure(CourseReviewsClientError.unexpected)
     var targetSearchResult: Result<CourseReviewTargetPage, Error> = .failure(CourseReviewsClientError.unexpected)

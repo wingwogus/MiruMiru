@@ -3,6 +3,11 @@ spring:
     activate:
       on-profile: prod
 
+  sql:
+    init:
+      mode: always
+      platform: mysql
+
   datasource:
     url: ${PROD_DB_URL}
     username: ${PROD_DB_USERNAME}
@@ -23,3 +28,9 @@ jwt:
 redis:
   host: ${REDIS_HOST}
   port: ${REDIS_PORT}
+
+chat:
+  room:
+    cleanup:
+      enabled: true
+      cron: 0 0 4 * * *

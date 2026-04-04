@@ -138,8 +138,10 @@ class PostApiIntegrationTest(
 
         assertEquals(200, response.status)
         assertTrue(response.contentAsString.contains("\"title\":\"Best lunch near campus?\""))
+        assertTrue(response.contentAsString.contains("\"authorMemberId\":1"))
         assertTrue(response.contentAsString.contains("\"authorDisplayName\":\"익명 1\""))
         assertTrue(response.contentAsString.contains("\"isLikedByMe\":true"))
+        assertTrue(response.contentAsString.contains("\"authorMemberId\":2"))
         assertTrue(response.contentAsString.contains("\"authorDisplayName\":\"익명 2\""))
         assertTrue(response.contentAsString.contains("\"children\":["))
     }

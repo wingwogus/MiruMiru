@@ -8,11 +8,18 @@ struct MessagesViewer: Equatable, Sendable {
     let displayName: String
 }
 
-struct MessageStartRequest: Equatable, Sendable {
+struct MessageStartRequest: Identifiable, Hashable, Equatable, Sendable {
     let postId: Int64
     let postTitle: String
     let postIsAnonymous: Bool
+    let partnerMemberId: Int64?
+    let targetDisplayName: String
+    let targetIsAnonymous: Bool
     let requesterIsAnonymous: Bool
+
+    var id: String {
+        "\(postId)-\(partnerMemberId ?? -1)-\(targetDisplayName)"
+    }
 }
 
 struct MessageRoomSummary: Identifiable, Hashable, Equatable, Sendable {
@@ -57,6 +64,7 @@ struct MessageRoomSummary: Identifiable, Hashable, Equatable, Sendable {
             postId: postId,
             postTitle: postTitle,
             roomTitle: roomTitle,
+            otherMemberId: otherMemberId,
             counterpartDisplayName: counterpartDisplayName,
             isAnonMe: isAnonMe,
             isAnonOther: isAnonOther,
@@ -71,6 +79,7 @@ struct MessageRoomContext: Hashable, Equatable, Identifiable, Sendable {
     let postId: Int64
     let postTitle: String
     let roomTitle: String
+    let otherMemberId: Int64
     let counterpartDisplayName: String?
     let isAnonMe: Bool
     let isAnonOther: Bool
@@ -121,6 +130,8 @@ struct MessagesPage: Equatable, Sendable {
 struct MessageRoomCreated: Equatable, Sendable {
     let roomId: Int64
     let postId: Int64
+    let member1Id: Int64
+    let member2Id: Int64
     let roomTitle: String
     let counterpartDisplayName: String?
     let isAnonMe: Bool
@@ -146,6 +157,8 @@ enum MessagesClientError: Error, Equatable {
     case postNotFound
     case roomNotFound
     case messageNotFound
+    case blockedConversation
+    case forbidden
     case network
     case unexpected
 }
@@ -155,6 +168,8 @@ enum MessagesFailure: Error, Equatable {
     case postNotFound
     case roomNotFound
     case messageNotFound
+    case blockedConversation
+    case forbidden
     case network
     case unexpected
 
@@ -168,6 +183,10 @@ enum MessagesFailure: Error, Equatable {
             return "We couldn't find that conversation."
         case .messageNotFound:
             return "That message is no longer available."
+        case .blockedConversation:
+            return "This conversation is blocked."
+        case .forbidden:
+            return "You can't do that in this conversation."
         case .network:
             return "Unable to connect to Messages right now."
         case .unexpected:
@@ -185,10 +204,14 @@ enum MessagesRealtimeEvent: Equatable, Sendable {
 protocol MessagesClientProtocol: Sendable {
     func fetchViewer() async throws -> MessagesViewer
     func fetchRooms(limit: Int) async throws -> [MessageRoomSummary]
-    func createRoom(postId: Int64, requesterIsAnonymous: Bool) async throws -> MessageRoomCreated
+    func fetchBlockedMemberIds() async throws -> Set<Int64>
+    func createRoom(postId: Int64, requesterIsAnonymous: Bool, partnerMemberId: Int64?) async throws -> MessageRoomCreated
     func fetchMessages(roomId: Int64, beforeMessageId: Int64?, limit: Int) async throws -> MessagesPage
     func sendMessage(roomId: Int64, content: String) async throws -> MessageItem
     func markRead(roomId: Int64, lastReadMessageId: Int64) async throws -> Int
+    func blockMember(targetMemberId: Int64) async throws
+    func unblockMember(targetMemberId: Int64) async throws
+    func reportMember(targetMemberId: Int64, roomId: Int64, reason: String, detail: String?) async throws
 }
 
 protocol MessagesRealtimeClientProtocol: Sendable {
@@ -225,8 +248,17 @@ final class MessagesAPIClient: MessagesClientProtocol, @unchecked Sendable {
         return payload.map(\.toDomain)
     }
 
-    func createRoom(postId: Int64, requesterIsAnonymous: Bool) async throws -> MessageRoomCreated {
-        let request = CreateRoomRequest(postId: postId, requesterIsAnonymous: requesterIsAnonymous)
+    func fetchBlockedMemberIds() async throws -> Set<Int64> {
+        let payload: [BlockListItemResponse] = try await requestPayload(path: "/api/v1/chat/blocks")
+        return Set(payload.map(\.targetMemberId))
+    }
+
+    func createRoom(postId: Int64, requesterIsAnonymous: Bool, partnerMemberId: Int64?) async throws -> MessageRoomCreated {
+        let request = CreateRoomRequest(
+            postId: postId,
+            requesterIsAnonymous: requesterIsAnonymous,
+            partnerMemberId: partnerMemberId
+        )
         let payload: RoomCreatedResponse = try await requestPayload(
             path: "/api/v1/message-rooms",
             method: .post,
@@ -264,6 +296,37 @@ final class MessagesAPIClient: MessagesClientProtocol, @unchecked Sendable {
         return Int(payload.unreadCount)
     }
 
+    func blockMember(targetMemberId: Int64) async throws {
+        let request = BlockMemberRequest(targetMemberId: targetMemberId)
+        let _: BlockMemberResponse = try await requestPayload(
+            path: "/api/v1/chat/blocks",
+            method: .post,
+            body: try encoder.encode(request)
+        )
+    }
+
+    func unblockMember(targetMemberId: Int64) async throws {
+        let _: UnblockMemberResponse = try await requestPayload(
+            path: "/api/v1/chat/blocks/\(targetMemberId)",
+            method: .delete
+        )
+    }
+
+    func reportMember(targetMemberId: Int64, roomId: Int64, reason: String, detail: String?) async throws {
+        let request = ReportMemberRequest(
+            targetMemberId: targetMemberId,
+            roomId: roomId,
+            messageId: nil,
+            reason: reason,
+            detail: detail
+        )
+        let _: ReportMemberResponse = try await requestPayload(
+            path: "/api/v1/chat/reports",
+            method: .post,
+            body: try encoder.encode(request)
+        )
+    }
+
     private func requestPayload<Response: Decodable>(
         path: String,
         method: HTTPMethod = .get,
@@ -296,6 +359,12 @@ final class MessagesAPIClient: MessagesClientProtocol, @unchecked Sendable {
         case let .server(statusCode, payload):
             if statusCode == 401 {
                 return .invalidSession
+            }
+            if statusCode == 403 {
+                if payload?.message == "chat_blocked_between_members" {
+                    return .blockedConversation
+                }
+                return .forbidden
             }
             switch payload?.code {
             case "POST_001":
@@ -331,6 +400,7 @@ private extension MessagesAPIClient {
     struct CreateRoomRequest: Encodable {
         let postId: Int64
         let requesterIsAnonymous: Bool
+        let partnerMemberId: Int64?
     }
 
     struct SendMessageRequest: Encodable {
@@ -339,6 +409,18 @@ private extension MessagesAPIClient {
 
     struct MarkReadRequest: Encodable {
         let lastReadMessageId: Int64
+    }
+
+    struct BlockMemberRequest: Encodable {
+        let targetMemberId: Int64
+    }
+
+    struct ReportMemberRequest: Encodable {
+        let targetMemberId: Int64
+        let roomId: Int64
+        let messageId: Int64?
+        let reason: String
+        let detail: String?
     }
 
     struct RoomResponse: Decodable {
@@ -380,6 +462,8 @@ private extension MessagesAPIClient {
     struct RoomCreatedResponse: Decodable {
         let roomId: Int64
         let postId: Int64
+        let member1Id: Int64
+        let member2Id: Int64
         let roomTitle: String
         let counterpartDisplayName: String?
         let isAnon1: Bool
@@ -390,6 +474,8 @@ private extension MessagesAPIClient {
             MessageRoomCreated(
                 roomId: roomId,
                 postId: postId,
+                member1Id: member1Id,
+                member2Id: member2Id,
                 roomTitle: roomTitle,
                 counterpartDisplayName: counterpartDisplayName,
                 isAnonMe: isAnon1,
@@ -397,6 +483,29 @@ private extension MessagesAPIClient {
                 created: created
             )
         }
+    }
+
+    struct BlockMemberResponse: Decodable {
+        let targetMemberId: Int64
+        let blocked: Bool
+        let created: Bool
+    }
+
+    struct UnblockMemberResponse: Decodable {
+        let targetMemberId: Int64
+        let unblocked: Bool
+    }
+
+    struct ReportMemberResponse: Decodable {
+        let reportId: Int64
+        let targetMemberId: Int64
+        let blocked: Bool
+        let blockCreated: Bool
+    }
+
+    struct BlockListItemResponse: Decodable {
+        let targetMemberId: Int64
+        let blockedAt: String?
     }
 
     struct ChatMessageResponse: Decodable {
@@ -865,17 +974,21 @@ final class MessagesInboxViewModel: ObservableObject {
             try await loadViewerIfNeeded()
             let created = try await client.createRoom(
                 postId: request.postId,
-                requesterIsAnonymous: request.requesterIsAnonymous
+                requesterIsAnonymous: request.requesterIsAnonymous,
+                partnerMemberId: request.partnerMemberId
             )
             await loadRooms()
             if let matchedRoom = rooms.first(where: { $0.roomId == created.roomId }) {
                 return matchedRoom.asRoomContext
             }
+            let viewerId = viewer?.memberId ?? 0
+            let otherMemberId = created.member1Id == viewerId ? created.member2Id : created.member1Id
             return MessageRoomContext(
                 roomId: created.roomId,
                 postId: created.postId,
                 postTitle: request.postTitle,
                 roomTitle: created.roomTitle,
+                otherMemberId: otherMemberId,
                 counterpartDisplayName: created.counterpartDisplayName,
                 isAnonMe: created.isAnonMe,
                 isAnonOther: created.isAnonOther,
@@ -1005,6 +1118,8 @@ final class MessagesInboxViewModel: ObservableObject {
         case .postNotFound: .postNotFound
         case .roomNotFound: .roomNotFound
         case .messageNotFound: .messageNotFound
+        case .blockedConversation: .blockedConversation
+        case .forbidden: .forbidden
         case .network: .network
         case .unexpected: .unexpected
         }
@@ -1021,6 +1136,7 @@ final class ChatRoomViewModel: ObservableObject {
     @Published var actionMessage: String?
     @Published private(set) var isSending = false
     @Published private(set) var isLoadingMore = false
+    @Published private(set) var isCounterpartBlockedByMe = false
 
     private let client: MessagesClientProtocol
     private let realtimeClient: MessagesRealtimeClientProtocol
@@ -1089,6 +1205,11 @@ final class ChatRoomViewModel: ObservableObject {
     }
 
     func sendMessage() async {
+        guard isCounterpartBlockedByMe == false else {
+            actionMessage = "You blocked this user. You can still view the conversation."
+            return
+        }
+
         let trimmed = composerText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.isEmpty == false else { return }
 
@@ -1122,6 +1243,53 @@ final class ChatRoomViewModel: ObservableObject {
         isSending = false
     }
 
+    func blockCounterpart() async {
+        actionMessage = nil
+
+        do {
+            try await client.blockMember(targetMemberId: roomContext.otherMemberId)
+            isCounterpartBlockedByMe = true
+            actionMessage = "This user has been blocked. Sending is now disabled in this room."
+        } catch let error as MessagesClientError {
+            actionMessage = Self.map(error).message
+        } catch {
+            actionMessage = MessagesFailure.unexpected.message
+        }
+    }
+
+    func unblockCounterpart() async {
+        actionMessage = nil
+
+        do {
+            try await client.unblockMember(targetMemberId: roomContext.otherMemberId)
+            isCounterpartBlockedByMe = false
+            actionMessage = "This user has been unblocked. Sending is available again."
+        } catch let error as MessagesClientError {
+            actionMessage = Self.map(error).message
+        } catch {
+            actionMessage = MessagesFailure.unexpected.message
+        }
+    }
+
+    func reportCounterpart(reason: String, detail: String?) async {
+        actionMessage = nil
+
+        do {
+            try await client.reportMember(
+                targetMemberId: roomContext.otherMemberId,
+                roomId: roomContext.roomId,
+                reason: reason,
+                detail: detail
+            )
+            isCounterpartBlockedByMe = true
+            actionMessage = "Report submitted. Sending is now disabled in this room."
+        } catch let error as MessagesClientError {
+            actionMessage = Self.map(error).message
+        } catch {
+            actionMessage = MessagesFailure.unexpected.message
+        }
+    }
+
     func handleRealtimeEvent(_ event: MessagesRealtimeEvent) {
         switch event {
         case let .message(message):
@@ -1147,17 +1315,20 @@ final class ChatRoomViewModel: ObservableObject {
         actionMessage = nil
 
         do {
-            let page = try await client.fetchMessages(
+            async let pageTask = client.fetchMessages(
                 roomId: roomContext.roomId,
                 beforeMessageId: nil,
                 limit: pageSize
             )
+            async let blockedTask = client.fetchBlockedMemberIds()
+            let (page, blockedMemberIds) = try await (pageTask, blockedTask)
 
             messages = page.messages
             roomContext.myLastReadMessageId = page.myLastReadMessageId
             roomContext.otherLastReadMessageId = page.otherLastReadMessageId
             nextBeforeMessageId = page.nextBeforeMessageId
             hasMore = page.messages.count >= pageSize && page.nextBeforeMessageId != nil
+            isCounterpartBlockedByMe = blockedMemberIds.contains(roomContext.otherMemberId)
             state = .loaded
             await markNewestVisiblePartnerMessageAsReadIfNeeded()
         } catch let error as MessagesClientError {
@@ -1234,6 +1405,8 @@ final class ChatRoomViewModel: ObservableObject {
         case .postNotFound: .postNotFound
         case .roomNotFound: .roomNotFound
         case .messageNotFound: .messageNotFound
+        case .blockedConversation: .blockedConversation
+        case .forbidden: .forbidden
         case .network: .network
         case .unexpected: .unexpected
         }
@@ -1529,6 +1702,8 @@ private struct MessageRoomRow: View {
 private struct ChatRoomView: View {
     @ObservedObject private var session: AppSession
     @StateObject private var viewModel: ChatRoomViewModel
+    @State private var showBlockConfirmation = false
+    @State private var showReportSheet = false
 
     init(
         session: AppSession,
@@ -1611,6 +1786,29 @@ private struct ChatRoomView: View {
                             .foregroundStyle(Color(red: 0.58, green: 0.64, blue: 0.73))
                     }
                 }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button(role: viewModel.isCounterpartBlockedByMe ? nil : .destructive) {
+                            showBlockConfirmation = true
+                        } label: {
+                            Label(
+                                viewModel.isCounterpartBlockedByMe ? "Unblock User" : "Block User",
+                                systemImage: viewModel.isCounterpartBlockedByMe ? "hand.raised.slash.fill" : "hand.raised.fill"
+                            )
+                        }
+
+                        Button {
+                            showReportSheet = true
+                        } label: {
+                            Label("Report User", systemImage: "flag.fill")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .font(.system(size: 19, weight: .semibold))
+                            .foregroundStyle(Color(red: 0.35, green: 0.42, blue: 0.54))
+                    }
+                }
             }
             .safeAreaInset(edge: .bottom) {
                 roomComposer
@@ -1653,6 +1851,40 @@ private struct ChatRoomView: View {
                 }
             } message: {
                 Text("Please log in again.")
+            }
+            .confirmationDialog(
+                viewModel.isCounterpartBlockedByMe ? "Unblock this user?" : "Block this user?",
+                isPresented: $showBlockConfirmation,
+                titleVisibility: .visible
+            ) {
+                if viewModel.isCounterpartBlockedByMe {
+                    Button("Unblock User") {
+                        Task { await viewModel.unblockCounterpart() }
+                    }
+                } else {
+                    Button("Block User", role: .destructive) {
+                        Task { await viewModel.blockCounterpart() }
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text(
+                    viewModel.isCounterpartBlockedByMe
+                        ? "Sending will be enabled again in this room."
+                        : "You will still be able to view this room, but sending will be disabled."
+                )
+            }
+            .sheet(isPresented: $showReportSheet) {
+                ReportConversationSheet(
+                    counterpartName: viewModel.roomContext.subtitle,
+                    onClose: {
+                        showReportSheet = false
+                    },
+                    onSubmit: { reason, detail in
+                        showReportSheet = false
+                        Task { await viewModel.reportCounterpart(reason: reason, detail: detail) }
+                    }
+                )
             }
         }
     }
@@ -1698,6 +1930,7 @@ private struct ChatRoomView: View {
                 TextField("Write a message...", text: $viewModel.composerText, axis: .vertical)
                     .font(AppFont.medium(17, relativeTo: .body))
                     .lineLimit(1...4)
+                    .disabled(viewModel.isCounterpartBlockedByMe)
 
                 Button {
                     Task { await viewModel.sendMessage() }
@@ -1716,7 +1949,11 @@ private struct ChatRoomView: View {
                         )
                 }
                 .buttonStyle(.plain)
-                .disabled(viewModel.composerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isSending)
+                .disabled(
+                    viewModel.composerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        || viewModel.isSending
+                        || viewModel.isCounterpartBlockedByMe
+                )
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 13)
@@ -1729,6 +1966,70 @@ private struct ChatRoomView: View {
             .padding(.bottom, 8)
         }
         .background(.ultraThinMaterial)
+    }
+}
+
+private struct ReportConversationSheet: View {
+    let counterpartName: String
+    let onClose: () -> Void
+    let onSubmit: (String, String?) -> Void
+
+    @State private var reason = ""
+    @State private var detail = ""
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Report \(counterpartName)")
+                    .font(AppFont.extraBold(26, relativeTo: .title2))
+                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+
+                TextField("Reason", text: $reason)
+                    .textInputAutocapitalization(.sentences)
+                    .font(AppFont.medium(17, relativeTo: .body))
+                    .padding(.horizontal, 16)
+                    .frame(height: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(Color.white)
+                    )
+
+                TextEditor(text: $detail)
+                    .font(AppFont.medium(16, relativeTo: .body))
+                    .frame(minHeight: 140)
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(Color.white)
+                    )
+
+                Spacer()
+
+                PrimaryActionButton(
+                    title: "Submit Report",
+                    isLoading: false,
+                    isDisabled: reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                    height: 56,
+                    cornerRadius: 18
+                ) {
+                    onSubmit(
+                        reason.trimmingCharacters(in: .whitespacesAndNewlines),
+                        detail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : detail.trimmingCharacters(in: .whitespacesAndNewlines)
+                    )
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 24)
+            .background(MessagesBackgroundView())
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Close", action: onClose)
+                        .font(AppFont.medium(16, relativeTo: .body))
+                        .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                }
+            }
+        }
     }
 }
 
@@ -1890,10 +2191,16 @@ struct PreviewMessagesClient: MessagesClientProtocol {
         }
     }
 
-    func createRoom(postId: Int64, requesterIsAnonymous: Bool) async throws -> MessageRoomCreated {
+    func fetchBlockedMemberIds() async throws -> Set<Int64> {
+        []
+    }
+
+    func createRoom(postId: Int64, requesterIsAnonymous: Bool, partnerMemberId: Int64?) async throws -> MessageRoomCreated {
         MessageRoomCreated(
             roomId: 101,
             postId: postId,
+            member1Id: 1,
+            member2Id: partnerMemberId ?? 22,
             roomTitle: "게시글 \(postId)",
             counterpartDisplayName: requesterIsAnonymous ? "익명 1" : "Kenta",
             isAnonMe: requesterIsAnonymous,
@@ -1927,6 +2234,12 @@ struct PreviewMessagesClient: MessagesClientProtocol {
     func markRead(roomId: Int64, lastReadMessageId: Int64) async throws -> Int {
         0
     }
+
+    func blockMember(targetMemberId: Int64) async throws {}
+
+    func unblockMember(targetMemberId: Int64) async throws {}
+
+    func reportMember(targetMemberId: Int64, roomId: Int64, reason: String, detail: String?) async throws {}
 }
 
 actor PreviewMessagesRealtimeClient: MessagesRealtimeClientProtocol {

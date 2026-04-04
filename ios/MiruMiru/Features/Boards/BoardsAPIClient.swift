@@ -241,6 +241,7 @@ private extension BoardsAPIClient {
         let commentId: Int64
         let parentId: Int64?
         let content: String
+        let authorMemberId: Int64?
         let authorDisplayName: String
         let isAnonymous: Bool
         let isMine: Bool
@@ -253,6 +254,7 @@ private extension BoardsAPIClient {
                 commentId: commentId,
                 parentId: parentId,
                 content: content,
+                authorMemberId: authorMemberId,
                 authorDisplayName: authorDisplayName,
                 isAnonymous: isAnonymous,
                 isMine: isMine,
@@ -270,6 +272,7 @@ private extension BoardsAPIClient {
         let boardName: String
         let title: String
         let content: String
+        let authorMemberId: Int64
         let authorDisplayName: String
         let isAnonymous: Bool
         let isMine: Bool
@@ -289,6 +292,7 @@ private extension BoardsAPIClient {
                 boardName: boardName,
                 title: title,
                 content: content,
+                authorMemberId: authorMemberId,
                 authorDisplayName: authorDisplayName,
                 isAnonymous: isAnonymous,
                 isMine: isMine,

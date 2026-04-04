@@ -3,6 +3,11 @@ spring:
     activate:
       on-profile: dev
 
+  sql:
+    init:
+      mode: always
+      platform: mysql
+
   datasource:
     url: ${DEV_DB_URL}
     username: ${DEV_DB_USERNAME}
@@ -27,3 +32,7 @@ redis:
 chat:
   redis:
     enabled: true
+  room:
+    cleanup:
+      enabled: true
+      cron: 0 0 4 * * *

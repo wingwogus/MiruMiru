@@ -49,6 +49,7 @@ struct PostCommentItem: Identifiable, Hashable, Equatable, Sendable {
     let commentId: Int64
     let parentId: Int64?
     let content: String
+    let authorMemberId: Int64?
     let authorDisplayName: String
     let isAnonymous: Bool
     let isMine: Bool
@@ -70,6 +71,7 @@ struct PostDetailContent: Equatable, Sendable {
     let boardName: String
     let title: String
     let content: String
+    let authorMemberId: Int64
     let authorDisplayName: String
     let isAnonymous: Bool
     let isMine: Bool

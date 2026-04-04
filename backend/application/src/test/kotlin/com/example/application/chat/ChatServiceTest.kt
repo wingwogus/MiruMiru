@@ -8,6 +8,7 @@ import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
 import com.example.application.post.PostAnonymousService
 import com.example.domain.board.Board
+import com.example.domain.chat.ChatBlockRepository
 import com.example.domain.chat.ChatMessage
 import com.example.domain.chat.ChatMessageRepository
 import com.example.domain.chat.MessageRoom
@@ -39,6 +40,7 @@ class ChatServiceTest {
     private lateinit var messageRoomRepository: MessageRoomRepository
     private lateinit var chatRoomCreateTxService: ChatRoomCreateTxService
     private lateinit var chatRoomRecoveryService: ChatRoomRecoveryService
+    private lateinit var chatBlockRepository: ChatBlockRepository
     private lateinit var chatMessageRepository: ChatMessageRepository
     private lateinit var chatMessageReadRepository: ChatMessageReadRepository
     private lateinit var chatEventPublisher: RecordingChatEventPublisher
@@ -52,6 +54,7 @@ class ChatServiceTest {
         messageRoomRepository = mock(MessageRoomRepository::class.java)
         chatRoomCreateTxService = mock(ChatRoomCreateTxService::class.java)
         chatRoomRecoveryService = mock(ChatRoomRecoveryService::class.java)
+        chatBlockRepository = mock(ChatBlockRepository::class.java)
         chatMessageRepository = mock(ChatMessageRepository::class.java)
         chatMessageReadRepository = mock(ChatMessageReadRepository::class.java)
         chatEventPublisher = RecordingChatEventPublisher()
@@ -66,6 +69,10 @@ class ChatServiceTest {
             chatMessageReadRepository = chatMessageReadRepository,
             chatEventPublisher = chatEventPublisher,
             postAnonymousService = postAnonymousService,
+            chatAccessPolicy = ChatAccessPolicy(
+                memberRepository = memberRepository,
+                chatBlockRepository = chatBlockRepository,
+            ),
         )
     }
 
@@ -195,7 +202,7 @@ class ChatServiceTest {
     }
 
     @Test
-    fun `create room by non owner always targets post author`() {
+    fun `create room by non owner respects explicit partner selection`() {
         val university = university()
         val major = major(university)
         val owner = member(id = 1L, university = university, major = major, email = "owner@tokyo.ac.jp")
@@ -206,14 +213,14 @@ class ChatServiceTest {
         val savedRoom = MessageRoom(
             id = 31L,
             post = post,
-            member1 = requester,
-            member2 = owner,
+            member1 = arbitraryPartner,
+            member2 = requester,
             isAnon1 = true,
             isAnon2 = true,
         )
         val createRequest = ChatRoomCreateTxService.CreateRequest(
             postId = post.id,
-            member1Id = owner.id,
+            member1Id = arbitraryPartner.id,
             member2Id = requester.id,
             isAnon1 = true,
             isAnon2 = true,
@@ -221,9 +228,10 @@ class ChatServiceTest {
 
         `when`(memberRepository.findById(requester.id)).thenReturn(Optional.of(requester))
         `when`(postRepository.findByIdAndBoardUniversityIdAndIsDeletedFalse(post.id, university.id)).thenReturn(post)
+        `when`(memberRepository.findByIdAndUniversityId(arbitraryPartner.id, university.id)).thenReturn(arbitraryPartner)
         `when`(chatRoomCreateTxService.create(createRequest)).thenReturn(savedRoom)
+        `when`(postAnonymousService.getOrCreateAnonNumber(post, arbitraryPartner)).thenReturn(1)
         `when`(postAnonymousService.getOrCreateAnonNumber(post, requester)).thenReturn(2)
-        `when`(postAnonymousService.getOrCreateAnonNumber(post, owner)).thenReturn(1)
 
         val result = chatService.createRoom(
             ChatCommand.CreateRoom(
@@ -234,13 +242,13 @@ class ChatServiceTest {
             )
         )
 
-        assertEquals(owner.id, result.member2Id)
+        assertEquals(arbitraryPartner.id, result.member2Id)
         assertEquals("seed post", result.roomTitle)
         assertEquals("익명 1", result.counterpartDisplayName)
         assertEquals(true, result.created)
-        verify(memberRepository, never()).findByIdAndUniversityId(arbitraryPartner.id, university.id)
+        verify(memberRepository).findByIdAndUniversityId(arbitraryPartner.id, university.id)
         verify(messageRoomRepository, times(1))
-            .findByPostIdAndMember1IdAndMember2Id(eq(post.id), eq(owner.id), eq(requester.id))
+            .findByPostIdAndMember1IdAndMember2Id(eq(post.id), eq(arbitraryPartner.id), eq(requester.id))
     }
 
     @Test
@@ -284,6 +292,48 @@ class ChatServiceTest {
         assertEquals(owner.nickname, result.counterpartDisplayName)
         assertEquals(true, result.isAnon1)
         assertEquals(false, result.isAnon2)
+    }
+
+    @Test
+    fun `create room by non owner falls back to post author when partner is omitted`() {
+        val university = university()
+        val major = major(university)
+        val owner = member(id = 1L, university = university, major = major, email = "owner@tokyo.ac.jp")
+        val requester = member(id = 3L, university = university, major = major, email = "requester@tokyo.ac.jp")
+        val board = board(id = 10L, university = university)
+        val post = post(id = 20L, board = board, member = owner, isAnonymous = true)
+        val savedRoom = MessageRoom(
+            id = 31L,
+            post = post,
+            member1 = owner,
+            member2 = requester,
+            isAnon1 = true,
+            isAnon2 = true,
+        )
+        val createRequest = ChatRoomCreateTxService.CreateRequest(
+            postId = post.id,
+            member1Id = owner.id,
+            member2Id = requester.id,
+            isAnon1 = true,
+            isAnon2 = true,
+        )
+
+        `when`(memberRepository.findById(requester.id)).thenReturn(Optional.of(requester))
+        `when`(postRepository.findByIdAndBoardUniversityIdAndIsDeletedFalse(post.id, university.id)).thenReturn(post)
+        `when`(chatRoomCreateTxService.create(createRequest)).thenReturn(savedRoom)
+        `when`(postAnonymousService.getOrCreateAnonNumber(post, owner)).thenReturn(1)
+        `when`(postAnonymousService.getOrCreateAnonNumber(post, requester)).thenReturn(2)
+
+        val result = chatService.createRoom(
+            ChatCommand.CreateRoom(
+                requesterId = requester.id,
+                postId = post.id,
+                requesterIsAnonymous = true,
+            )
+        )
+
+        assertEquals(owner.id, result.member2Id)
+        assertEquals("익명 1", result.counterpartDisplayName)
     }
 
     @Test
@@ -434,6 +484,34 @@ class ChatServiceTest {
         assertEquals("seed post", result.roomTitle)
         assertEquals("익명 2", result.counterpartDisplayName)
         assertEquals(false, result.created)
+    }
+
+    @Test
+    fun `create room rejects blocked pair`() {
+        val university = university()
+        val major = major(university)
+        val owner = member(id = 1L, university = university, major = major, email = "owner@tokyo.ac.jp")
+        val requester = member(id = 3L, university = university, major = major, email = "requester@tokyo.ac.jp")
+        val board = board(id = 10L, university = university)
+        val post = post(id = 20L, board = board, member = owner, isAnonymous = true)
+
+        `when`(memberRepository.findById(requester.id)).thenReturn(Optional.of(requester))
+        `when`(postRepository.findByIdAndBoardUniversityIdAndIsDeletedFalse(post.id, university.id)).thenReturn(post)
+        `when`(chatBlockRepository.existsByMember1IdAndMember2Id(owner.id, requester.id)).thenReturn(true)
+
+        val exception = assertThrows(BusinessException::class.java) {
+            chatService.createRoom(
+                ChatCommand.CreateRoom(
+                    requesterId = requester.id,
+                    postId = post.id,
+                    requesterIsAnonymous = true,
+                )
+            )
+        }
+
+        assertEquals(ErrorCode.FORBIDDEN, exception.errorCode)
+        assertEquals("chat_blocked_between_members", exception.customMessage)
+        verifyNoInteractions(chatRoomCreateTxService)
     }
 
     @Test

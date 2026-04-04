@@ -34,6 +34,7 @@ class ChatService(
     private val chatMessageReadRepository: ChatMessageReadRepository,
     private val chatEventPublisher: ChatEventPublisher,
     private val postAnonymousService: PostAnonymousService,
+    private val chatAccessPolicy: ChatAccessPolicy,
 ) {
 
     fun createRoom(command: ChatCommand.CreateRoom): ChatResult.RoomCreated {
@@ -45,7 +46,12 @@ class ChatService(
             requester.university.id,
         ) ?: throw BusinessException(ErrorCode.POST_NOT_FOUND)
 
-        val otherMember = resolveOtherMember(requester = requester, command = command, postAuthor = post.member)
+        val otherMember = chatAccessPolicy.resolveOtherMember(
+            requester = requester,
+            post = post,
+            partnerMemberId = command.partnerMemberId,
+        )
+        chatAccessPolicy.ensurePairNotBlocked(requester.id, otherMember.id)
 
         val normalizedPair = normalizeParticipants(
             requester = requester,
@@ -125,6 +131,9 @@ class ChatService(
             throw BusinessException(ErrorCode.UNAUTHORIZED)
         }
 
+        val receiverId = room.otherMemberId(sender.id)
+        chatAccessPolicy.ensurePairNotBlocked(sender.id, receiverId)
+
         val message = chatMessageRepository.save(
             ChatMessage(
                 room = room,
@@ -133,7 +142,6 @@ class ChatService(
             )
         )
 
-        val receiverId = room.otherMemberId(sender.id)
         val receiverLastReadId = room.getLastReadMessageId(receiverId)
         val unreadCount = chatMessageReadRepository.countUnread(room.id, receiverId, receiverLastReadId)
 
@@ -221,29 +229,6 @@ class ChatService(
             lastReadMessageId = command.lastReadMessageId,
             unreadCount = unreadCount,
         )
-    }
-
-    private fun resolveOtherMember(
-        requester: Member,
-        command: ChatCommand.CreateRoom,
-        postAuthor: Member,
-    ): Member {
-        if (postAuthor.id != requester.id) {
-            return postAuthor
-        }
-
-        val partnerId = command.partnerMemberId
-            ?: throw BusinessException(
-                ErrorCode.INVALID_INPUT,
-                customMessage = "partner_member_id_required_for_post_owner"
-            )
-
-        if (partnerId == requester.id) {
-            throw BusinessException(ErrorCode.INVALID_INPUT, customMessage = "cannot_create_room_with_self")
-        }
-
-        return memberRepository.findByIdAndUniversityId(partnerId, requester.university.id)
-            ?: throw BusinessException(ErrorCode.USER_NOT_FOUND)
     }
 
     private fun normalizeParticipants(

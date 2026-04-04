@@ -534,6 +534,7 @@ final class PostDetailViewModel: ObservableObject {
                 boardName: detail.boardName,
                 title: detail.title,
                 content: detail.content,
+                authorMemberId: detail.authorMemberId,
                 authorDisplayName: detail.authorDisplayName,
                 isAnonymous: detail.isAnonymous,
                 isMine: detail.isMine,
@@ -693,7 +694,7 @@ private struct PostDetailView: View {
     @State private var replyTarget: PostCommentItem?
     @State private var commentDeletionTarget: PostCommentItem?
     @State private var showDeletePostPrompt = false
-    @State private var showStartChatSheet = false
+    @State private var pendingChatRequest: MessageStartRequest?
     @State private var requesterIsAnonymousForChat = false
     private let onStartChat: (MessageStartRequest) -> Void
 
@@ -771,6 +772,19 @@ private struct PostDetailView: View {
                                 CommentThreadView(
                                     comment: comment,
                                     onReply: { replyTarget = comment },
+                                    onStartChat: { target in
+                                        guard let partnerMemberId = target.authorMemberId else { return }
+                                        requesterIsAnonymousForChat = false
+                                        pendingChatRequest = MessageStartRequest(
+                                            postId: detail.postId,
+                                            postTitle: detail.title,
+                                            postIsAnonymous: detail.isAnonymous,
+                                            partnerMemberId: partnerMemberId,
+                                            targetDisplayName: target.authorDisplayName,
+                                            targetIsAnonymous: target.isAnonymous,
+                                            requesterIsAnonymous: requesterIsAnonymousForChat
+                                        )
+                                    },
                                     onDelete: { target in
                                         commentDeletionTarget = target
                                     }
@@ -849,30 +863,32 @@ private struct PostDetailView: View {
         } message: {
             Text("This action can't be undone.")
         }
-        .sheet(isPresented: $showStartChatSheet) {
-            if case let .loaded(detail) = viewModel.state {
-                StartChatSheet(
-                    postTitle: detail.title,
-                    postIsAnonymous: detail.isAnonymous,
-                    requesterIsAnonymous: $requesterIsAnonymousForChat,
-                    onClose: {
-                        showStartChatSheet = false
-                    },
-                    onStart: {
-                        showStartChatSheet = false
-                        onStartChat(
-                            MessageStartRequest(
-                                postId: detail.postId,
-                                postTitle: detail.title,
-                                postIsAnonymous: detail.isAnonymous,
-                                requesterIsAnonymous: requesterIsAnonymousForChat
-                            )
+        .sheet(item: $pendingChatRequest) { pendingChatRequest in
+            StartChatSheet(
+                postTitle: pendingChatRequest.postTitle,
+                targetDisplayName: pendingChatRequest.targetDisplayName,
+                targetIsAnonymous: pendingChatRequest.targetIsAnonymous,
+                requesterIsAnonymous: $requesterIsAnonymousForChat,
+                onClose: {
+                    self.pendingChatRequest = nil
+                },
+                onStart: {
+                    onStartChat(
+                        MessageStartRequest(
+                            postId: pendingChatRequest.postId,
+                            postTitle: pendingChatRequest.postTitle,
+                            postIsAnonymous: pendingChatRequest.postIsAnonymous,
+                            partnerMemberId: pendingChatRequest.partnerMemberId,
+                            targetDisplayName: pendingChatRequest.targetDisplayName,
+                            targetIsAnonymous: pendingChatRequest.targetIsAnonymous,
+                            requesterIsAnonymous: requesterIsAnonymousForChat
                         )
-                    }
-                )
-                .presentationDetents([.fraction(0.6)])
-                .presentationDragIndicator(.visible)
-            }
+                    )
+                    self.pendingChatRequest = nil
+                }
+            )
+            .presentationDetents([.fraction(0.72)])
+            .presentationDragIndicator(.visible)
         }
     }
 
@@ -880,7 +896,15 @@ private struct PostDetailView: View {
         Button {
             guard detail.isMine == false else { return }
             requesterIsAnonymousForChat = false
-            showStartChatSheet = true
+            pendingChatRequest = MessageStartRequest(
+                postId: detail.postId,
+                postTitle: detail.title,
+                postIsAnonymous: detail.isAnonymous,
+                partnerMemberId: detail.authorMemberId,
+                targetDisplayName: detail.authorDisplayName,
+                targetIsAnonymous: detail.isAnonymous,
+                requesterIsAnonymous: requesterIsAnonymousForChat
+            )
         } label: {
             HStack(alignment: .center, spacing: 12) {
                 Circle()
@@ -1619,6 +1643,7 @@ private struct RemotePostImageView: View {
 private struct CommentThreadView: View {
     let comment: PostCommentItem
     let onReply: () -> Void
+    let onStartChat: (PostCommentItem) -> Void
     let onDelete: (PostCommentItem) -> Void
 
     var body: some View {
@@ -1627,6 +1652,9 @@ private struct CommentThreadView: View {
                 comment: comment,
                 canReply: comment.isDeleted == false,
                 onReply: onReply,
+                onStartChat: {
+                    onStartChat(comment)
+                },
                 onDelete: {
                     onDelete(comment)
                 }
@@ -1639,6 +1667,9 @@ private struct CommentThreadView: View {
                             comment: child,
                             canReply: false,
                             onReply: {},
+                            onStartChat: {
+                                onStartChat(child)
+                            },
                             onDelete: {
                                 onDelete(child)
                             }
@@ -1655,6 +1686,7 @@ private struct CommentBubbleView: View {
     let comment: PostCommentItem
     let canReply: Bool
     let onReply: () -> Void
+    let onStartChat: () -> Void
     let onDelete: () -> Void
 
     var body: some View {
@@ -1682,6 +1714,12 @@ private struct CommentBubbleView: View {
                 Spacer()
 
                 HStack(spacing: 10) {
+                    if comment.isMine == false, comment.isDeleted == false, comment.authorMemberId != nil {
+                        Button("CHAT", action: onStartChat)
+                            .font(AppFont.bold(11, relativeTo: .caption))
+                            .foregroundStyle(AuthPalette.primaryStart)
+                    }
+
                     if canReply {
                         Button("REPLY", action: onReply)
                             .font(AppFont.bold(11, relativeTo: .caption))
@@ -1731,7 +1769,8 @@ private struct WritePostMetaChip: View {
 
 private struct StartChatSheet: View {
     let postTitle: String
-    let postIsAnonymous: Bool
+    let targetDisplayName: String
+    let targetIsAnonymous: Bool
     @Binding var requesterIsAnonymous: Bool
     let onClose: () -> Void
     let onStart: () -> Void
@@ -1750,6 +1789,30 @@ private struct StartChatSheet: View {
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
+                    Text("TO")
+                        .font(AppFont.bold(13, relativeTo: .caption))
+                        .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.65))
+                        .tracking(1.6)
+
+                    Text(targetDisplayName)
+                        .font(AppFont.bold(18, relativeTo: .headline))
+                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if targetIsAnonymous {
+                        Text("This person appears anonymous in the post thread.")
+                            .font(AppFont.medium(14, relativeTo: .caption))
+                            .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                    }
+                }
+                .padding(18)
+                .background(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .fill(Color.white)
+                        .shadow(color: Color.black.opacity(0.05), radius: 12, y: 3)
+                )
+
+                VStack(alignment: .leading, spacing: 10) {
                     Text("POST")
                         .font(AppFont.bold(13, relativeTo: .caption))
                         .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.65))
@@ -1759,12 +1822,6 @@ private struct StartChatSheet: View {
                         .font(AppFont.bold(18, relativeTo: .headline))
                         .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
                         .fixedSize(horizontal: false, vertical: true)
-
-                    if postIsAnonymous {
-                        Text("The post author is anonymous in this thread.")
-                            .font(AppFont.medium(14, relativeTo: .caption))
-                            .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
-                    }
                 }
                 .padding(18)
                 .background(

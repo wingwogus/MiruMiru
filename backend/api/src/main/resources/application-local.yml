@@ -47,3 +47,7 @@ redis:
 chat:
   redis:
     enabled: true
+  room:
+    cleanup:
+      enabled: true
+      cron: 0 0 4 * * *

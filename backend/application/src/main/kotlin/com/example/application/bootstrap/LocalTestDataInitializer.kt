@@ -79,6 +79,12 @@ class LocalTestDataInitializer(
             EMPTY_MEMBER_EMAIL,
             EMPTY_MEMBER_NICKNAME
         )
+        findOrCreateMember(
+            university,
+            majorsByCode.getValue(PARTNER_MEMBER_MAJOR_CODE),
+            PARTNER_MEMBER_EMAIL,
+            PARTNER_MEMBER_NICKNAME
+        )
         val boardsByCode = BOARD_SEEDS.associate { seed ->
             seed.code to findOrCreateBoard(university, seed)
         }
@@ -435,6 +441,9 @@ class LocalTestDataInitializer(
         private const val EMPTY_MEMBER_EMAIL = "empty@tokyo.ac.jp"
         private const val EMPTY_MEMBER_NICKNAME = "empty-user"
         private const val EMPTY_MEMBER_MAJOR_CODE = "MATH"
+        private const val PARTNER_MEMBER_EMAIL = "partner@tokyo.ac.jp"
+        private const val PARTNER_MEMBER_NICKNAME = "partner-user"
+        private const val PARTNER_MEMBER_MAJOR_CODE = "CS"
         private const val SEED_ACADEMIC_YEAR = 2026
         private val SEED_TERM = SemesterTerm.SPRING
         private val INITIAL_TIMETABLE_LECTURE_CODES = setOf("CS101", "MATH201")

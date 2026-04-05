@@ -33,7 +33,9 @@ class SecurityConfig(
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/api/v1/auth/**",       // 로그인/회원가입/토큰 재발급
+            "/chat-test.html",
             "/error",                // 스프링 내부 오류 페이지
+            "/ws/**",
         )
     }
 

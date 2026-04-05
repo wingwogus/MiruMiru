@@ -7,6 +7,8 @@ struct AppRoot: View {
     private let timetableClient: TimetableClientProtocol
     private let boardsClient: BoardsClientProtocol
     private let courseReviewsClient: CourseReviewsClientProtocol
+    private let messagesClient: MessagesClientProtocol
+    private let messagesRealtimeClient: MessagesRealtimeClientProtocol
     @State private var authRoute: AuthRoute = .login
     @State private var loginPrefillEmail = ""
 
@@ -15,13 +17,17 @@ struct AppRoot: View {
         homeClient: HomeClientProtocol,
         timetableClient: TimetableClientProtocol,
         boardsClient: BoardsClientProtocol,
-        courseReviewsClient: CourseReviewsClientProtocol
+        courseReviewsClient: CourseReviewsClientProtocol,
+        messagesClient: MessagesClientProtocol,
+        messagesRealtimeClient: MessagesRealtimeClientProtocol
     ) {
         self.session = session
         self.homeClient = homeClient
         self.timetableClient = timetableClient
         self.boardsClient = boardsClient
         self.courseReviewsClient = courseReviewsClient
+        self.messagesClient = messagesClient
+        self.messagesRealtimeClient = messagesRealtimeClient
     }
 
     var body: some View {
@@ -38,6 +44,8 @@ struct AppRoot: View {
                     timetableClient: timetableClient,
                     boardsClient: boardsClient,
                     courseReviewsClient: courseReviewsClient,
+                    messagesClient: messagesClient,
+                    messagesRealtimeClient: messagesRealtimeClient,
                     boardsSyncStore: boardsSyncStore
                 )
             }
@@ -117,7 +125,9 @@ struct AppRoot_Previews: PreviewProvider {
                 homeClient: PreviewHomeClient.loaded(),
                 timetableClient: PreviewTimetableClient.loaded(),
                 boardsClient: PreviewBoardsClient(scenario: .loaded),
-                courseReviewsClient: PreviewCourseReviewsClient.loaded()
+                courseReviewsClient: PreviewCourseReviewsClient.loaded(),
+                messagesClient: PreviewMessagesClient.loaded(),
+                messagesRealtimeClient: PreviewMessagesRealtimeClient()
             )
             .previewDisplayName("AppRoot Login")
 
@@ -126,7 +136,9 @@ struct AppRoot_Previews: PreviewProvider {
                 homeClient: PreviewHomeClient.loaded(),
                 timetableClient: PreviewTimetableClient.loaded(),
                 boardsClient: PreviewBoardsClient(scenario: .loaded),
-                courseReviewsClient: PreviewCourseReviewsClient.loaded()
+                courseReviewsClient: PreviewCourseReviewsClient.loaded(),
+                messagesClient: PreviewMessagesClient.loaded(),
+                messagesRealtimeClient: PreviewMessagesRealtimeClient()
             )
             .previewDisplayName("AppRoot Home")
         }

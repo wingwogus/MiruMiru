@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.get
     ]
 )
 @AutoConfigureMockMvc
-@ActiveProfiles("local")
+@ActiveProfiles("local", "test")
 class AuthApiIntegrationTest(
     @Autowired private val mockMvc: MockMvc
 ) {

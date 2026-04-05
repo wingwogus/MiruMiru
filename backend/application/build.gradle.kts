@@ -15,6 +15,7 @@ dependencies {
     implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.4"))
     testImplementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.4"))
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.boot:spring-boot-starter-mail")

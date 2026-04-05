@@ -23,7 +23,7 @@ import org.springframework.test.web.servlet.get
     ]
 )
 @AutoConfigureMockMvc
-@ActiveProfiles("local")
+@ActiveProfiles("local", "test")
 class MemberApiIntegrationTest(
     @Autowired private val mockMvc: MockMvc,
     @Autowired private val memberRepository: MemberRepository,

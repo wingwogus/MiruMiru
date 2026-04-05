@@ -29,7 +29,7 @@ import java.time.DayOfWeek
         "spring.mail.password=test-password"
     ]
 )
-@ActiveProfiles("local")
+@ActiveProfiles("local", "test")
 @Transactional
 class TimetablePersistenceIntegrationTest(
     @Autowired private val memberRepository: MemberRepository,

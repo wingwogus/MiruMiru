@@ -507,6 +507,185 @@ final class HomeAPIClientTests: XCTestCase {
     }
 }
 
+final class MessagesAPIClientTests: XCTestCase {
+    override func tearDown() {
+        MockURLProtocol.requestHandler = nil
+        super.tearDown()
+    }
+
+    func testCreateRoomEncodesPartnerMemberId() async throws {
+        let client = makeMessagesClient(
+            expectedPath: "/api/v1/message-rooms",
+            expectedMethod: "POST",
+            responseBody: """
+            {
+              "success": true,
+              "data": {
+                "roomId": 101,
+                "postId": 2001,
+                "member1Id": 1,
+                "member2Id": 22,
+                "roomTitle": "Study Post",
+                "counterpartDisplayName": "Anonymous 2",
+                "isAnon1": false,
+                "isAnon2": true,
+                "created": true
+              },
+              "error": null
+            }
+            """
+        ) { [self] request in
+            let body = try self.requestBodyData(for: request)
+            let decoded = try JSONSerialization.jsonObject(with: body) as? [String: Any]
+            XCTAssertEqual(decoded?["postId"] as? Int, 2001)
+            XCTAssertEqual(decoded?["requesterIsAnonymous"] as? Bool, false)
+            XCTAssertEqual(decoded?["partnerMemberId"] as? Int, 22)
+        }
+
+        let response = try await client.createRoom(postId: 2001, requesterIsAnonymous: false, partnerMemberId: 22)
+        XCTAssertEqual(response.member2Id, 22)
+    }
+
+    func testBlockMemberPostsExpectedPayload() async throws {
+        let client = makeMessagesClient(
+            expectedPath: "/api/v1/chat/blocks",
+            expectedMethod: "POST",
+            responseBody: """
+            {
+              "success": true,
+              "data": {
+                "targetMemberId": 22,
+                "blocked": true,
+                "created": true
+              },
+              "error": null
+            }
+            """
+        ) { [self] request in
+            let body = try self.requestBodyData(for: request)
+            let decoded = try JSONSerialization.jsonObject(with: body) as? [String: Any]
+            XCTAssertEqual(decoded?["targetMemberId"] as? Int, 22)
+        }
+
+        try await client.blockMember(targetMemberId: 22)
+    }
+
+    func testUnblockMemberCallsDeletePath() async throws {
+        let client = makeMessagesClient(
+            expectedPath: "/api/v1/chat/blocks/22",
+            expectedMethod: "DELETE",
+            responseBody: """
+            {
+              "success": true,
+              "data": {
+                "targetMemberId": 22,
+                "unblocked": true
+              },
+              "error": null
+            }
+            """
+        )
+
+        try await client.unblockMember(targetMemberId: 22)
+    }
+
+    func testCreateRoomMapsBlockedConversation() async {
+        let client = makeMessagesClient(
+            expectedPath: "/api/v1/message-rooms",
+            expectedMethod: "POST",
+            responseBody: """
+            {
+              "success": false,
+              "data": null,
+              "error": {
+                "code": "AUTH_002",
+                "message": "chat_blocked_between_members",
+                "detail": null
+              }
+            }
+            """,
+            statusCode: 403
+        )
+
+        do {
+            _ = try await client.createRoom(postId: 2001, requesterIsAnonymous: false, partnerMemberId: 22)
+            XCTFail("Expected blocked conversation")
+        } catch let error as MessagesClientError {
+            XCTAssertEqual(error, .blockedConversation)
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
+
+    private func makeMessagesClient(
+        expectedPath: String,
+        expectedMethod: String,
+        responseBody: String,
+        statusCode: Int = 200,
+        requestValidator: ((URLRequest) throws -> Void)? = nil
+    ) -> MessagesAPIClient {
+        MockURLProtocol.requestHandler = { request in
+            XCTAssertTrue(request.url?.absoluteString.contains(expectedPath) == true)
+            XCTAssertEqual(request.httpMethod, expectedMethod)
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer preview-access")
+            try requestValidator?(request)
+
+            let response = HTTPURLResponse(
+                url: request.url!,
+                statusCode: statusCode,
+                httpVersion: nil,
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, Data(responseBody.utf8))
+        }
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let apiClient = APIClient(
+            environment: AppEnvironment(
+                apiBaseURL: URL(string: "http://localhost")!,
+                enforcesAcademicSuffixValidation: true
+            ),
+            session: session
+        )
+        let store = InMemoryTokenStore()
+        store.storedSession = TokenPair(accessToken: "preview-access", refreshToken: "preview-refresh")
+        return MessagesAPIClient(apiClient: apiClient, tokenStore: store)
+    }
+
+    private func requestBodyData(for request: URLRequest) throws -> Data {
+        if let body = request.httpBody {
+            return body
+        }
+
+        guard let stream = request.httpBodyStream else {
+            throw XCTSkip("Request body not available")
+        }
+
+        stream.open()
+        defer { stream.close() }
+
+        var data = Data()
+        let bufferSize = 1024
+        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+        defer { buffer.deallocate() }
+
+        while stream.hasBytesAvailable {
+            let read = stream.read(buffer, maxLength: bufferSize)
+            if read < 0 {
+                break
+            }
+            if read == 0 {
+                break
+            }
+            data.append(buffer, count: read)
+        }
+
+        return data
+    }
+}
+
 private final class ConcurrentRefreshState: @unchecked Sendable {
     private let lock = NSLock()
     private var _initialMemberRequestCount = 0

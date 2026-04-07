@@ -2,6 +2,8 @@ package com.example.application.auth
 
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
+import com.example.application.redis.EmailVerificationRepository
+import com.example.application.redis.NicknameVerificationRepository
 import com.example.application.redis.RefreshTokenRepository
 import com.example.application.security.TokenProvider
 import com.example.domain.major.MajorRepository

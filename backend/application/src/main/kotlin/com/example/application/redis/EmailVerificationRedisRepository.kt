@@ -1,6 +1,6 @@
 package com.example.application.redis
 
-import com.example.application.auth.EmailVerificationRepository
+import com.example.application.redis.EmailVerificationRepository
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Repository
 import java.time.Duration

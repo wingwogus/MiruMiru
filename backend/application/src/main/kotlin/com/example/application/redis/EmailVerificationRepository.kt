@@ -1,4 +1,4 @@
-package com.example.application.auth
+package com.example.application.redis
 
 import java.time.Duration
 

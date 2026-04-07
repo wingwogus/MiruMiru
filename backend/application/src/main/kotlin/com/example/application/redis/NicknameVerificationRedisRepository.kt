@@ -1,6 +1,6 @@
 package com.example.application.redis
 
-import com.example.application.auth.NicknameVerificationRepository
+import com.example.application.redis.NicknameVerificationRepository
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Repository
 import java.time.Duration

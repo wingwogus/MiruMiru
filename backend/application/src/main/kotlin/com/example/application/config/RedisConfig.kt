@@ -10,12 +10,16 @@ import org.springframework.data.redis.core.StringRedisTemplate
 @Configuration
 class RedisConfig(
     @Value("\${redis.host}") private val host: String,
-    @Value("\${redis.port}") private val port: Int
+    @Value("\${redis.port}") private val port: Int,
+    @Value("\${redis.db:0}") private val db: Int
 ) {
 
     @Bean
     fun redisConnectionFactory(): RedisConnectionFactory {
-        return LettuceConnectionFactory(host, port)
+
+        val lettuceConnectionFactory = LettuceConnectionFactory(host, port)
+        lettuceConnectionFactory.database = db;
+        return lettuceConnectionFactory
     }
 
     @Bean

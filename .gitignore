@@ -22,3 +22,5 @@ Thumbs.db
 .kotlin/
 .vscode/
 .omx/
+/deploy/
+/docs/

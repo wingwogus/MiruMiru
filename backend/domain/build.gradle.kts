@@ -16,7 +16,7 @@ repositories {
 dependencies {
     testImplementation(kotlin("test"))
     api("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("com.mysql:mysql-connector-j:8.0.33")
+    implementation("org.postgresql:postgresql")
     implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.4"))
     implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
     kapt("com.querydsl:querydsl-apt:5.0.0:jakarta")

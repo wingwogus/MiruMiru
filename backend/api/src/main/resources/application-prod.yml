@@ -49,6 +49,8 @@ redis:
   db : ${REDIS_DB}
 
 chat:
+  redis:
+    enabled: true
   room:
     cleanup:
       enabled: true

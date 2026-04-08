@@ -32,6 +32,9 @@ class SecurityConfig(
         private val PUBLIC_ENDPOINTS = listOf(
             "/swagger-ui/**",
             "/v3/api-docs/**",
+            "/actuator/health",
+            "/actuator/health/**",
+            "/actuator/prometheus",
             "/api/v1/auth/**",       // 로그인/회원가입/토큰 재발급
             "/api/v1/health",
             "/chat-test.html",

@@ -44,7 +44,7 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 
 @Component
-@Profile("local", "bootstrap")
+@Profile("local")
 @Transactional
 class LocalTestDataInitializer(
     private val universityRepository: UniversityRepository,

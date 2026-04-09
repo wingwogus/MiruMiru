@@ -41,6 +41,7 @@
 		B0000000000000000000001E /* UI/AuthPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000040 /* UI/AuthPalette.swift */; };
 		B0000000000000000000001F /* UI/AuthRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000041 /* UI/AuthRoute.swift */; };
 		B00000000000000000000020 /* Auth/Signup/SignupModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000043 /* Auth/Signup/SignupModels.swift */; };
+		B00000000000000000000083 /* UI/AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000084 /* UI/AppTheme.swift */; };
 		B00000000000000000000046 /* Auth/Signup/SignupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000044 /* Auth/Signup/SignupViewModel.swift */; };
 		B00000000000000000000047 /* SignupViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000045 /* SignupViewModelTests.swift */; };
 		B00000000000000000000048 /* Home/HomeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000004E /* Home/HomeModels.swift */; };
@@ -128,6 +129,7 @@
 		B00000000000000000000043 /* Auth/Signup/SignupModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth/Signup/SignupModels.swift; sourceTree = "<group>"; };
 		B00000000000000000000044 /* Auth/Signup/SignupViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth/Signup/SignupViewModel.swift; sourceTree = "<group>"; };
 		B00000000000000000000045 /* SignupViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupViewModelTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000084 /* UI/AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/AppTheme.swift; sourceTree = "<group>"; };
 		B0000000000000000000004E /* Home/HomeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Home/HomeModels.swift; sourceTree = "<group>"; };
 		B0000000000000000000004F /* Home/HomeAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Home/HomeAPIClient.swift; sourceTree = "<group>"; };
 		B00000000000000000000050 /* Home/HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Home/HomeViewModel.swift; sourceTree = "<group>"; };
@@ -249,6 +251,7 @@
 				B00000000000000000000031 /* UI/PrimaryActionButton.swift */,
 				B00000000000000000000036 /* UI/AppTypography.swift */,
 				B00000000000000000000040 /* UI/AuthPalette.swift */,
+				B00000000000000000000084 /* UI/AppTheme.swift */,
 				B00000000000000000000041 /* UI/AuthRoute.swift */,
 				B00000000000000000000051 /* UI/PreviewSupport.swift */,
 			);
@@ -480,6 +483,7 @@
 				B00000000000000000000011 /* UI/PrimaryActionButton.swift in Sources */,
 				B00000000000000000000016 /* UI/AppTypography.swift in Sources */,
 				B0000000000000000000001E /* UI/AuthPalette.swift in Sources */,
+				B00000000000000000000083 /* UI/AppTheme.swift in Sources */,
 				B0000000000000000000001F /* UI/AuthRoute.swift in Sources */,
 				B0000000000000000000004B /* UI/PreviewSupport.swift in Sources */,
 				B00000000000000000000054 /* AuthenticatedAppShell.swift in Sources */,
@@ -545,10 +549,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				API_BASE_URL = "http://127.0.0.1:8080";
+				API_BASE_URL = "https://mirumiru.jaehyuns.com";
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -580,10 +582,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				API_BASE_URL = "https://example.invalid";
+				API_BASE_URL = "https://mirumiru.jaehyuns.com";
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = M2CPG9V47M;

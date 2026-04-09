@@ -1,2 +1,2 @@
 PRODUCT_BUNDLE_IDENTIFIER = com.mirumiru.ios
-API_BASE_URL = https://example.invalid
+API_BASE_URL = https://mirumiru.jaehyuns.com

@@ -1052,19 +1052,14 @@ private struct CourseReviewsFeedScreen: View {
     }
 
     private var background: some View {
-        LinearGradient(
-            colors: [Color.white, Color(red: 0.97, green: 0.98, blue: 1.0)],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
+        AppTheme.pageBackground.ignoresSafeArea()
     }
 
     private var header: some View {
         HStack {
             Text("Course Evaluation")
                 .font(AppFont.extraBold(30, relativeTo: .largeTitle))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             Spacer()
 
@@ -1072,7 +1067,7 @@ private struct CourseReviewsFeedScreen: View {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: "bell.fill")
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(Color(red: 0.30, green: 0.38, blue: 0.52))
+                        .foregroundStyle(AppTheme.textSecondary)
 
                     Circle()
                         .fill(Color.red)
@@ -1091,11 +1086,11 @@ private struct CourseReviewsFeedScreen: View {
             HStack(spacing: 14) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 19, weight: .medium))
-                    .foregroundStyle(Color(red: 0.52, green: 0.58, blue: 0.69))
+                    .foregroundStyle(AppTheme.textSecondary)
 
                 Text("Search by course name, professor...")
                     .font(AppFont.medium(16, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.52, green: 0.58, blue: 0.69))
+                    .foregroundStyle(AppTheme.textSecondary)
 
                 Spacer()
             }
@@ -1103,10 +1098,10 @@ private struct CourseReviewsFeedScreen: View {
             .frame(height: 58)
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color.white)
+                    .fill(AppTheme.surfacePrimary)
                     .overlay {
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(Color(red: 0.88, green: 0.90, blue: 0.95), lineWidth: 1)
+                            .stroke(AppTheme.divider, lineWidth: 1)
                     }
             )
         }
@@ -1129,7 +1124,7 @@ private struct CourseReviewsFeedScreen: View {
                             Text(filter.title)
                                 .font(AppFont.semibold(14, relativeTo: .subheadline))
                         }
-                        .foregroundStyle(viewModel.selectedFilter == filter ? .white : Color(red: 0.25, green: 0.32, blue: 0.42))
+                        .foregroundStyle(viewModel.selectedFilter == filter ? .white : AppTheme.textSecondary)
                         .padding(.horizontal, 18)
                         .frame(height: 40)
                         .background(
@@ -1140,7 +1135,7 @@ private struct CourseReviewsFeedScreen: View {
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
-                                ) : AnyShapeStyle(Color(red: 0.93, green: 0.95, blue: 0.98)))
+                                ) : AnyShapeStyle(AppTheme.surfaceSecondary))
                         )
                     }
                     .buttonStyle(.plain)
@@ -1155,7 +1150,7 @@ private struct CourseReviewsFeedScreen: View {
             HStack {
                 Text("Recent Reviews")
                     .font(AppFont.extraBold(26, relativeTo: .title2))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
 
                 Spacer()
 
@@ -1177,7 +1172,7 @@ private struct CourseReviewsFeedScreen: View {
                 VStack(spacing: 14) {
                     ForEach(0..<3, id: \.self) { _ in
                         RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .fill(Color.white)
+                            .fill(AppTheme.surfacePrimary)
                             .frame(height: 236)
                             .shadow(color: Color.black.opacity(0.05), radius: 18, y: 10)
                             .redacted(reason: .placeholder)
@@ -1289,7 +1284,7 @@ private struct ReviewTargetSearchScreen: View {
             .padding(.top, 18)
             .padding(.bottom, 40)
         }
-        .background(Color.white.ignoresSafeArea())
+        .background(AppTheme.pageBackground.ignoresSafeArea())
         .navigationTitle(purpose.navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
         .task(id: query) {
@@ -1308,19 +1303,19 @@ private struct ReviewTargetSearchScreen: View {
         HStack(spacing: 14) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(Color(red: 0.55, green: 0.61, blue: 0.71))
+                .foregroundStyle(AppTheme.textTertiary)
 
             TextField("Search by course or professor...", text: $query)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .font(AppFont.medium(15, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
         }
         .padding(.horizontal, 18)
         .frame(height: 58)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(red: 0.95, green: 0.97, blue: 1.0))
+                .fill(AppTheme.surfaceSecondary)
         )
     }
 }
@@ -1382,7 +1377,7 @@ private struct CourseReviewDetailScreen: View {
                     HStack {
                         Text("Reviews")
                             .font(AppFont.extraBold(24, relativeTo: .title2))
-                            .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                            .foregroundStyle(AppTheme.textPrimary)
 
                         Spacer()
 
@@ -1412,7 +1407,7 @@ private struct CourseReviewDetailScreen: View {
             .padding(.top, 18)
             .padding(.bottom, 40)
         }
-        .background(Color.white.ignoresSafeArea())
+        .background(AppTheme.pageBackground.ignoresSafeArea())
         .navigationTitle(target.courseName)
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -1459,7 +1454,7 @@ private struct WriteReviewScreen: View {
             .padding(.top, 18)
             .padding(.bottom, 120)
         }
-        .background(Color.white.ignoresSafeArea())
+        .background(AppTheme.pageBackground.ignoresSafeArea())
         .navigationTitle(viewModel.isEditing ? "Edit Review" : "Write Review")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -1479,7 +1474,7 @@ private struct WriteReviewScreen: View {
                     } label: {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(Color(red: 0.16, green: 0.20, blue: 0.29))
+                            .foregroundStyle(AppTheme.textPrimary)
                     }
                 }
             }
@@ -1511,7 +1506,7 @@ private struct WriteReviewScreen: View {
                 .padding(.top, 8)
                 .padding(.bottom, 8)
                 .background(
-                    Color.white.opacity(0.96)
+                    AppTheme.backgroundTop.opacity(0.96)
                         .ignoresSafeArea(edges: .bottom)
                 )
             }
@@ -1557,17 +1552,17 @@ private struct WriteReviewScreen: View {
 
                 Text(target.courseName)
                     .font(AppFont.extraBold(24, relativeTo: .title))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(spacing: 8) {
                     Image(systemName: "person.fill")
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(Color(red: 0.46, green: 0.53, blue: 0.64))
+                        .foregroundStyle(AppTheme.textSecondary)
 
                     Text(target.professorDisplayName)
                         .font(AppFont.medium(15, relativeTo: .body))
-                        .foregroundStyle(Color(red: 0.46, green: 0.53, blue: 0.64))
+                        .foregroundStyle(AppTheme.textSecondary)
                 }
             }
             .padding(.horizontal, 20)
@@ -1575,7 +1570,7 @@ private struct WriteReviewScreen: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(Color.white)
+                    .fill(AppTheme.surfacePrimary)
                     .shadow(color: Color.black.opacity(0.05), radius: 18, y: 10)
             )
             .padding(.leading, 4)
@@ -1589,7 +1584,7 @@ private struct WriteReviewScreen: View {
             Text("WHEN DID YOU TAKE IT?")
                 .font(AppFont.bold(13, relativeTo: .caption))
                 .tracking(2)
-                .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.64))
+                .foregroundStyle(AppTheme.textSecondary)
 
             HStack(spacing: 12) {
                 Menu {
@@ -1608,7 +1603,7 @@ private struct WriteReviewScreen: View {
                     } label: {
                         Text(term.title)
                             .font(AppFont.semibold(15, relativeTo: .body))
-                            .foregroundStyle(viewModel.term == term ? .white : Color(red: 0.35, green: 0.43, blue: 0.55))
+                            .foregroundStyle(viewModel.term == term ? .white : AppTheme.textSecondary)
                             .padding(.horizontal, 18)
                             .frame(height: 42)
                             .background(
@@ -1619,8 +1614,8 @@ private struct WriteReviewScreen: View {
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         )
-                                    ) : AnyShapeStyle(Color(red: 0.92, green: 0.95, blue: 0.98)))
-                            )
+                                    ) : AnyShapeStyle(AppTheme.surfaceSecondary))
+                    )
                     }
                     .buttonStyle(.plain)
                 }
@@ -1633,7 +1628,7 @@ private struct WriteReviewScreen: View {
             Text("OVERALL RATING")
                 .font(AppFont.bold(13, relativeTo: .caption))
                 .tracking(2)
-                .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.64))
+                .foregroundStyle(AppTheme.textSecondary)
 
             HStack(spacing: 12) {
                 ForEach(1...5, id: \.self) { value in
@@ -1642,7 +1637,7 @@ private struct WriteReviewScreen: View {
                     } label: {
                         Image(systemName: value <= viewModel.overallRating ? "star.fill" : "star.fill")
                             .font(.system(size: 36, weight: .semibold))
-                            .foregroundStyle(value <= viewModel.overallRating ? AuthPalette.primaryStart : Color(red: 0.68, green: 0.73, blue: 0.80))
+                            .foregroundStyle(value <= viewModel.overallRating ? AuthPalette.primaryStart : AppTheme.textTertiary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -1651,7 +1646,7 @@ private struct WriteReviewScreen: View {
             .padding(.vertical, 22)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(red: 0.96, green: 0.97, blue: 1.0))
+                    .fill(AppTheme.surfaceSecondary)
             )
         }
     }
@@ -1661,7 +1656,7 @@ private struct WriteReviewScreen: View {
             Text("COURSE CHARACTERISTICS")
                 .font(AppFont.bold(13, relativeTo: .caption))
                 .tracking(2)
-                .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.64))
+                .foregroundStyle(AppTheme.textSecondary)
 
             ReviewChipRow(
                 title: "Difficulty",
@@ -1690,7 +1685,7 @@ private struct WriteReviewScreen: View {
             } label: {
                 Text("Would Take Again")
                     .font(AppFont.semibold(15, relativeTo: .body))
-                    .foregroundStyle(viewModel.wouldTakeAgain ? .white : Color(red: 0.35, green: 0.43, blue: 0.55))
+                    .foregroundStyle(viewModel.wouldTakeAgain ? .white : AppTheme.textSecondary)
                     .padding(.horizontal, 20)
                     .frame(height: 40)
                     .background(
@@ -1701,7 +1696,7 @@ private struct WriteReviewScreen: View {
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
-                            ) : AnyShapeStyle(Color(red: 0.92, green: 0.95, blue: 0.98)))
+                            ) : AnyShapeStyle(AppTheme.surfaceSecondary))
                     )
             }
             .buttonStyle(.plain)
@@ -1713,15 +1708,15 @@ private struct WriteReviewScreen: View {
             Text("DETAILED FEEDBACK")
                 .font(AppFont.bold(13, relativeTo: .caption))
                 .tracking(2)
-                .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.64))
+                .foregroundStyle(AppTheme.textSecondary)
 
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(red: 0.96, green: 0.97, blue: 1.0))
+                    .fill(AppTheme.surfaceSecondary)
 
                 TextEditor(text: $viewModel.content)
                     .font(AppFont.medium(16, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
                     .padding(.horizontal, 16)
                     .padding(.top, 16)
                     .scrollContentBackground(.hidden)
@@ -1730,7 +1725,7 @@ private struct WriteReviewScreen: View {
                 if viewModel.content.isEmpty {
                     Text("Write your detailed review here...")
                         .font(AppFont.medium(16, relativeTo: .body))
-                        .foregroundStyle(Color(red: 0.67, green: 0.72, blue: 0.79))
+                        .foregroundStyle(AppTheme.textTertiary)
                         .padding(.horizontal, 20)
                         .padding(.top, 24)
                         .allowsHitTesting(false)
@@ -1744,7 +1739,7 @@ private struct WriteReviewScreen: View {
 
                         Text(viewModel.characterCountText)
                             .font(AppFont.semibold(13, relativeTo: .caption))
-                            .foregroundStyle(Color(red: 0.54, green: 0.60, blue: 0.69))
+                            .foregroundStyle(AppTheme.textTertiary)
                             .padding(.trailing, 18)
                             .padding(.bottom, 18)
                     }
@@ -1758,7 +1753,7 @@ private struct WriteReviewScreen: View {
         HStack(alignment: .top, spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(Color(red: 0.52, green: 0.58, blue: 0.69))
+                    .fill(AppTheme.textSecondary)
                     .frame(width: 32, height: 32)
 
                 Image(systemName: "info")
@@ -1770,18 +1765,18 @@ private struct WriteReviewScreen: View {
                 Text("COMMUNITY GUIDELINES")
                     .font(AppFont.bold(13, relativeTo: .caption))
                     .tracking(1.5)
-                    .foregroundStyle(Color(red: 0.12, green: 0.16, blue: 0.24))
+                    .foregroundStyle(AppTheme.textPrimary)
 
                 Text("Please provide honest, constructive feedback. Avoid personal attacks on faculty or other students. Reviews are moderated for quality and authenticity.")
                     .font(AppFont.medium(15, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.42, green: 0.50, blue: 0.62))
+                    .foregroundStyle(AppTheme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(red: 0.94, green: 0.96, blue: 0.99))
+                .fill(AppTheme.surfaceSecondary)
         )
     }
 }
@@ -1797,17 +1792,17 @@ private struct CourseReviewFeedCard: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(item.target.courseName)
                         .font(AppFont.extraBold(21, relativeTo: .title3))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
                         .lineLimit(2)
 
                     HStack(spacing: 8) {
                         Image(systemName: "person.fill")
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(Color(red: 0.54, green: 0.60, blue: 0.69))
+                            .foregroundStyle(AppTheme.textTertiary)
 
                         Text(item.target.professorDisplayName)
                             .font(AppFont.medium(14, relativeTo: .subheadline))
-                            .foregroundStyle(Color(red: 0.54, green: 0.60, blue: 0.69))
+                            .foregroundStyle(AppTheme.textTertiary)
                     }
                 }
 
@@ -1816,7 +1811,7 @@ private struct CourseReviewFeedCard: View {
                 HStack(spacing: 4) {
                     Text(String(format: "%.1f", Double(item.overallRating)))
                         .font(AppFont.extraBold(20, relativeTo: .title3))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
 
                     Image(systemName: "star.fill")
                         .font(.system(size: 16, weight: .bold))
@@ -1830,26 +1825,26 @@ private struct CourseReviewFeedCard: View {
 
             Text(item.content)
                 .font(AppFont.medium(16, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.22, green: 0.29, blue: 0.39))
+                .foregroundStyle(AppTheme.textPrimary)
                 .lineLimit(3)
 
                     HStack {
                 Text(verbatim: "\(item.term.titleText) \(item.academicYear)")
                     .font(AppFont.medium(13, relativeTo: .caption))
-                    .foregroundStyle(Color(red: 0.59, green: 0.65, blue: 0.74))
+                    .foregroundStyle(AppTheme.textTertiary)
 
                 Spacer()
 
                 Text(verbatim: item.createdAt.relativeDisplayText)
                     .font(AppFont.medium(13, relativeTo: .caption))
-                    .foregroundStyle(Color(red: 0.59, green: 0.65, blue: 0.74))
+                    .foregroundStyle(AppTheme.textTertiary)
             }
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.06), radius: 18, y: 10)
         )
     }
@@ -1862,11 +1857,11 @@ private struct ReviewTargetCard: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(target.courseName)
                 .font(AppFont.bold(18, relativeTo: .headline))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             Text(target.professorDisplayName)
                 .font(AppFont.medium(14, relativeTo: .subheadline))
-                .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.64))
+                .foregroundStyle(AppTheme.textSecondary)
 
             Text(target.courseCode)
                 .font(AppFont.semibold(12, relativeTo: .caption))
@@ -1876,7 +1871,7 @@ private struct ReviewTargetCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.05), radius: 14, y: 8)
         )
     }
@@ -1889,11 +1884,11 @@ private struct ReviewSummaryCard: View {
         VStack(alignment: .leading, spacing: 18) {
             Text(summary.target.courseName)
                 .font(AppFont.extraBold(22, relativeTo: .title2))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             Text(summary.target.professorDisplayName)
                 .font(AppFont.medium(14, relativeTo: .headline))
-                .foregroundStyle(Color(red: 0.46, green: 0.53, blue: 0.64))
+                .foregroundStyle(AppTheme.textSecondary)
 
             HStack(spacing: 10) {
                 SummaryStat(title: "Overall", value: summary.averageOverall.flatMap { String(format: "%.1f", $0) } ?? "-")
@@ -1904,7 +1899,7 @@ private struct ReviewSummaryCard: View {
             HStack {
                 Text(verbatim: "\(summary.reviewCount) reviews")
                     .font(AppFont.semibold(14, relativeTo: .subheadline))
-                    .foregroundStyle(Color(red: 0.29, green: 0.35, blue: 0.45))
+                    .foregroundStyle(AppTheme.textSecondary)
 
                 Spacer()
 
@@ -1917,7 +1912,7 @@ private struct ReviewSummaryCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.06), radius: 18, y: 10)
         )
     }
@@ -1931,14 +1926,14 @@ private struct ReviewDetailCard: View {
             HStack {
                 Text(review.isMine ? "Your Review" : "Anonymous Student")
                     .font(AppFont.bold(15, relativeTo: .headline))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
 
                 Spacer()
 
                 HStack(spacing: 4) {
                     Text(String(review.overallRating))
                         .font(AppFont.extraBold(16, relativeTo: .headline))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
 
                     Image(systemName: "star.fill")
                         .font(.system(size: 14, weight: .bold))
@@ -1952,26 +1947,26 @@ private struct ReviewDetailCard: View {
 
             Text(review.content)
                 .font(AppFont.medium(15, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.22, green: 0.29, blue: 0.39))
+                .foregroundStyle(AppTheme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack {
                 Text(verbatim: "\(review.term.titleText) \(review.academicYear)")
                     .font(AppFont.medium(14, relativeTo: .caption))
-                    .foregroundStyle(Color(red: 0.59, green: 0.65, blue: 0.74))
+                    .foregroundStyle(AppTheme.textTertiary)
 
                 Spacer()
 
                 Text(verbatim: review.createdAt.relativeDisplayText)
                     .font(AppFont.medium(14, relativeTo: .caption))
-                    .foregroundStyle(Color(red: 0.59, green: 0.65, blue: 0.74))
+                    .foregroundStyle(AppTheme.textTertiary)
             }
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.05), radius: 16, y: 8)
         )
     }
@@ -1985,11 +1980,11 @@ private struct ReviewsFailureCard: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Unable to load reviews")
                 .font(AppFont.bold(20, relativeTo: .title3))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             Text(message)
                 .font(AppFont.medium(15, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.42, green: 0.50, blue: 0.62))
+                .foregroundStyle(AppTheme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             PrimaryActionButton(
@@ -2004,7 +1999,7 @@ private struct ReviewsFailureCard: View {
         .padding(22)
         .background(
             RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.05), radius: 16, y: 8)
         )
     }
@@ -2064,18 +2059,18 @@ private struct ReviewsEmptyCard: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(AppFont.bold(20, relativeTo: .title3))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             Text(message)
                 .font(AppFont.medium(15, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.42, green: 0.50, blue: 0.62))
+                .foregroundStyle(AppTheme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.05), radius: 16, y: 8)
         )
     }
@@ -2090,7 +2085,7 @@ private struct SummaryStat: View {
             Text(title)
                 .font(AppFont.bold(10, relativeTo: .caption))
                 .tracking(0.8)
-                .foregroundStyle(Color(red: 0.46, green: 0.53, blue: 0.64))
+                .foregroundStyle(AppTheme.textSecondary)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -2105,7 +2100,7 @@ private struct SummaryStat: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Color(red: 0.95, green: 0.97, blue: 1.0))
+                .fill(AppTheme.surfaceSecondary)
         )
     }
 }
@@ -2143,7 +2138,7 @@ private struct ReviewChipRow: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(AppFont.semibold(14, relativeTo: .subheadline))
-                .foregroundStyle(Color(red: 0.35, green: 0.43, blue: 0.55))
+                .foregroundStyle(AppTheme.textSecondary)
 
             FlowLayout(options, spacing: 12, lineSpacing: 12) { option in
                     Button {
@@ -2151,7 +2146,7 @@ private struct ReviewChipRow: View {
                     } label: {
                         Text(option.title)
                             .font(AppFont.semibold(15, relativeTo: .body))
-                            .foregroundStyle(selectedValue == option.value ? .white : Color(red: 0.35, green: 0.43, blue: 0.55))
+                            .foregroundStyle(selectedValue == option.value ? .white : AppTheme.textSecondary)
                             .padding(.horizontal, 18)
                             .frame(height: 40)
                             .background(
@@ -2162,7 +2157,7 @@ private struct ReviewChipRow: View {
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         )
-                                    ) : AnyShapeStyle(Color(red: 0.92, green: 0.95, blue: 0.98)))
+                                    ) : AnyShapeStyle(AppTheme.surfaceSecondary))
                             )
                     }
                     .buttonStyle(.plain)
@@ -2181,12 +2176,12 @@ private struct ReviewFormPill: View {
             Image(systemName: "chevron.down")
                 .font(.system(size: 12, weight: .bold))
         }
-        .foregroundStyle(Color(red: 0.35, green: 0.43, blue: 0.55))
+        .foregroundStyle(AppTheme.textSecondary)
         .padding(.horizontal, 18)
         .frame(height: 42)
         .background(
             Capsule(style: .continuous)
-                .fill(Color(red: 0.92, green: 0.95, blue: 0.98))
+                .fill(AppTheme.surfaceSecondary)
         )
     }
 }
@@ -2688,6 +2683,13 @@ struct CourseReviewsRootView_Previews: PreviewProvider {
             )
             .previewDisplayName("Reviews Feed")
 
+            CourseReviewsRootView(
+                session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewCourseReviewsClient.loaded()
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Reviews Feed - Dark")
+
             NavigationStack {
                 WriteReviewScreen(
                     session: PreviewFactory.makeSession(state: .authenticated),
@@ -2699,6 +2701,17 @@ struct CourseReviewsRootView_Previews: PreviewProvider {
             .previewDisplayName("Write Review")
 
             NavigationStack {
+                WriteReviewScreen(
+                    session: PreviewFactory.makeSession(state: .authenticated),
+                    client: PreviewCourseReviewsClient(scenario: .writePrefilled),
+                    target: PreviewCourseReviewsData.target,
+                    onCompleted: { _ in }
+                )
+            }
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Write Review - Dark")
+
+            NavigationStack {
                 CourseReviewDetailScreen(
                     session: PreviewFactory.makeSession(state: .authenticated),
                     client: PreviewCourseReviewsClient.loaded(),
@@ -2707,6 +2720,17 @@ struct CourseReviewsRootView_Previews: PreviewProvider {
                 )
             }
             .previewDisplayName("Review Detail")
+
+            NavigationStack {
+                CourseReviewDetailScreen(
+                    session: PreviewFactory.makeSession(state: .authenticated),
+                    client: PreviewCourseReviewsClient.loaded(),
+                    target: PreviewCourseReviewsData.target,
+                    onWriteTap: { _ in }
+                )
+            }
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Review Detail - Dark")
         }
     }
 }

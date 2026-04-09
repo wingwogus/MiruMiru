@@ -74,7 +74,7 @@ struct SignupPlaceholderView: View {
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 24, weight: .semibold))
-                        .foregroundStyle(Color(red: 0.12, green: 0.17, blue: 0.28))
+                        .foregroundStyle(AppTheme.textPrimary)
                         .frame(width: 44, height: 44)
                 }
 
@@ -82,7 +82,7 @@ struct SignupPlaceholderView: View {
 
                 Text(viewModel.step.title)
                     .font(AppFont.bold(18, relativeTo: .headline))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
 
                 Spacer()
 
@@ -92,7 +92,7 @@ struct SignupPlaceholderView: View {
             .padding(.top, metrics.headerTopInset)
 
             Rectangle()
-                .fill(Color(red: 0.90, green: 0.92, blue: 0.96))
+                .fill(AppTheme.divider)
                 .frame(height: 1)
                 .padding(.horizontal, -metrics.horizontalPadding)
         }
@@ -105,14 +105,14 @@ struct SignupPlaceholderView: View {
             VStack(alignment: .leading, spacing: metrics.copySpacing) {
                 Text(copy.heading)
                     .font(AppFont.extraBold(metrics.headingSize, relativeTo: .largeTitle))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
                     .minimumScaleFactor(0.78)
                     .lineLimit(2)
                     .padding(.top, metrics.headingTopPadding)
 
                 Text(copy.body)
                     .font(AppFont.medium(metrics.bodySize, relativeTo: .title3))
-                    .foregroundStyle(Color(red: 0.42, green: 0.50, blue: 0.62))
+                    .foregroundStyle(AppTheme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -159,7 +159,7 @@ struct SignupPlaceholderView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("School Email Address")
                     .font(AppFont.bold(17, relativeTo: .headline))
-                    .foregroundStyle(Color(red: 0.16, green: 0.22, blue: 0.33))
+                    .foregroundStyle(AppTheme.textPrimary)
 
                 HStack(spacing: 12) {
                     AuthTextFieldRow(
@@ -175,7 +175,7 @@ struct SignupPlaceholderView: View {
                             .autocorrectionDisabled()
                             .keyboardType(.emailAddress)
                             .font(AppFont.medium(18, relativeTo: .body))
-                            .foregroundStyle(Color(red: 0.39, green: 0.45, blue: 0.56))
+                            .foregroundStyle(AppTheme.textSecondary)
                     }
 
                     Button {
@@ -195,7 +195,7 @@ struct SignupPlaceholderView: View {
                         .font(AppFont.bold(17, relativeTo: .headline))
                         .foregroundStyle(.white)
                         .frame(width: metrics.sendButtonWidth, height: metrics.fieldHeight)
-                        .background(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .background(AppTheme.controlStrong)
                         .clipShape(
                             RoundedRectangle(
                                 cornerRadius: metrics.controlCornerRadius,
@@ -214,7 +214,7 @@ struct SignupPlaceholderView: View {
                     HStack {
                         Text("6-Digit Verification Code")
                             .font(AppFont.bold(17, relativeTo: .headline))
-                            .foregroundStyle(Color(red: 0.16, green: 0.22, blue: 0.33))
+                            .foregroundStyle(AppTheme.textPrimary)
                         Spacer()
                         Text(viewModel.resendLabel)
                             .font(AppFont.medium(15, relativeTo: .subheadline))
@@ -223,7 +223,7 @@ struct SignupPlaceholderView: View {
 
                     Text("We sent a code to your school email. Enter it below to continue.")
                         .font(AppFont.medium(14, relativeTo: .footnote))
-                        .foregroundStyle(Color(red: 0.42, green: 0.50, blue: 0.62))
+                        .foregroundStyle(AppTheme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
 
                     SignupCodeEntryField(
@@ -242,14 +242,14 @@ struct SignupPlaceholderView: View {
                     HStack(spacing: 6) {
                         Text("Didn't receive the email?")
                             .font(AppFont.medium(16, relativeTo: .body))
-                            .foregroundStyle(Color(red: 0.64, green: 0.68, blue: 0.75))
+                            .foregroundStyle(AppTheme.textTertiary)
                         Button("Resend") {
                             Task {
                                 await viewModel.sendCode()
                             }
                         }
                         .font(AppFont.bold(16, relativeTo: .body))
-                        .foregroundStyle(Color(red: 0.16, green: 0.22, blue: 0.33))
+                        .foregroundStyle(AppTheme.textPrimary)
                         .disabled(viewModel.canResend == false)
                         .underline()
                     }
@@ -276,14 +276,14 @@ struct SignupPlaceholderView: View {
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .font(AppFont.medium(18, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.39, green: 0.45, blue: 0.56))
+                    .foregroundStyle(AppTheme.textSecondary)
             }
 
             VStack(alignment: .leading, spacing: 10) {
                 Text("MAJOR")
                     .font(AppFont.semibold(16, relativeTo: .subheadline))
                     .tracking(2)
-                    .foregroundStyle(Color(red: 0.36, green: 0.45, blue: 0.59))
+                    .foregroundStyle(AppTheme.textSecondary)
 
                 Menu {
                     ForEach(viewModel.majorOptions) { option in
@@ -295,23 +295,23 @@ struct SignupPlaceholderView: View {
                     HStack(spacing: 14) {
                         Image(systemName: "book.closed.fill")
                             .font(.system(size: 20, weight: .semibold))
-                            .foregroundStyle(Color(red: 0.59, green: 0.65, blue: 0.74))
+                            .foregroundStyle(AppTheme.textTertiary)
                             .frame(width: 28)
 
                         Text(selectedMajorLabel)
                             .font(AppFont.medium(18, relativeTo: .body))
-                            .foregroundStyle(Color(red: 0.39, green: 0.45, blue: 0.56))
+                            .foregroundStyle(AppTheme.textSecondary)
 
                         Spacer()
 
                         Image(systemName: "chevron.down")
-                            .foregroundStyle(Color(red: 0.59, green: 0.65, blue: 0.74))
+                            .foregroundStyle(AppTheme.textTertiary)
                     }
                     .padding(.horizontal, metrics.fieldHorizontalPadding)
                     .frame(minHeight: metrics.fieldHeight)
                     .background(
                         RoundedRectangle(cornerRadius: metrics.controlCornerRadius, style: .continuous)
-                            .fill(Color(red: 0.96, green: 0.97, blue: 0.99))
+                            .fill(AppTheme.surfaceSecondary)
                     )
                 }
 
@@ -393,7 +393,7 @@ struct SignupPlaceholderView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .font(AppFont.bold(17, relativeTo: .headline))
-                .foregroundStyle(Color(red: 0.16, green: 0.22, blue: 0.33))
+                .foregroundStyle(AppTheme.textPrimary)
 
             AuthTextFieldRow(
                 label: "",
@@ -411,7 +411,7 @@ struct SignupPlaceholderView: View {
                     }
                 }
                 .font(AppFont.medium(18, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.39, green: 0.45, blue: 0.56))
+                .foregroundStyle(AppTheme.textSecondary)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
 
@@ -422,7 +422,7 @@ struct SignupPlaceholderView: View {
                 } label: {
                     Image(systemName: isVisible.wrappedValue ? "eye.slash.fill" : "eye.fill")
                         .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(Color(red: 0.59, green: 0.65, blue: 0.74))
+                        .foregroundStyle(AppTheme.textTertiary)
                 }
             }
         }
@@ -455,16 +455,16 @@ private struct SignupCodeEntryField: View {
             HStack(spacing: boxSpacing) {
                 ForEach(0..<6, id: \.self) { index in
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .fill(.white)
+                        .fill(AppTheme.surfacePrimary)
                         .overlay(
                             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                                .stroke(Color(red: 0.87, green: 0.89, blue: 0.93), lineWidth: 1.2)
+                                .stroke(AppTheme.divider, lineWidth: 1.2)
                         )
                         .frame(height: boxHeight)
                         .overlay {
                             Text(character(at: index))
                                 .font(AppFont.bold(28, relativeTo: .title2))
-                                .foregroundStyle(Color(red: 0.16, green: 0.22, blue: 0.33))
+                                .foregroundStyle(AppTheme.textPrimary)
                         }
                 }
             }
@@ -523,6 +523,14 @@ struct SignupPlaceholderView_Previews: PreviewProvider {
             )
             .previewDisplayName("Verify Email")
 
+            SignupPlaceholderView(
+                client: PreviewSignupClient(),
+                onClose: {},
+                onBackToLogin: { _ in }
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Verify Email - Dark")
+
             VStack {
                 SignupCodeEntryField(
                     code: .constant("123456"),
@@ -534,6 +542,19 @@ struct SignupPlaceholderView_Previews: PreviewProvider {
             .padding(24)
             .background(Color(.systemGroupedBackground))
             .previewDisplayName("Code Entry")
+
+            VStack {
+                SignupCodeEntryField(
+                    code: .constant("123456"),
+                    boxHeight: 92,
+                    boxSpacing: 10,
+                    cornerRadius: 20
+                )
+            }
+            .padding(24)
+            .background(Color(.systemGroupedBackground))
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Code Entry - Dark")
         }
     }
 }

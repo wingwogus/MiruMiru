@@ -171,12 +171,12 @@ private struct AuthenticatedTabBar: View {
         .padding(.bottom, AuthenticatedLayoutMetrics.tabBarBottomPadding)
         .background(
             ZStack(alignment: .top) {
-                Color(uiColor: .systemBackground)
+                AppTheme.surfacePrimary
                     .opacity(0.94)
                     .ignoresSafeArea(edges: .bottom)
 
                 Rectangle()
-                    .fill(Color(red: 0.88, green: 0.90, blue: 0.95))
+                    .fill(AppTheme.divider)
                     .frame(height: 1)
             }
             .shadow(color: Color.black.opacity(0.08), radius: 16, y: -4)
@@ -187,7 +187,7 @@ private struct AuthenticatedTabBar: View {
         if item.tab == selectedTab {
             return AuthPalette.primaryStart
         }
-        return Color(red: 0.48, green: 0.56, blue: 0.67)
+        return AppTheme.textSecondary
     }
 }
 
@@ -208,30 +208,25 @@ private struct AuthenticatedTabBarItem: Identifiable {
 struct AuthenticatedAppShell_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            AuthenticatedAppShell(
-                session: PreviewFactory.makeSession(state: .authenticated),
-                    homeClient: PreviewHomeClient.loaded(),
-                    timetableClient: PreviewTimetableClient.loaded(),
-                    boardsClient: PreviewBoardsClient(scenario: .loaded),
-                    courseReviewsClient: PreviewCourseReviewsClient.loaded(),
-                    messagesClient: PreviewMessagesClient.loaded(),
-                    messagesRealtimeClient: PreviewMessagesRealtimeClient(),
-                    boardsSyncStore: BoardsSyncStore()
-            )
+            previewShell
             .previewDisplayName("Authenticated Shell - Light")
 
-            AuthenticatedAppShell(
-                session: PreviewFactory.makeSession(state: .authenticated),
-                    homeClient: PreviewHomeClient.loaded(),
-                    timetableClient: PreviewTimetableClient.loaded(),
-                    boardsClient: PreviewBoardsClient(scenario: .loaded),
-                    courseReviewsClient: PreviewCourseReviewsClient.loaded(),
-                    messagesClient: PreviewMessagesClient.loaded(),
-                    messagesRealtimeClient: PreviewMessagesRealtimeClient(),
-                    boardsSyncStore: BoardsSyncStore()
-            )
+            previewShell
             .preferredColorScheme(.dark)
             .previewDisplayName("Authenticated Shell - Dark")
         }
+    }
+
+    private static var previewShell: some View {
+        AuthenticatedAppShell(
+            session: PreviewFactory.makeSession(state: .authenticated),
+                homeClient: PreviewHomeClient.loaded(),
+                timetableClient: PreviewTimetableClient.loaded(),
+                boardsClient: PreviewBoardsClient(scenario: .loaded),
+                courseReviewsClient: PreviewCourseReviewsClient.loaded(),
+                messagesClient: PreviewMessagesClient.loaded(),
+                messagesRealtimeClient: PreviewMessagesRealtimeClient(),
+                boardsSyncStore: BoardsSyncStore()
+        )
     }
 }

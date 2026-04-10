@@ -126,27 +126,31 @@ struct AppRoot: View {
 struct AppRoot_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            AppRoot(
-                session: PreviewFactory.makeSession(state: .unauthenticated),
-                homeClient: PreviewHomeClient.loaded(),
-                timetableClient: PreviewTimetableClient.loaded(),
-                boardsClient: PreviewBoardsClient(scenario: .loaded),
-                courseReviewsClient: PreviewCourseReviewsClient.loaded(),
-                messagesClient: PreviewMessagesClient.loaded(),
-                messagesRealtimeClient: PreviewMessagesRealtimeClient()
-            )
+            previewRoot(state: .unauthenticated)
             .previewDisplayName("AppRoot Login")
 
-            AppRoot(
-                session: PreviewFactory.makeSession(state: .authenticated),
-                homeClient: PreviewHomeClient.loaded(),
-                timetableClient: PreviewTimetableClient.loaded(),
-                boardsClient: PreviewBoardsClient(scenario: .loaded),
-                courseReviewsClient: PreviewCourseReviewsClient.loaded(),
-                messagesClient: PreviewMessagesClient.loaded(),
-                messagesRealtimeClient: PreviewMessagesRealtimeClient()
-            )
+            previewRoot(state: .unauthenticated)
+            .preferredColorScheme(.dark)
+            .previewDisplayName("AppRoot Login - Dark")
+
+            previewRoot(state: .authenticated)
             .previewDisplayName("AppRoot Home")
+
+            previewRoot(state: .authenticated)
+            .preferredColorScheme(.dark)
+            .previewDisplayName("AppRoot Home - Dark")
         }
+    }
+
+    private static func previewRoot(state: AuthSessionState) -> some View {
+        AppRoot(
+            session: PreviewFactory.makeSession(state: state),
+            homeClient: PreviewHomeClient.loaded(),
+            timetableClient: PreviewTimetableClient.loaded(),
+            boardsClient: PreviewBoardsClient(scenario: .loaded),
+            courseReviewsClient: PreviewCourseReviewsClient.loaded(),
+            messagesClient: PreviewMessagesClient.loaded(),
+            messagesRealtimeClient: PreviewMessagesRealtimeClient()
+        )
     }
 }

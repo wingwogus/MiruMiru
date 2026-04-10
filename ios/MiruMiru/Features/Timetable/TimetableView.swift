@@ -120,15 +120,7 @@ struct TimetableView: View {
     }
 
     private var background: some View {
-        LinearGradient(
-            colors: [
-                Color.white,
-                Color(red: 0.97, green: 0.98, blue: 1.0)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
+        AppTheme.pageBackground.ignoresSafeArea()
     }
 
     @ViewBuilder
@@ -145,13 +137,13 @@ struct TimetableView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(selectedSemesterTitle)
                             .font(AppFont.extraBold(22, relativeTo: .title))
-                            .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                            .foregroundStyle(AppTheme.textPrimary)
                             .lineLimit(2)
                             .minimumScaleFactor(0.82)
 
                         Text("Tap to change semester")
                             .font(AppFont.medium(13, relativeTo: .footnote))
-                            .foregroundStyle(Color(red: 0.47, green: 0.55, blue: 0.66))
+                            .foregroundStyle(AppTheme.textSecondary)
                     }
                 }
                 .buttonStyle(.plain)
@@ -194,7 +186,7 @@ struct TimetableView: View {
             ForEach(Array(zip(["Mon", "Tue", "Wed", "Thu", "Fri"].indices, ["Mon", "Tue", "Wed", "Thu", "Fri"])), id: \.0) { _, day in
                 Text(day)
                     .font(AppFont.bold(15, relativeTo: .subheadline))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -336,7 +328,7 @@ private struct TimetableGridSection: View {
                             Text(hourLabel(hour))
                                 .font(AppFont.medium(12, relativeTo: .caption))
                                 .monospacedDigit()
-                                .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.70))
+                                .foregroundStyle(AppTheme.textTertiary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
 
                             Spacer(minLength: 0)
@@ -352,10 +344,10 @@ private struct TimetableGridSection: View {
                             HStack(spacing: columnSpacing) {
                                 ForEach(0..<5, id: \.self) { _ in
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(Color(red: 0.96, green: 0.97, blue: 0.99))
+                                        .fill(AppTheme.surfaceSecondary)
                                         .overlay {
                                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                .stroke(Color(red: 0.92, green: 0.95, blue: 0.99), lineWidth: 1)
+                                                .stroke(AppTheme.divider, lineWidth: 1)
                                         }
                                         .frame(width: dayColumnWidth, height: rowHeight)
                                 }
@@ -441,7 +433,7 @@ private struct TimetableLectureBlock: View {
 
                             Text(block.location)
                                 .font(AppFont.medium(10, relativeTo: .caption2))
-                                .foregroundStyle(Color(red: 0.38, green: 0.46, blue: 0.59))
+                                .foregroundStyle(AppTheme.textSecondary)
                                 .lineLimit(2)
                         }
                         .padding(.horizontal, 9)
@@ -480,7 +472,7 @@ private struct TimetableLectureDetailSheet: View {
             .padding(.top, 14)
             .padding(.bottom, 30)
         }
-        .background(Color(red: 0.98, green: 0.99, blue: 1.0))
+        .background(AppTheme.pageBackground.ignoresSafeArea())
         .confirmationDialog(
             primaryActionConfirmationTitle ?? "",
             isPresented: $isShowingPrimaryActionConfirmation,
@@ -526,12 +518,12 @@ private struct TimetableLectureDetailSheet: View {
             Button(action: onClose) {
                 Text("Close")
                     .font(AppFont.bold(18, relativeTo: .headline))
-                    .foregroundStyle(Color(red: 0.15, green: 0.19, blue: 0.29))
+                    .foregroundStyle(AppTheme.textPrimary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 58)
                     .background(
                         RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .fill(Color(red: 0.90, green: 0.93, blue: 0.97))
+                            .fill(AppTheme.surfaceSecondary)
                     )
             }
             .buttonStyle(.plain)
@@ -545,7 +537,7 @@ private struct TimetableDetailSheetTopBar: View {
     var body: some View {
         VStack(spacing: 18) {
             Capsule()
-                .fill(Color(red: 0.86, green: 0.89, blue: 0.95))
+                .fill(AppTheme.handle)
                 .frame(width: 42, height: 8)
                 .frame(maxWidth: .infinity)
 
@@ -553,7 +545,7 @@ private struct TimetableDetailSheetTopBar: View {
                 Button(action: onClose) {
                     Image(systemName: "xmark")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(Color(red: 0.47, green: 0.55, blue: 0.66))
+                        .foregroundStyle(AppTheme.textSecondary)
                         .frame(width: 40, height: 40)
                 }
                 .buttonStyle(.plain)
@@ -562,13 +554,13 @@ private struct TimetableDetailSheetTopBar: View {
 
                 Text("Course Details")
                     .font(AppFont.extraBold(24, relativeTo: .title2))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
 
                 Spacer()
 
                 Image(systemName: "ellipsis")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(Color(red: 0.60, green: 0.66, blue: 0.77))
+                    .foregroundStyle(AppTheme.textTertiary)
                     .frame(width: 40, height: 40)
             }
         }
@@ -582,12 +574,12 @@ private struct TimetableDetailHeroSection: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(lecture.name)
                 .font(AppFont.extraBold(28, relativeTo: .title))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text(lecture.professor)
                 .font(AppFont.medium(18, relativeTo: .title3))
-                .foregroundStyle(Color(red: 0.47, green: 0.55, blue: 0.66))
+                .foregroundStyle(AppTheme.textSecondary)
         }
     }
 }
@@ -629,7 +621,7 @@ private struct TimetableDetailScheduleCard: View {
                 .fill(AuthPalette.primaryStart.opacity(0.95))
 
             cardShape
-                .fill(Color(red: 0.95, green: 0.97, blue: 1.0))
+                .fill(AppTheme.surfaceSecondary)
                 .padding(.leading, 4)
                 .overlay {
                     LinearGradient(
@@ -675,7 +667,7 @@ private struct TimetableDetailScheduleCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay {
             cardShape
-                .stroke(Color.white.opacity(0.6), lineWidth: 0.8)
+                .stroke(AppTheme.divider, lineWidth: 0.8)
                 .padding(.leading, 4)
         }
     }
@@ -695,7 +687,7 @@ private struct TimetableDetailMetricCard: View {
                 .fill(accent.opacity(0.95))
 
             cardShape
-                .fill(Color(red: 0.95, green: 0.97, blue: 1.0))
+                .fill(AppTheme.surfaceSecondary)
                 .padding(.leading, 4)
                 .overlay {
                     LinearGradient(
@@ -719,12 +711,12 @@ private struct TimetableDetailMetricCard: View {
 
                     Text(title)
                         .font(AppFont.bold(12, relativeTo: .caption))
-                        .foregroundStyle(Color(red: 0.47, green: 0.55, blue: 0.66))
+                        .foregroundStyle(AppTheme.textSecondary)
                         .textCase(.uppercase)
 
                     Text(value)
                         .font(AppFont.bold(16, relativeTo: .headline))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.horizontal, 18)
@@ -737,7 +729,7 @@ private struct TimetableDetailMetricCard: View {
         .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
         .overlay {
             cardShape
-                .stroke(Color.white.opacity(0.6), lineWidth: 0.8)
+                .stroke(AppTheme.divider, lineWidth: 0.8)
                 .padding(.leading, 4)
         }
     }
@@ -750,7 +742,7 @@ private struct TimetableDetailMetaSection: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Course Information")
                 .font(AppFont.bold(16, relativeTo: .headline))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             VStack(spacing: 12) {
                 detailRow(title: "Course Code", value: lecture.code)
@@ -763,12 +755,12 @@ private struct TimetableDetailMetaSection: View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text(title)
                 .font(AppFont.semibold(13, relativeTo: .caption))
-                .foregroundStyle(Color(red: 0.47, green: 0.55, blue: 0.66))
+                .foregroundStyle(AppTheme.textSecondary)
                 .frame(width: 98, alignment: .leading)
 
             Text(value)
                 .font(AppFont.medium(16, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.13, green: 0.18, blue: 0.30))
+                .foregroundStyle(AppTheme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer(minLength: 0)
@@ -783,15 +775,15 @@ private struct TimetableDetailLocationPanel: View {
         VStack(alignment: .leading, spacing: 18) {
             Text("Where to Go")
                 .font(AppFont.bold(16, relativeTo: .headline))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             ZStack {
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 0.97, green: 0.98, blue: 1.0),
-                                Color.white
+                                AppTheme.surfaceSecondary,
+                                AppTheme.surfacePrimary
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -799,7 +791,7 @@ private struct TimetableDetailLocationPanel: View {
                     )
                     .overlay {
                         RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .stroke(Color(red: 0.89, green: 0.92, blue: 0.97), lineWidth: 1)
+                            .stroke(AppTheme.divider, lineWidth: 1)
                     }
 
                 VStack(spacing: 16) {
@@ -809,13 +801,13 @@ private struct TimetableDetailLocationPanel: View {
 
                     Text(lecture.locationSummary)
                         .font(AppFont.bold(21, relativeTo: .title3))
-                        .foregroundStyle(Color(red: 0.10, green: 0.14, blue: 0.24))
+                        .foregroundStyle(AppTheme.textPrimary)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text("Room information is based on the current timetable schedule.")
                         .font(AppFont.medium(14, relativeTo: .body))
-                        .foregroundStyle(Color(red: 0.49, green: 0.56, blue: 0.67))
+                        .foregroundStyle(AppTheme.textSecondary)
                         .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 22)
@@ -854,11 +846,11 @@ private struct TimetableEmptyOverlay: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text(title)
                     .font(AppFont.bold(20, relativeTo: .title3))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
 
                 Text(message)
                     .font(AppFont.medium(15, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                    .foregroundStyle(AppTheme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Button(action: action) {
@@ -878,7 +870,7 @@ private struct TimetableEmptyOverlay: View {
             .frame(maxWidth: 280, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.white.opacity(0.96))
+                    .fill(AppTheme.surfacePrimary.opacity(0.96))
                     .shadow(color: Color.black.opacity(0.06), radius: 16, y: 10)
             )
 
@@ -898,7 +890,7 @@ private struct TimetableMessageBanner: View {
 
             Text(message)
                 .font(AppFont.medium(14, relativeTo: .subheadline))
-                .foregroundStyle(Color(red: 0.28, green: 0.31, blue: 0.38))
+                .foregroundStyle(AppTheme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer(minLength: 8)
@@ -906,7 +898,7 @@ private struct TimetableMessageBanner: View {
             Button(action: dismiss) {
                 Image(systemName: "xmark")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.65))
+                    .foregroundStyle(AppTheme.textSecondary)
             }
             .buttonStyle(.plain)
         }
@@ -914,7 +906,7 @@ private struct TimetableMessageBanner: View {
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.04), radius: 10, y: 4)
         )
     }
@@ -928,11 +920,11 @@ private struct TimetableFailureState: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("We couldn't load your timetable")
                 .font(AppFont.bold(22, relativeTo: .title3))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             Text(message)
                 .font(AppFont.medium(15, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                .foregroundStyle(AppTheme.textSecondary)
 
             PrimaryActionButton(
                 title: "Try Again",
@@ -947,7 +939,7 @@ private struct TimetableFailureState: View {
         .padding(22)
         .background(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.05), radius: 16, y: 8)
         )
     }
@@ -958,11 +950,11 @@ private struct TimetableLoadingState: View {
         VStack(spacing: 12) {
             ForEach(0..<6, id: \.self) { _ in
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.white)
+                    .fill(AppTheme.surfacePrimary)
                     .frame(height: 84)
                     .overlay {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color(red: 0.93, green: 0.95, blue: 0.98), lineWidth: 1)
+                            .stroke(AppTheme.divider, lineWidth: 1)
                     }
             }
         }
@@ -991,7 +983,7 @@ private struct TimetableCatalogSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Capsule()
-                .fill(Color(red: 0.86, green: 0.89, blue: 0.95))
+                .fill(AppTheme.handle)
                 .frame(width: 42, height: 8)
                 .frame(maxWidth: .infinity)
                 .padding(.top, 12)
@@ -999,14 +991,14 @@ private struct TimetableCatalogSheet: View {
             HStack {
                 Text("Add Course")
                     .font(AppFont.extraBold(28, relativeTo: .title2))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
 
                 Spacer()
 
                 Button(action: onClose) {
                     Image(systemName: "xmark")
                         .font(.system(size: 22, weight: .medium))
-                        .foregroundStyle(Color(red: 0.60, green: 0.66, blue: 0.77))
+                        .foregroundStyle(AppTheme.textTertiary)
                         .frame(width: 36, height: 36)
                 }
                 .buttonStyle(.plain)
@@ -1019,7 +1011,7 @@ private struct TimetableCatalogSheet: View {
             HStack(spacing: 12) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(Color(red: 0.57, green: 0.66, blue: 0.78))
+                    .foregroundStyle(AppTheme.textTertiary)
 
                 TextField("Search by course or professor", text: $query)
                     .font(AppFont.medium(16, relativeTo: .body))
@@ -1031,7 +1023,7 @@ private struct TimetableCatalogSheet: View {
             .frame(height: 60)
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color(red: 0.95, green: 0.97, blue: 1.0))
+                    .fill(AppTheme.surfaceSecondary)
             )
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -1042,12 +1034,12 @@ private struct TimetableCatalogSheet: View {
                         } label: {
                             Text(chipTitle(for: item))
                                 .font(AppFont.bold(14, relativeTo: .subheadline))
-                                .foregroundStyle(filter == item ? Color.white : Color(red: 0.28, green: 0.36, blue: 0.47))
+                                .foregroundStyle(filter == item ? Color.white : AppTheme.textSecondary)
                                 .padding(.horizontal, 18)
                                 .padding(.vertical, 12)
                                 .background(
                                     Capsule()
-                                        .fill(filter == item ? AuthPalette.primaryStart : Color(red: 0.96, green: 0.97, blue: 0.99))
+                                        .fill(filter == item ? AuthPalette.primaryStart : AppTheme.surfaceSecondary)
                                 )
                                 .shadow(
                                     color: filter == item ? AuthPalette.primaryShadow : .clear,
@@ -1069,7 +1061,7 @@ private struct TimetableCatalogSheet: View {
                     if isLoading {
                         ForEach(0..<4, id: \.self) { _ in
                             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                .fill(Color.white)
+                                .fill(AppTheme.surfacePrimary)
                                 .frame(height: 108)
                                 .shadow(color: Color.black.opacity(0.04), radius: 12, y: 5)
                         }
@@ -1077,17 +1069,17 @@ private struct TimetableCatalogSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("No courses found")
                                 .font(AppFont.bold(18, relativeTo: .headline))
-                                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                                .foregroundStyle(AppTheme.textPrimary)
 
                             Text("Try another search or filter.")
                                 .font(AppFont.medium(15, relativeTo: .body))
-                                .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                                .foregroundStyle(AppTheme.textSecondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(20)
                         .background(
                             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                .fill(Color.white)
+                                .fill(AppTheme.surfacePrimary)
                         )
                     } else {
                         ForEach(lectures) { lecture in
@@ -1114,7 +1106,7 @@ private struct TimetableCatalogSheet: View {
         .padding(.bottom, 24)
         .background(
             RoundedRectangle(cornerRadius: 36, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.backgroundTop)
         )
         .task {
             guard focusSearchOnAppear else { return }
@@ -1177,22 +1169,22 @@ private struct TimetableCatalogLectureCard: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(lecture.name)
                             .font(AppFont.bold(18, relativeTo: .headline))
-                            .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                            .foregroundStyle(AppTheme.textPrimary)
                             .lineLimit(2)
 
                         Text(lecture.professor)
                             .font(AppFont.medium(15, relativeTo: .body))
-                            .foregroundStyle(Color(red: 0.42, green: 0.50, blue: 0.62))
+                            .foregroundStyle(AppTheme.textSecondary)
                             .lineLimit(1)
 
                         Text(lecture.primaryLocation)
                             .font(AppFont.medium(14, relativeTo: .subheadline))
-                            .foregroundStyle(Color(red: 0.47, green: 0.55, blue: 0.66))
+                            .foregroundStyle(AppTheme.textSecondary)
                             .lineLimit(1)
 
                         Text(lecture.scheduleSummary)
                             .font(AppFont.medium(13, relativeTo: .caption))
-                            .foregroundStyle(Color(red: 0.53, green: 0.60, blue: 0.71))
+                            .foregroundStyle(AppTheme.textTertiary)
                             .lineLimit(1)
                     }
 
@@ -1205,12 +1197,12 @@ private struct TimetableCatalogLectureCard: View {
             Button(action: isAdded ? onRemove : onAdd) {
                 ZStack {
                     Circle()
-                        .fill(Color(red: 0.95, green: 0.97, blue: 1.0))
+                        .fill(AppTheme.surfaceSecondary)
                         .frame(width: 52, height: 52)
 
                     Image(systemName: isAdded ? "checkmark" : "plus")
                         .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(isAdded ? palette.accent : Color(red: 0.35, green: 0.43, blue: 0.55))
+                        .foregroundStyle(isAdded ? palette.accent : AppTheme.textSecondary)
                 }
             }
             .buttonStyle(.plain)
@@ -1219,7 +1211,7 @@ private struct TimetableCatalogLectureCard: View {
         .padding(.vertical, 16)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.04), radius: 12, y: 6)
         )
     }
@@ -1257,6 +1249,13 @@ struct TimetableView_Previews: PreviewProvider {
 
             TimetableView(
                 session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewTimetableClient.loaded()
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Timetable Loaded - Dark")
+
+            TimetableView(
+                session: PreviewFactory.makeSession(state: .authenticated),
                 client: PreviewTimetableClient(scenario: .loadedLongTitle)
             )
             .previewDisplayName("Timetable Loaded - Long Title")
@@ -1277,6 +1276,10 @@ struct TimetableView_Previews: PreviewProvider {
             TimetableCatalogSheetPreview()
                 .previewDisplayName("Add Course Sheet")
 
+            TimetableCatalogSheetPreview()
+                .preferredColorScheme(.dark)
+                .previewDisplayName("Add Course Sheet - Dark")
+
             TimetableCatalogSheetPreview(actionMessage: TimetableFailure.timeConflict.message)
                 .previewDisplayName("Add Course Sheet - Conflict Banner")
 
@@ -1288,6 +1291,10 @@ struct TimetableView_Previews: PreviewProvider {
 
             TimetableLectureDetailSheetPreview()
                 .previewDisplayName("Course Detail - Remove")
+
+            TimetableLectureDetailSheetPreview()
+                .preferredColorScheme(.dark)
+                .previewDisplayName("Course Detail - Remove - Dark")
 
             TimetableLectureDetailSheetPreview(isAdded: false, lecture: PreviewTimetableData.catalog[3])
                 .previewDisplayName("Course Detail - Add")
@@ -1331,7 +1338,7 @@ private struct TimetableCatalogSheetPreview: View {
             onRemove: { _ in }
         )
         .padding(.horizontal, 12)
-        .background(Color(red: 0.93, green: 0.95, blue: 0.99))
+        .background(AppTheme.backgroundTop)
     }
 }
 
@@ -1356,6 +1363,6 @@ private struct TimetableLectureDetailSheetPreview: View {
             onClose: {},
             onPrimaryAction: {}
         )
-        .background(Color(red: 0.98, green: 0.99, blue: 1.0))
+        .background(AppTheme.backgroundTop)
     }
 }

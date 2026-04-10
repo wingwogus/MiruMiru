@@ -32,12 +32,12 @@ struct AuthTextFieldRow<Accessory: View>: View {
             Text(label)
                 .font(AppFont.semibold(16, relativeTo: .subheadline))
                 .tracking(2)
-                .foregroundStyle(Color(red: 0.36, green: 0.45, blue: 0.59))
+                .foregroundStyle(AppTheme.textSecondary)
 
             HStack(spacing: 14) {
                 Image(systemName: systemImage)
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(Color(red: 0.59, green: 0.65, blue: 0.74))
+                    .foregroundStyle(AppTheme.textTertiary)
                     .frame(width: 28)
 
                 field()
@@ -46,7 +46,7 @@ struct AuthTextFieldRow<Accessory: View>: View {
             .frame(minHeight: minHeight)
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(Color(red: 0.96, green: 0.97, blue: 0.99))
+                    .fill(AppTheme.surfaceSecondary)
                     .overlay(
                         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                             .stroke(errorText == nil ? Color.clear : Color.red.opacity(0.45), lineWidth: 1)
@@ -65,6 +65,23 @@ struct AuthTextFieldRow<Accessory: View>: View {
 
 struct AuthTextFieldRow_Previews: PreviewProvider {
     static var previews: some View {
+        Group {
+            AuthTextFieldRowPreviewContent()
+                .padding(24)
+                .background(Color(.systemGroupedBackground))
+                .previewDisplayName("Light")
+
+            AuthTextFieldRowPreviewContent()
+                .padding(24)
+                .background(Color(.systemGroupedBackground))
+                .preferredColorScheme(.dark)
+                .previewDisplayName("Dark")
+        }
+    }
+}
+
+private struct AuthTextFieldRowPreviewContent: View {
+    var body: some View {
         VStack(spacing: 20) {
             AuthTextFieldRow(
                 label: "EMAIL ADDRESS",
@@ -73,7 +90,7 @@ struct AuthTextFieldRow_Previews: PreviewProvider {
             ) {
                 Text("preview@tokyo.ac.jp")
                     .font(AppFont.medium(18, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.39, green: 0.45, blue: 0.56))
+                    .foregroundStyle(AppTheme.textSecondary)
                 Spacer()
             }
 
@@ -84,11 +101,9 @@ struct AuthTextFieldRow_Previews: PreviewProvider {
             ) {
                 Text("••••••••")
                     .font(AppFont.medium(18, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.39, green: 0.45, blue: 0.56))
+                    .foregroundStyle(AppTheme.textSecondary)
                 Spacer()
             }
         }
-        .padding(24)
-        .background(Color(.systemGroupedBackground))
     }
 }

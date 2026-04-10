@@ -4,10 +4,12 @@ on:
   push:
     branches: [ "main" ]  # main 브랜치에 Push 될 때만 실행
     paths:
-      - 'backend/**'      # 백엔드 코드가 변경됐을 때만 실행 (프론트엔드 변경 시 무시)
+      - 'backend/**'
+      - '.github/workflows/ci.yml'
+      - '!backend/charts/**'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: mirumiru-backend-cicd-main
@@ -16,20 +18,23 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      DEFAULT_IMAGE_REPOSITORY: vantagac/mirumiru-api
 
     steps:
     # 1. 최신 코드 가져오기
     - name: Checkout Code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0
+        fetch-depth: 1
 
     - name: Resolve Docker Image Repository
       id: image
-      working-directory: ./backend/charts/mirumiru
       run: |
-        IMAGE_REPOSITORY=$(awk '/^[[:space:]]*repository:/ {print $2; exit}' values.yaml)
+        IMAGE_REPOSITORY="${DOCKER_IMAGE_REPOSITORY:-$DEFAULT_IMAGE_REPOSITORY}"
         echo "repository=${IMAGE_REPOSITORY}" >> "$GITHUB_OUTPUT"
+      env:
+        DOCKER_IMAGE_REPOSITORY: ${{ vars.DOCKER_IMAGE_REPOSITORY }}
 
     # 2. 빌드 공장에 Java 21 세팅
     - name: Set up JDK 21
@@ -53,36 +58,21 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
     # 5. Docker 이미지 굽고 도커 허브 전송
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v5
       with:
         context: ./backend
         file: ./backend/Dockerfile
+        platforms: linux/arm64
         push: true
         # 태그명: 깃허브 커밋 해시(고유번호)와 latest 두 가지로 저장
         tags: |
           ${{ steps.image.outputs.repository }}:${{ github.sha }}
           ${{ steps.image.outputs.repository }}:latest
-
-    # 6. Helm 차트의 버전을 방금 만든 새 이미지 버전으로 덮어쓰기
-    - name: Update Helm values.yaml
-      working-directory: ./backend/charts/mirumiru
-      run: |
-        if grep -q "tag: \"${GITHUB_SHA}\"" values.yaml; then
-          echo "values.yaml already points to ${GITHUB_SHA}"
-          exit 0
-        fi
-
-        sed -i "s#^\([[:space:]]*tag:[[:space:]]*\).*#\1\"${GITHUB_SHA}\"#" values.yaml
-
-        # 깃허브 봇 이름으로 변경 사항을 다시 Commit & Push
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add values.yaml
-        if git diff --cached --quiet; then
-          echo "No Helm changes to commit"
-          exit 0
-        fi
-        git commit -m "chore: sync backend image tag to ${GITHUB_SHA} [skip ci]"
-        git push origin HEAD:main

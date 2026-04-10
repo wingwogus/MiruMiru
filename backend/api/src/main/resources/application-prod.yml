@@ -49,7 +49,21 @@ redis:
   db : ${REDIS_DB}
 
 chat:
+  redis:
+    enabled: true
   room:
     cleanup:
       enabled: true
       cron: 0 0 4 * * *
+
+management:
+  server:
+    port: 9090
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true

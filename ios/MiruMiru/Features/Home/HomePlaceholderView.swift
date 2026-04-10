@@ -119,31 +119,23 @@ struct HomeView: View {
     }
 
     private var background: some View {
-        LinearGradient(
-            colors: [
-                Color.white,
-                Color(red: 0.97, green: 0.98, blue: 1.0)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
+        AppTheme.pageBackground.ignoresSafeArea()
     }
 
     private var loadingHeader: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 14) {
                 Circle()
-                    .fill(Color(red: 0.91, green: 0.94, blue: 0.99))
+                    .fill(AppTheme.surfaceSecondary)
                     .frame(width: 58, height: 58)
 
                 VStack(alignment: .leading, spacing: 8) {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(Color(red: 0.91, green: 0.94, blue: 0.99))
+                        .fill(AppTheme.surfaceSecondary)
                         .frame(width: 60, height: 14)
 
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color(red: 0.86, green: 0.90, blue: 0.97))
+                        .fill(AppTheme.divider)
                         .frame(width: 180, height: 22)
                 }
 
@@ -151,7 +143,7 @@ struct HomeView: View {
 
                 Image(systemName: "bell.fill")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(Color(red: 0.30, green: 0.38, blue: 0.52))
+                    .foregroundStyle(AppTheme.textSecondary)
             }
 
             ProgressView("Loading your home...")
@@ -164,16 +156,16 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Home")
                 .font(AppFont.extraBold(32, relativeTo: .largeTitle))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             VStack(alignment: .leading, spacing: 12) {
                 Text("We couldn't load your home")
                     .font(AppFont.bold(22, relativeTo: .title3))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
 
                 Text(failure.message)
                     .font(AppFont.medium(16, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.42, green: 0.50, blue: 0.62))
+                    .foregroundStyle(AppTheme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 PrimaryActionButton(
@@ -191,7 +183,7 @@ struct HomeView: View {
             .padding(22)
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(Color.white)
+                    .fill(AppTheme.surfacePrimary)
                     .shadow(color: Color.black.opacity(0.05), radius: 16, y: 8)
             )
         }
@@ -210,17 +202,17 @@ private struct HomeHeaderSection: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Hello,")
                     .font(AppFont.medium(17, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.42, green: 0.50, blue: 0.62))
+                    .foregroundStyle(AppTheme.textSecondary)
 
                 Text(profile.displayName)
                     .font(AppFont.extraBold(30, relativeTo: .largeTitle))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
                     .lineLimit(2)
                     .minimumScaleFactor(0.82)
 
                 Text(profile.secondaryText)
                     .font(AppFont.medium(15, relativeTo: .subheadline))
-                    .foregroundStyle(Color(red: 0.42, green: 0.50, blue: 0.62))
+                    .foregroundStyle(AppTheme.textSecondary)
                     .lineLimit(2)
             }
 
@@ -229,7 +221,7 @@ private struct HomeHeaderSection: View {
             Button(action: onLogoutTap) {
                 Image(systemName: "rectangle.portrait.and.arrow.right")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(Color(red: 0.30, green: 0.38, blue: 0.52))
+                    .foregroundStyle(AppTheme.textSecondary)
                     .frame(width: 42, height: 42)
             }
             .buttonStyle(.plain)
@@ -252,7 +244,7 @@ private struct HomeAvatar: View {
                         .overlay {
                             Text(initials)
                                 .font(AppFont.bold(18, relativeTo: .headline))
-                                .foregroundStyle(Color(red: 0.16, green: 0.19, blue: 0.24))
+                                .foregroundStyle(AppTheme.textPrimary)
                         }
                 }
                 .frame(width: 58, height: 58)
@@ -279,7 +271,7 @@ private struct TodayClassesSection: View {
             HStack {
                 Text("Today's Classes")
                     .font(AppFont.extraBold(28, relativeTo: .title2))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
 
                 Spacer()
 
@@ -299,7 +291,7 @@ private struct TodayClassesSection: View {
             .padding(18)
             .background(
                 RoundedRectangle(cornerRadius: 32, style: .continuous)
-                    .fill(Color(red: 0.96, green: 0.97, blue: 1.0))
+                    .fill(AppTheme.surfaceSecondary)
             )
         }
     }
@@ -328,7 +320,7 @@ private struct HomeClassCard: View {
         HStack(alignment: .top, spacing: 18) {
             ZStack {
                 Rectangle()
-                    .fill(Color(red: 0.86, green: 0.89, blue: 0.96))
+                    .fill(AppTheme.divider)
                     .frame(width: 2, height: max(cardHeight - 58, 26))
 
                 VStack(spacing: 0) {
@@ -342,7 +334,7 @@ private struct HomeClassCard: View {
 
                     Text(row.endTime)
                         .font(AppFont.semibold(15, relativeTo: .subheadline))
-                        .foregroundStyle(Color(red: 0.37, green: 0.44, blue: 0.56))
+                        .foregroundStyle(AppTheme.textSecondary)
                         .monospacedDigit()
                         .lineLimit(1)
                 }
@@ -358,7 +350,7 @@ private struct HomeClassCard: View {
                         .fill(accentColor.opacity(0.95))
 
                     cardShape
-                        .fill(Color.white)
+                        .fill(AppTheme.surfacePrimary)
                         .padding(.leading, 4)
                         .overlay {
                             LinearGradient(
@@ -395,7 +387,7 @@ private struct HomeClassCard: View {
 
                             Text(row.location)
                                 .font(AppFont.medium(14, relativeTo: .subheadline))
-                                .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.66))
+                                .foregroundStyle(AppTheme.textSecondary)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.82)
                         }
@@ -404,12 +396,12 @@ private struct HomeClassCard: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(row.title)
                                 .font(AppFont.bold(20, relativeTo: .headline))
-                                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                                .foregroundStyle(AppTheme.textPrimary)
                                 .fixedSize(horizontal: false, vertical: true)
 
                             Text(row.professor)
                                 .font(AppFont.medium(17, relativeTo: .body))
-                                .foregroundStyle(Color(red: 0.56, green: 0.62, blue: 0.72))
+                                .foregroundStyle(AppTheme.textTertiary)
                         }
                     }
                     .padding(.horizontal, 18)
@@ -421,7 +413,7 @@ private struct HomeClassCard: View {
             }
             .overlay {
                 cardShape
-                    .stroke(Color.white.opacity(0.6), lineWidth: 0.8)
+                    .stroke(AppTheme.divider, lineWidth: 0.8)
                     .padding(.leading, 4)
             }
             .background {
@@ -457,7 +449,7 @@ private struct HomeEmptyCard: View {
             HStack {
                 Text("Today's Classes")
                     .font(AppFont.extraBold(28, relativeTo: .title2))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
 
                 Spacer()
 
@@ -474,18 +466,18 @@ private struct HomeEmptyCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text(title)
                     .font(AppFont.bold(22, relativeTo: .title3))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
 
                 Text(message)
                     .font(AppFont.medium(16, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.42, green: 0.50, blue: 0.62))
+                    .foregroundStyle(AppTheme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(22)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(Color(red: 0.96, green: 0.97, blue: 1.0))
+                    .fill(AppTheme.surfacePrimary)
             )
         }
     }
@@ -496,16 +488,16 @@ private struct HomeLoadingCard: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Today's Classes")
                 .font(AppFont.extraBold(28, relativeTo: .title2))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             VStack(spacing: 14) {
                 ForEach(0..<2, id: \.self) { _ in
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color.white)
+                        .fill(AppTheme.surfacePrimary)
                         .frame(height: 128)
                         .overlay {
                             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                .stroke(Color(red: 0.92, green: 0.94, blue: 0.98), lineWidth: 1)
+                                .stroke(AppTheme.divider, lineWidth: 1)
                         }
                 }
             }
@@ -524,7 +516,7 @@ private struct HomeTrendingPostsSection: View {
                 Label {
                     Text("Trending Posts")
                         .font(AppFont.extraBold(24, relativeTo: .title3))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
                 } icon: {
                     Image(systemName: "flame.fill")
                         .foregroundStyle(Color(red: 0.98, green: 0.32, blue: 0.26))
@@ -577,12 +569,12 @@ private struct HomeTrendingPostCard: View {
 
                 Text(post.relativeCreatedAt)
                     .font(AppFont.medium(13, relativeTo: .caption))
-                    .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                    .foregroundStyle(AppTheme.textSecondary)
             }
 
             Text(post.title)
                 .font(AppFont.bold(18, relativeTo: .headline))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
                 .lineLimit(3)
                 .multilineTextAlignment(.leading)
 
@@ -602,7 +594,7 @@ private struct HomeTrendingPostCard: View {
         .frame(width: 286, height: 172, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.05), radius: 14, y: 6)
         )
     }
@@ -618,6 +610,15 @@ struct HomeView_Previews: PreviewProvider {
                 nowProvider: { PreviewHomeData.previewNow }
             )
             .previewDisplayName("Home Loaded - Standard")
+
+            HomeView(
+                session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewHomeClient.loaded(),
+                boardsSyncStore: BoardsSyncStore(),
+                nowProvider: { PreviewHomeData.previewNow }
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Home Loaded - Dark")
 
             HomeView(
                 session: PreviewFactory.makeSession(state: .authenticated),
@@ -651,6 +652,15 @@ struct HomeView_Previews: PreviewProvider {
             )
             .preferredColorScheme(.dark)
             .previewDisplayName("Home Loaded - Dark")
+
+            HomeView(
+                session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewHomeClient(scenario: .networkFailure),
+                boardsSyncStore: BoardsSyncStore(),
+                nowProvider: { PreviewHomeData.previewNow }
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Home Failure - Dark")
         }
     }
 }

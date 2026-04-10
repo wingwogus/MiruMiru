@@ -239,7 +239,13 @@ final class MessagesAPIClient: MessagesClientProtocol, @unchecked Sendable {
     }
 
     func fetchViewer() async throws -> MessagesViewer {
-        let payload: ViewerResponse = try await requestPayload(path: "/api/v1/members/me")
+        let payload: ViewerResponse = try await requestPayload(
+            path: "/api/v1/members/me",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.sharedMemberMe,
+                maxAge: APICacheTTL.memberProfile
+            )
+        )
         return payload.toDomain()
     }
 
@@ -330,14 +336,24 @@ final class MessagesAPIClient: MessagesClientProtocol, @unchecked Sendable {
     private func requestPayload<Response: Decodable>(
         path: String,
         method: HTTPMethod = .get,
-        body: Data? = nil
+        body: Data? = nil,
+        cachePolicy: RequestCachePolicy? = nil
     ) async throws -> Response {
         do {
-            let (data, _) = try await authorizedExecutor.send(
-                path: path,
-                method: method,
-                body: body
-            )
+            let data: Data
+            if method == .get {
+                data = try await authorizedExecutor.get(
+                    path: path,
+                    cachePolicy: cachePolicy
+                )
+            } else {
+                let response = try await authorizedExecutor.send(
+                    path: path,
+                    method: method,
+                    body: body
+                )
+                data = response.0
+            }
             let envelope = try apiClient.decode(APIResponseEnvelope<Response>.self, from: data)
             guard envelope.success, let payload = envelope.data else {
                 throw MessagesClientError.unexpected
@@ -919,20 +935,30 @@ final class MessagesInboxViewModel: ObservableObject {
 
     private let client: MessagesClientProtocol
     private let realtimeClient: MessagesRealtimeClientProtocol
+    private let nowProvider: @Sendable () -> Date
     private var hasLoaded = false
     private var rooms: [MessageRoomSummary] = []
     private var reloadTask: Task<Void, Never>?
+    private var lastSuccessfulRoomsLoadAt: Date?
+    private let softRefreshInterval: TimeInterval = 20
 
-    init(client: MessagesClientProtocol, realtimeClient: MessagesRealtimeClientProtocol) {
+    init(
+        client: MessagesClientProtocol,
+        realtimeClient: MessagesRealtimeClientProtocol,
+        nowProvider: @escaping @Sendable () -> Date = Date.init
+    ) {
         self.client = client
         self.realtimeClient = realtimeClient
+        self.nowProvider = nowProvider
     }
 
     func activate() async {
         await realtimeClient.activate()
         await realtimeClient.ensureUnreadSubscription()
         if hasLoaded {
-            await reload()
+            if shouldSoftRefreshRooms() {
+                await loadRooms(showLoading: false)
+            }
         } else {
             await loadIfNeeded()
         }
@@ -951,7 +977,7 @@ final class MessagesInboxViewModel: ObservableObject {
     }
 
     func reload() async {
-        await loadRooms()
+        await loadRooms(showLoading: true)
     }
 
     func displayedRooms(query: String) -> [MessageRoomSummary] {
@@ -1008,8 +1034,11 @@ final class MessagesInboxViewModel: ObservableObject {
         switch event {
         case let .unread(roomId, memberId, unreadCount):
             guard memberId == viewer?.memberId else { return }
-            patchUnreadCount(roomId: roomId, unreadCount: unreadCount)
-            scheduleReload()
+            if patchUnreadCount(roomId: roomId, unreadCount: unreadCount) {
+                scheduleReloadIfNeeded()
+            } else {
+                scheduleReload(forceRefresh: true)
+            }
         case let .message(message):
             if let roomIndex = rooms.firstIndex(where: { $0.roomId == message.roomId }) {
                 var room = rooms[roomIndex]
@@ -1032,8 +1061,10 @@ final class MessagesInboxViewModel: ObservableObject {
                 rooms.remove(at: roomIndex)
                 rooms.insert(room, at: 0)
                 state = .loaded(rooms)
+                scheduleReloadIfNeeded()
+            } else {
+                scheduleReload(forceRefresh: true)
             }
-            scheduleReload()
         case let .read(roomId, readerId, lastReadMessageId):
             guard let viewer else { return }
             if let roomIndex = rooms.firstIndex(where: { $0.roomId == roomId }) {
@@ -1056,20 +1087,27 @@ final class MessagesInboxViewModel: ObservableObject {
                 )
                 rooms[roomIndex] = room
                 state = .loaded(rooms)
+                scheduleReloadIfNeeded()
+            } else {
+                scheduleReload(forceRefresh: true)
             }
-            scheduleReload()
         }
     }
 
-    private func loadRooms() async {
-        state = .loading
-        actionMessage = nil
+    private func loadRooms(showLoading: Bool = true) async {
+        if showLoading || hasReusableContent == false {
+            state = .loading
+        }
+        if showLoading {
+            actionMessage = nil
+        }
 
         do {
             try await loadViewerIfNeeded()
             let fetchedRooms = try await client.fetchRooms(limit: 30)
             rooms = fetchedRooms
             state = fetchedRooms.isEmpty ? .empty : .loaded(fetchedRooms)
+            lastSuccessfulRoomsLoadAt = nowProvider()
         } catch let error as MessagesClientError {
             state = .failed(Self.map(error))
         } catch {
@@ -1082,8 +1120,10 @@ final class MessagesInboxViewModel: ObservableObject {
         viewer = try await client.fetchViewer()
     }
 
-    private func patchUnreadCount(roomId: Int64, unreadCount: Int) {
-        guard let roomIndex = rooms.firstIndex(where: { $0.roomId == roomId }) else { return }
+    private func patchUnreadCount(roomId: Int64, unreadCount: Int) -> Bool {
+        guard let roomIndex = rooms.firstIndex(where: { $0.roomId == roomId }) else {
+            return false
+        }
         let room = rooms[roomIndex]
         rooms[roomIndex] = MessageRoomSummary(
             roomId: room.roomId,
@@ -1102,14 +1142,34 @@ final class MessagesInboxViewModel: ObservableObject {
             isAnonOther: room.isAnonOther
         )
         state = .loaded(rooms)
+        return true
     }
 
-    private func scheduleReload() {
+    private func scheduleReloadIfNeeded() {
+        scheduleReload(forceRefresh: false)
+    }
+
+    private func scheduleReload(forceRefresh: Bool) {
+        guard forceRefresh || shouldSoftRefreshRooms() else { return }
         reloadTask?.cancel()
         reloadTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 500_000_000)
-            await self?.reload()
+            await self?.loadRooms(showLoading: false)
         }
+    }
+
+    private var hasReusableContent: Bool {
+        switch state {
+        case .loaded, .empty:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func shouldSoftRefreshRooms() -> Bool {
+        guard let lastSuccessfulRoomsLoadAt else { return true }
+        return nowProvider().timeIntervalSince(lastSuccessfulRoomsLoadAt) >= softRefreshInterval
     }
 
     private static func map(_ error: MessagesClientError) -> MessagesFailure {

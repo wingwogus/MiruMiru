@@ -32,6 +32,9 @@ final class TimetableViewModel: ObservableObject {
     }
 
     func reload() async {
+        await client.invalidateCache()
+        lectureCatalogCache.removeAll()
+        catalogState = .idle
         await loadCurrentSemester(forceReloadCatalog: false)
     }
 

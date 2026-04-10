@@ -166,4 +166,9 @@ protocol HomeClientProtocol: Sendable {
     func fetchSemesters() async throws -> [HomeSemester]
     func fetchTimetable(semesterId: Int64) async throws -> HomeTimetable
     func fetchHotPosts() async throws -> [HotPostSummary]
+    func invalidateCache() async
+}
+
+extension HomeClientProtocol {
+    func invalidateCache() async {}
 }

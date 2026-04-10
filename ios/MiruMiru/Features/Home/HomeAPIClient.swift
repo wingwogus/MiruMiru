@@ -14,32 +14,64 @@ final class HomeAPIClient: HomeClientProtocol, @unchecked Sendable {
     }
 
     func fetchProfile() async throws -> HomeMemberProfile {
-        let payload: ProfileResponse = try await requestPayload(path: "/api/v1/members/me")
+        let payload: ProfileResponse = try await requestPayload(
+            path: "/api/v1/members/me",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.sharedMemberMe,
+                maxAge: APICacheTTL.memberProfile
+            )
+        )
         return payload.toDomain()
     }
 
     func fetchSemesters() async throws -> [HomeSemester] {
-        let payload: [SemesterResponse] = try await requestPayload(path: "/api/v1/semesters")
+        let payload: [SemesterResponse] = try await requestPayload(
+            path: "/api/v1/semesters",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.sharedSemesters,
+                maxAge: APICacheTTL.semesters
+            )
+        )
         return payload.map(\.toDomain)
     }
 
     func fetchTimetable(semesterId: Int64) async throws -> HomeTimetable {
         let payload: TimetableResponse = try await requestPayload(
-            path: "/api/v1/timetables/me?semesterId=\(semesterId)"
+            path: "/api/v1/timetables/me?semesterId=\(semesterId)",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.sharedTimetable(semesterId: semesterId),
+                maxAge: APICacheTTL.timetable
+            )
         )
         return payload.toDomain()
     }
 
     func fetchHotPosts() async throws -> [HotPostSummary] {
-        let payload: [HotPostResponse] = try await requestPayload(path: "/api/v1/posts/hot")
+        let payload: [HotPostResponse] = try await requestPayload(
+            path: "/api/v1/posts/hot",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.sharedHotPosts,
+                maxAge: APICacheTTL.hotPosts
+            )
+        )
         return payload.map(\.toDomain)
     }
 
-    private func requestPayload<Response: Decodable>(path: String) async throws -> Response {
+    func invalidateCache() async {
+        await authorizedExecutor.invalidateCache(key: APICacheKey.sharedMemberMe)
+        await authorizedExecutor.invalidateCache(key: APICacheKey.sharedSemesters)
+        await authorizedExecutor.invalidateCache(key: APICacheKey.sharedHotPosts)
+        await authorizedExecutor.invalidateCache(prefix: APICacheKey.sharedTimetablePrefix)
+    }
+
+    private func requestPayload<Response: Decodable>(
+        path: String,
+        cachePolicy: RequestCachePolicy? = nil
+    ) async throws -> Response {
         do {
-            let (data, _) = try await authorizedExecutor.send(
+            let data = try await authorizedExecutor.get(
                 path: path,
-                method: .get,
+                cachePolicy: cachePolicy
             )
             let envelope = try apiClient.decode(APIResponseEnvelope<Response>.self, from: data)
             guard envelope.success, let payload = envelope.data else {

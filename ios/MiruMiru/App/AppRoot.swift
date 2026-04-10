@@ -3,6 +3,7 @@ import SwiftUI
 struct AppRoot: View {
     @ObservedObject var session: AppSession
     @StateObject private var boardsSyncStore = BoardsSyncStore()
+    private let requestCacheStore: RequestCacheStore
     private let homeClient: HomeClientProtocol
     private let timetableClient: TimetableClientProtocol
     private let boardsClient: BoardsClientProtocol
@@ -14,6 +15,7 @@ struct AppRoot: View {
 
     init(
         session: AppSession,
+        requestCacheStore: RequestCacheStore = RequestCacheStore(),
         homeClient: HomeClientProtocol,
         timetableClient: TimetableClientProtocol,
         boardsClient: BoardsClientProtocol,
@@ -22,6 +24,7 @@ struct AppRoot: View {
         messagesRealtimeClient: MessagesRealtimeClientProtocol
     ) {
         self.session = session
+        self.requestCacheStore = requestCacheStore
         self.homeClient = homeClient
         self.timetableClient = timetableClient
         self.boardsClient = boardsClient
@@ -58,6 +61,9 @@ struct AppRoot: View {
             }
             if newState != .authenticated {
                 boardsSyncStore.reset()
+                Task {
+                    await requestCacheStore.clear()
+                }
             }
         }
     }

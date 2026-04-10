@@ -15,12 +15,24 @@ final class TimetableAPIClient: TimetableClientProtocol, @unchecked Sendable {
     }
 
     func fetchMemberContext() async throws -> TimetableMemberContext {
-        let payload: MemberContextResponse = try await requestPayload(path: "/api/v1/members/me")
+        let payload: MemberContextResponse = try await requestPayload(
+            path: "/api/v1/members/me",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.sharedMemberMe,
+                maxAge: APICacheTTL.memberProfile
+            )
+        )
         return payload.toDomain()
     }
 
     func fetchSemesters() async throws -> [TimetableSemester] {
-        let payload: [SemesterResponse] = try await requestPayload(path: "/api/v1/semesters")
+        let payload: [SemesterResponse] = try await requestPayload(
+            path: "/api/v1/semesters",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.sharedSemesters,
+                maxAge: APICacheTTL.semesters
+            )
+        )
         return payload.map(\.toDomain)
     }
 
@@ -30,7 +42,13 @@ final class TimetableAPIClient: TimetableClientProtocol, @unchecked Sendable {
     }
 
     func fetchMyTimetable(semesterId: Int64) async throws -> TimetableDetail {
-        let payload: TimetableResponse = try await requestPayload(path: "/api/v1/timetables/me?semesterId=\(semesterId)")
+        let payload: TimetableResponse = try await requestPayload(
+            path: "/api/v1/timetables/me?semesterId=\(semesterId)",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.sharedTimetable(semesterId: semesterId),
+                maxAge: APICacheTTL.timetable
+            )
+        )
         return payload.toDomain()
     }
 
@@ -38,6 +56,7 @@ final class TimetableAPIClient: TimetableClientProtocol, @unchecked Sendable {
         let request = AddLectureRequest(semesterId: semesterId, lectureId: lectureId)
         let body = try encoder.encode(request)
         try await sendEmpty(path: "/api/v1/timetables/me/lectures", method: .post, body: body)
+        await authorizedExecutor.invalidateCache(key: APICacheKey.sharedTimetable(semesterId: semesterId))
     }
 
     func removeLecture(semesterId: Int64, lectureId: Int64) async throws {
@@ -45,13 +64,23 @@ final class TimetableAPIClient: TimetableClientProtocol, @unchecked Sendable {
             path: "/api/v1/timetables/me/lectures/\(lectureId)?semesterId=\(semesterId)",
             method: .delete
         )
+        await authorizedExecutor.invalidateCache(key: APICacheKey.sharedTimetable(semesterId: semesterId))
     }
 
-    private func requestPayload<Response: Decodable>(path: String) async throws -> Response {
+    func invalidateCache() async {
+        await authorizedExecutor.invalidateCache(key: APICacheKey.sharedMemberMe)
+        await authorizedExecutor.invalidateCache(key: APICacheKey.sharedSemesters)
+        await authorizedExecutor.invalidateCache(prefix: APICacheKey.sharedTimetablePrefix)
+    }
+
+    private func requestPayload<Response: Decodable>(
+        path: String,
+        cachePolicy: RequestCachePolicy? = nil
+    ) async throws -> Response {
         do {
-            let (data, _) = try await authorizedExecutor.send(
+            let data = try await authorizedExecutor.get(
                 path: path,
-                method: .get,
+                cachePolicy: cachePolicy
             )
             let envelope = try apiClient.decode(APIResponseEnvelope<Response>.self, from: data)
             guard envelope.success, let payload = envelope.data else {

@@ -191,6 +191,11 @@ protocol BoardsClientProtocol: Sendable {
     func createComment(postId: Int64, input: CreateCommentInput) async throws -> Int64
     func deleteComment(commentId: Int64) async throws
     func deletePost(postId: Int64) async throws
+    func invalidateCache() async
+}
+
+extension BoardsClientProtocol {
+    func invalidateCache() async {}
 }
 
 enum BoardSectionKind: String, CaseIterable, Equatable, Hashable, Sendable {

@@ -88,15 +88,18 @@ actor AuthorizedRequestExecutor {
     private let apiClient: APIClient
     private let tokenStore: TokenStore
     private let encoder: JSONEncoder
+    private let cacheStore: RequestCacheStore?
     private var inFlightRefresh: Task<TokenPair, Error>?
 
     init(
         apiClient: APIClient,
         tokenStore: TokenStore,
+        cacheStore: RequestCacheStore? = nil,
         encoder: JSONEncoder = JSONEncoder()
     ) {
         self.apiClient = apiClient
         self.tokenStore = tokenStore
+        self.cacheStore = cacheStore
         self.encoder = encoder
     }
 
@@ -127,6 +130,36 @@ actor AuthorizedRequestExecutor {
                 accessToken: refreshedSession.accessToken
             )
         }
+    }
+
+    func get(
+        path: String,
+        cachePolicy: RequestCachePolicy? = nil,
+        forceRefresh: Bool = false
+    ) async throws -> Data {
+        if let cachePolicy,
+           forceRefresh == false,
+           let cachedData = await cacheStore?.cachedData(for: cachePolicy) {
+            return cachedData
+        }
+
+        let (data, _) = try await send(path: path, method: .get)
+        if let cachePolicy {
+            await cacheStore?.store(data, for: cachePolicy.key)
+        }
+        return data
+    }
+
+    func invalidateCache(key: String) async {
+        await cacheStore?.invalidate(key: key)
+    }
+
+    func invalidateCache(prefix: String) async {
+        await cacheStore?.invalidate(prefix: prefix)
+    }
+
+    func clearCache() async {
+        await cacheStore?.clear()
     }
 
     private func readSession() throws -> TokenPair {
@@ -184,10 +217,12 @@ actor AuthorizedRequestExecutor {
         } catch let error as APIClientError {
             if shouldReissue(after: error) {
                 try? tokenStore.clearSession()
+                await cacheStore?.clear()
             }
             throw error
         } catch {
             try? tokenStore.clearSession()
+            await cacheStore?.clear()
             throw invalidSessionError()
         }
     }

@@ -15,22 +15,46 @@ final class BoardsAPIClient: BoardsClientProtocol, @unchecked Sendable {
     }
 
     func fetchBoards() async throws -> [BoardSummary] {
-        let payload: [BoardResponse] = try await requestPayload(path: "/api/v1/boards/me")
+        let payload: [BoardResponse] = try await requestPayload(
+            path: "/api/v1/boards/me",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.boardsList,
+                maxAge: APICacheTTL.boardsList
+            )
+        )
         return payload.map(\.toDomain)
     }
 
     func fetchHotPosts() async throws -> [HotPostSummary] {
-        let payload: [HotPostResponse] = try await requestPayload(path: "/api/v1/posts/hot")
+        let payload: [HotPostResponse] = try await requestPayload(
+            path: "/api/v1/posts/hot",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.sharedHotPosts,
+                maxAge: APICacheTTL.hotPosts
+            )
+        )
         return payload.map(\.toDomain)
     }
 
     func fetchBoardPosts(boardId: Int64) async throws -> [BoardPostSummary] {
-        let payload: [BoardPostResponse] = try await requestPayload(path: "/api/v1/boards/\(boardId)/posts")
+        let payload: [BoardPostResponse] = try await requestPayload(
+            path: "/api/v1/boards/\(boardId)/posts",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.boardsFeed(boardId),
+                maxAge: APICacheTTL.boardsFeed
+            )
+        )
         return payload.map(\.toDomain)
     }
 
     func fetchPostDetail(postId: Int64) async throws -> PostDetailContent {
-        let payload: PostDetailResponse = try await requestPayload(path: "/api/v1/posts/\(postId)")
+        let payload: PostDetailResponse = try await requestPayload(
+            path: "/api/v1/posts/\(postId)",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.boardsPostDetail(postId),
+                maxAge: APICacheTTL.boardsPostDetail
+            )
+        )
         return payload.toDomain()
     }
 
@@ -47,15 +71,18 @@ final class BoardsAPIClient: BoardsClientProtocol, @unchecked Sendable {
             method: .post,
             body: body
         )
+        await invalidateCache()
         return payload.postId
     }
 
     func likePost(postId: Int64) async throws {
         try await sendEmpty(path: "/api/v1/posts/\(postId)/likes", method: .post)
+        await invalidateCache()
     }
 
     func unlikePost(postId: Int64) async throws {
         try await sendEmpty(path: "/api/v1/posts/\(postId)/likes", method: .delete)
+        await invalidateCache()
     }
 
     func createComment(postId: Int64, input: CreateCommentInput) async throws -> Int64 {
@@ -70,28 +97,46 @@ final class BoardsAPIClient: BoardsClientProtocol, @unchecked Sendable {
             method: .post,
             body: body
         )
+        await invalidateCache()
         return payload.commentId
     }
 
     func deleteComment(commentId: Int64) async throws {
         try await sendEmpty(path: "/api/v1/comments/\(commentId)", method: .delete)
+        await invalidateCache()
     }
 
     func deletePost(postId: Int64) async throws {
         try await sendEmpty(path: "/api/v1/posts/\(postId)", method: .delete)
+        await invalidateCache()
+    }
+
+    func invalidateCache() async {
+        await authorizedExecutor.invalidateCache(prefix: APICacheKey.boardsPrefix)
+        await authorizedExecutor.invalidateCache(key: APICacheKey.sharedHotPosts)
     }
 
     private func requestPayload<Response: Decodable>(
         path: String,
         method: HTTPMethod = .get,
-        body: Data? = nil
+        body: Data? = nil,
+        cachePolicy: RequestCachePolicy? = nil
     ) async throws -> Response {
         do {
-            let (data, _) = try await authorizedExecutor.send(
-                path: path,
-                method: method,
-                body: body,
-            )
+            let data: Data
+            if method == .get {
+                data = try await authorizedExecutor.get(
+                    path: path,
+                    cachePolicy: cachePolicy
+                )
+            } else {
+                let response = try await authorizedExecutor.send(
+                    path: path,
+                    method: method,
+                    body: body
+                )
+                data = response.0
+            }
             let envelope = try apiClient.decode(APIResponseEnvelope<Response>.self, from: data)
             guard envelope.success, let payload = envelope.data else {
                 throw BoardsClientError.unexpected

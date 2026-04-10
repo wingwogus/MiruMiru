@@ -247,4 +247,9 @@ protocol TimetableClientProtocol: Sendable {
     func fetchMyTimetable(semesterId: Int64) async throws -> TimetableDetail
     func addLecture(semesterId: Int64, lectureId: Int64) async throws
     func removeLecture(semesterId: Int64, lectureId: Int64) async throws
+    func invalidateCache() async
+}
+
+extension TimetableClientProtocol {
+    func invalidateCache() async {}
 }

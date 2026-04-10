@@ -134,6 +134,7 @@ final class BoardsViewModel: ObservableObject {
     }
 
     func reload() async {
+        await client.invalidateCache()
         await load()
     }
 
@@ -350,6 +351,7 @@ final class BoardFeedViewModel: ObservableObject {
     }
 
     func reload() async {
+        await client.invalidateCache()
         await load()
     }
 
@@ -517,6 +519,7 @@ final class PostDetailViewModel: ObservableObject {
     }
 
     func reload() async {
+        await client.invalidateCache()
         await load()
     }
 

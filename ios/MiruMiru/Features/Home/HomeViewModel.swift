@@ -35,6 +35,7 @@ final class HomeViewModel: ObservableObject {
     }
 
     func reload() async {
+        await client.invalidateCache()
         await load()
     }
 

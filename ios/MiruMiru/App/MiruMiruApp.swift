@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct MiruMiruApp: App {
     @StateObject private var session: AppSession
+    private let requestCacheStore: RequestCacheStore
     private let homeClient: HomeClientProtocol
     private let timetableClient: TimetableClientProtocol
     private let boardsClient: BoardsClientProtocol
@@ -14,9 +15,11 @@ struct MiruMiruApp: App {
         let environment = AppEnvironment.live()
         let tokenStore = KeychainTokenStore()
         let apiClient = APIClient(environment: environment)
+        requestCacheStore = RequestCacheStore()
         let authorizedExecutor = AuthorizedRequestExecutor(
             apiClient: apiClient,
-            tokenStore: tokenStore
+            tokenStore: tokenStore,
+            cacheStore: requestCacheStore
         )
         let authClient = AuthAPIClient(apiClient: apiClient)
         homeClient = HomeAPIClient(
@@ -60,6 +63,7 @@ struct MiruMiruApp: App {
         WindowGroup {
             AppRoot(
                 session: session,
+                requestCacheStore: requestCacheStore,
                 homeClient: homeClient,
                 timetableClient: timetableClient,
                 boardsClient: boardsClient,

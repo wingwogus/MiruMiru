@@ -160,6 +160,11 @@ protocol CourseReviewsClientProtocol: Sendable {
     func createReview(targetId: Int64, request: CourseReviewUpsertRequest) async throws -> Int64
     func updateMyReview(targetId: Int64, request: CourseReviewUpsertRequest) async throws -> Int64
     func deleteMyReview(targetId: Int64) async throws
+    func invalidateCache() async
+}
+
+extension CourseReviewsClientProtocol {
+    func invalidateCache() async {}
 }
 
 struct CourseReviewTargetPage: Equatable, Sendable {
@@ -189,7 +194,11 @@ final class CourseReviewsAPIClient: CourseReviewsClientProtocol, @unchecked Send
 
     func fetchReviewFeed(page: Int, size: Int) async throws -> CourseReviewFeedPage {
         let payload: FeedPageResponse = try await requestPayload(
-            path: "/api/v1/course-reviews?page=\(page)&size=\(size)"
+            path: "/api/v1/course-reviews?page=\(page)&size=\(size)",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.reviewsFeed(page: page, size: size),
+                maxAge: APICacheTTL.reviewsFeed
+            )
         )
         return payload.toDomain()
     }
@@ -204,14 +213,22 @@ final class CourseReviewsAPIClient: CourseReviewsClientProtocol, @unchecked Send
 
     func fetchTargetReviews(targetId: Int64, page: Int, size: Int) async throws -> CourseReviewPage {
         let payload: ReviewPageResponse = try await requestPayload(
-            path: "/api/v1/course-review-targets/\(targetId)/reviews?page=\(page)&size=\(size)"
+            path: "/api/v1/course-review-targets/\(targetId)/reviews?page=\(page)&size=\(size)",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.reviewsTargetReviews(targetId: targetId, page: page, size: size),
+                maxAge: APICacheTTL.reviewsDetail
+            )
         )
         return payload.toDomain()
     }
 
     func fetchMyReview(targetId: Int64) async throws -> CourseReviewEntry {
         let payload: ReviewItemResponse = try await requestPayload(
-            path: "/api/v1/course-review-targets/\(targetId)/reviews/me"
+            path: "/api/v1/course-review-targets/\(targetId)/reviews/me",
+            cachePolicy: RequestCachePolicy(
+                key: APICacheKey.reviewsMyReview(targetId: targetId),
+                maxAge: APICacheTTL.myReview
+            )
         )
         return payload.toDomain
     }
@@ -223,6 +240,7 @@ final class CourseReviewsAPIClient: CourseReviewsClientProtocol, @unchecked Send
             method: .post,
             body: body
         )
+        await invalidateCache()
         return payload.reviewId
     }
 
@@ -233,6 +251,7 @@ final class CourseReviewsAPIClient: CourseReviewsClientProtocol, @unchecked Send
             method: .put,
             body: body
         )
+        await invalidateCache()
         return payload.reviewId
     }
 
@@ -241,13 +260,21 @@ final class CourseReviewsAPIClient: CourseReviewsClientProtocol, @unchecked Send
             path: "/api/v1/course-review-targets/\(targetId)/reviews/me",
             method: .delete
         )
+        await invalidateCache()
     }
 
-    private func requestPayload<Response: Decodable>(path: String) async throws -> Response {
+    func invalidateCache() async {
+        await authorizedExecutor.invalidateCache(prefix: APICacheKey.reviewsPrefix)
+    }
+
+    private func requestPayload<Response: Decodable>(
+        path: String,
+        cachePolicy: RequestCachePolicy? = nil
+    ) async throws -> Response {
         do {
-            let (data, _) = try await authorizedExecutor.send(
+            let data = try await authorizedExecutor.get(
                 path: path,
-                method: .get,
+                cachePolicy: cachePolicy
             )
             let envelope = try apiClient.decode(APIResponseEnvelope<Response>.self, from: data)
             guard envelope.success, let payload = envelope.data else {
@@ -555,6 +582,7 @@ final class CourseReviewsFeedViewModel: ObservableObject {
     }
 
     func reload() async {
+        await client.invalidateCache()
         await load()
     }
 
@@ -621,12 +649,29 @@ final class CourseReviewTargetSearchViewModel: ObservableObject {
     @Published private(set) var failure: CourseReviewsFailure?
 
     private let client: CourseReviewsClientProtocol
+    private var queryCache: [String: SearchCacheEntry] = [:]
+    private let searchCacheMaxAge: TimeInterval = 15
 
     init(client: CourseReviewsClientProtocol) {
         self.client = client
     }
 
     func search(query: String) async {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.isEmpty == false else {
+            results = []
+            failure = nil
+            return
+        }
+
+        let cacheKey = trimmed.lowercased()
+        if let cached = queryCache[cacheKey],
+           Date().timeIntervalSince(cached.storedAt) <= searchCacheMaxAge {
+            results = cached.results
+            failure = nil
+            return
+        }
+
         isLoading = true
         failure = nil
         defer { isLoading = false }
@@ -634,6 +679,7 @@ final class CourseReviewTargetSearchViewModel: ObservableObject {
         do {
             let page = try await client.fetchReviewTargets(query: query, page: 0, size: 20)
             results = page.items
+            queryCache[cacheKey] = SearchCacheEntry(results: page.items, storedAt: Date())
         } catch is CancellationError {
             return
         } catch let error as CourseReviewsClientError {
@@ -656,6 +702,11 @@ final class CourseReviewTargetSearchViewModel: ObservableObject {
         case .network: return .network
         case .unexpected: return .unexpected
         }
+    }
+
+    private struct SearchCacheEntry {
+        let results: [CourseReviewTargetRef]
+        let storedAt: Date
     }
 }
 
@@ -682,6 +733,7 @@ final class CourseReviewDetailViewModel: ObservableObject {
     }
 
     func reload() async {
+        await client.invalidateCache()
         await load()
     }
 

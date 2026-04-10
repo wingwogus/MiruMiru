@@ -1041,13 +1041,13 @@ private struct CourseReviewsFeedScreen: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 18)
-                .padding(.bottom, 116)
+                .padding(.bottom, AuthenticatedLayoutMetrics.rootContentBottomSpacing)
             }
             .background(background)
 
             writeButton
                 .padding(.trailing, 20)
-                .padding(.bottom, 92)
+                .padding(.bottom, AuthenticatedLayoutMetrics.floatingActionBottomSpacing)
         }
     }
 
@@ -1287,7 +1287,7 @@ private struct ReviewTargetSearchScreen: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 18)
-            .padding(.bottom, 40)
+            .padding(.bottom, AuthenticatedLayoutMetrics.pushedContentBottomSpacing)
         }
         .background(Color.white.ignoresSafeArea())
         .navigationTitle(purpose.navigationTitle)
@@ -1410,7 +1410,7 @@ private struct CourseReviewDetailScreen: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 18)
-            .padding(.bottom, 40)
+            .padding(.bottom, AuthenticatedLayoutMetrics.pushedContentBottomSpacing)
         }
         .background(Color.white.ignoresSafeArea())
         .navigationTitle(target.courseName)
@@ -1457,7 +1457,7 @@ private struct WriteReviewScreen: View {
             }
             .padding(.horizontal, 24)
             .padding(.top, 18)
-            .padding(.bottom, 120)
+            .padding(.bottom, AuthenticatedLayoutMetrics.accessoryContentBottomSpacing)
         }
         .background(Color.white.ignoresSafeArea())
         .navigationTitle(viewModel.isEditing ? "Edit Review" : "Write Review")
@@ -2707,6 +2707,13 @@ struct CourseReviewsRootView_Previews: PreviewProvider {
                 )
             }
             .previewDisplayName("Review Detail")
+
+            CourseReviewsRootView(
+                session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewCourseReviewsClient.loaded()
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Reviews Feed - Dark")
         }
     }
 }

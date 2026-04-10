@@ -276,7 +276,7 @@ private struct BoardsHomeView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 18)
-            .padding(.bottom, 28)
+            .padding(.bottom, AuthenticatedLayoutMetrics.rootContentBottomSpacing)
         }
         .background(BoardsBackgroundView())
         .navigationBarHidden(true)
@@ -452,7 +452,7 @@ private struct BoardFeedView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 20)
-            .padding(.bottom, 120)
+            .padding(.bottom, AuthenticatedLayoutMetrics.pushedContentBottomSpacing)
         }
         .background(BoardsBackgroundView())
         .navigationTitle(viewModel.board.name)
@@ -796,7 +796,7 @@ private struct PostDetailView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 20)
-            .padding(.bottom, 120)
+            .padding(.bottom, AuthenticatedLayoutMetrics.accessoryContentBottomSpacing)
         }
         .background(BoardsBackgroundView())
         .navigationBarTitleDisplayMode(.inline)
@@ -2038,6 +2038,14 @@ struct BoardsRootView_Previews: PreviewProvider {
                 onCreated: {}
             )
             .previewDisplayName("Write Post")
+
+            BoardsRootView(
+                session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewBoardsClient(scenario: .loaded),
+                syncStore: BoardsSyncStore()
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Boards Home - Loaded - Dark")
         }
     }
 }

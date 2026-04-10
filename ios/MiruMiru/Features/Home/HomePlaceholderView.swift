@@ -87,7 +87,7 @@ struct HomeView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 18)
-                .padding(.bottom, 32)
+                .padding(.bottom, AuthenticatedLayoutMetrics.rootContentBottomSpacing)
             }
             .background(background)
             .task(id: isActive) {
@@ -642,6 +642,15 @@ struct HomeView_Previews: PreviewProvider {
                 nowProvider: { PreviewHomeData.previewNow }
             )
             .previewDisplayName("Home Failure")
+
+            HomeView(
+                session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewHomeClient.loaded(),
+                boardsSyncStore: BoardsSyncStore(),
+                nowProvider: { PreviewHomeData.previewNow }
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Home Loaded - Dark")
         }
     }
 }

@@ -171,7 +171,7 @@ private struct AuthenticatedTabBar: View {
         .background(.ultraThinMaterial)
         .overlay(alignment: .top) {
             Rectangle()
-                .fill(Color(red: 0.90, green: 0.92, blue: 0.96))
+                .fill(AppTheme.divider)
                 .frame(height: 1)
         }
     }
@@ -180,7 +180,7 @@ private struct AuthenticatedTabBar: View {
         if item.tab == selectedTab {
             return AuthPalette.primaryStart
         }
-        return Color(red: 0.48, green: 0.56, blue: 0.67)
+        return AppTheme.textSecondary
     }
 }
 
@@ -200,6 +200,17 @@ private struct AuthenticatedTabBarItem: Identifiable {
 
 struct AuthenticatedAppShell_Previews: PreviewProvider {
     static var previews: some View {
+        Group {
+            previewShell
+            .previewDisplayName("Authenticated Shell - Light")
+
+            previewShell
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Authenticated Shell - Dark")
+        }
+    }
+
+    private static var previewShell: some View {
         AuthenticatedAppShell(
             session: PreviewFactory.makeSession(state: .authenticated),
                 homeClient: PreviewHomeClient.loaded(),

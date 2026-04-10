@@ -54,16 +54,7 @@ struct LoginView: View {
     }
 
     private var background: some View {
-        LinearGradient(
-            colors: [
-                .white,
-                Color(red: 0.98, green: 0.99, blue: 1.0),
-                Color(red: 0.97, green: 0.98, blue: 1.0)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
+        AppTheme.pageBackground.ignoresSafeArea()
     }
 
     private var topBar: some View {
@@ -93,13 +84,13 @@ struct LoginView: View {
         return VStack(spacing: 14) {
             Text("MiruMiru")
                 .font(AppFont.extraBold(56, relativeTo: .largeTitle))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
                 .minimumScaleFactor(0.7)
                 .lineLimit(1)
 
             Text("Your university life, simplified.")
                 .font(AppFont.medium(19, relativeTo: .title3))
-                .foregroundStyle(Color(red: 0.42, green: 0.50, blue: 0.62))
+                .foregroundStyle(AppTheme.textSecondary)
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.85)
         }
@@ -120,7 +111,7 @@ struct LoginView: View {
                     .autocorrectionDisabled()
                     .keyboardType(.emailAddress)
                     .font(AppFont.medium(18, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.39, green: 0.45, blue: 0.56))
+                    .foregroundStyle(AppTheme.textSecondary)
                     .accessibilityIdentifier("email_text_field")
             }
 
@@ -129,7 +120,7 @@ struct LoginView: View {
                     Text("PASSWORD")
                         .font(AppFont.semibold(16, relativeTo: .subheadline))
                         .tracking(2)
-                        .foregroundStyle(Color(red: 0.36, green: 0.45, blue: 0.59))
+                        .foregroundStyle(AppTheme.textSecondary)
                     Spacer()
                     Button("Forgot Password?") {
                         isShowingForgotPassword = true
@@ -152,7 +143,7 @@ struct LoginView: View {
                         }
                     }
                     .font(AppFont.medium(18, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.39, green: 0.45, blue: 0.56))
+                    .foregroundStyle(AppTheme.textSecondary)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .accessibilityIdentifier("password_text_field")
@@ -164,7 +155,7 @@ struct LoginView: View {
                     } label: {
                         Image(systemName: viewModel.isPasswordVisible ? "eye.slash.fill" : "eye.fill")
                             .font(.system(size: 22, weight: .semibold))
-                            .foregroundStyle(Color(red: 0.59, green: 0.65, blue: 0.74))
+                            .foregroundStyle(AppTheme.textTertiary)
                     }
                     .accessibilityIdentifier("password_visibility_button")
                 }
@@ -200,7 +191,7 @@ struct LoginView: View {
         HStack(spacing: 6) {
             Text("Don't have an account?")
                 .font(AppFont.medium(18, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.41, green: 0.50, blue: 0.62))
+                .foregroundStyle(AppTheme.textSecondary)
             Button("Sign Up") {
                 onSignupTap()
             }
@@ -220,7 +211,7 @@ struct LoginView: View {
 
             Text(text)
                 .font(AppFont.semibold(13, relativeTo: .footnote))
-                .foregroundStyle(Color(red: 0.22, green: 0.27, blue: 0.36))
+                .foregroundStyle(AppTheme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer()
@@ -235,20 +226,34 @@ struct LoginView: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(red: 0.94, green: 0.95, blue: 1.0))
+                .fill(AppTheme.surfaceSecondary)
         )
     }
 }
 
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
-        LoginView(
-            session: PreviewFactory.makeSession(
-                state: .unauthenticated,
-                bannerMessage: "Welcome back. Use your university account to continue."
-            ),
-            initialEmail: "kenta@tokyo.ac.jp",
-            onSignupTap: {}
-        )
+        Group {
+            LoginView(
+                session: PreviewFactory.makeSession(
+                    state: .unauthenticated,
+                    bannerMessage: "Welcome back. Use your university account to continue."
+                ),
+                initialEmail: "kenta@tokyo.ac.jp",
+                onSignupTap: {}
+            )
+            .previewDisplayName("Login - Light")
+
+            LoginView(
+                session: PreviewFactory.makeSession(
+                    state: .unauthenticated,
+                    bannerMessage: "Welcome back. Use your university account to continue."
+                ),
+                initialEmail: "kenta@tokyo.ac.jp",
+                onSignupTap: {}
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Login - Dark")
+        }
     }
 }

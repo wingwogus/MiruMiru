@@ -313,18 +313,18 @@ private struct BoardsHomeView: View {
         HStack(spacing: 12) {
             Text("Boards")
                 .font(AppFont.extraBold(30, relativeTo: .largeTitle))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             Spacer()
 
             Image(systemName: "bell.fill")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(Color(red: 0.56, green: 0.64, blue: 0.75))
+                .foregroundStyle(AppTheme.textTertiary)
                 .frame(width: 38, height: 38)
 
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(Color(red: 0.56, green: 0.64, blue: 0.75))
+                .foregroundStyle(AppTheme.textTertiary)
                 .frame(width: 38, height: 38)
         }
     }
@@ -735,12 +735,12 @@ private struct PostDetailView: View {
 
                     Text(detail.title)
                         .font(AppFont.extraBold(26, relativeTo: .title))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text(detail.content)
                         .font(AppFont.medium(19, relativeTo: .body))
-                        .foregroundStyle(Color(red: 0.18, green: 0.22, blue: 0.30))
+                        .foregroundStyle(AppTheme.textPrimary)
                         .lineSpacing(6)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -760,7 +760,7 @@ private struct PostDetailView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Comments")
                             .font(AppFont.bold(22, relativeTo: .title3))
-                            .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                            .foregroundStyle(AppTheme.textPrimary)
 
                         if detail.comments.isEmpty {
                             BoardsEmptyView(
@@ -808,7 +808,7 @@ private struct PostDetailView: View {
                 if case let .loaded(detail) = viewModel.state {
                     Text(detail.boardName)
                         .font(AppFont.bold(21, relativeTo: .headline))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
                 }
             }
 
@@ -819,7 +819,7 @@ private struct PostDetailView: View {
                     } label: {
                         Image(systemName: "ellipsis.vertical")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(Color(red: 0.35, green: 0.42, blue: 0.54))
+                            .foregroundStyle(AppTheme.textSecondary)
                     }
                 }
             }
@@ -908,22 +908,22 @@ private struct PostDetailView: View {
         } label: {
             HStack(alignment: .center, spacing: 12) {
                 Circle()
-                    .fill(Color(red: 0.95, green: 0.96, blue: 0.98))
+                    .fill(AppTheme.surfaceSecondary)
                     .frame(width: 48, height: 48)
                     .overlay {
                         Image(systemName: "person.fill")
                             .font(.system(size: 20, weight: .medium))
-                            .foregroundStyle(Color(red: 0.60, green: 0.64, blue: 0.72))
+                            .foregroundStyle(AppTheme.textTertiary)
                     }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(detail.authorDisplayName)
                         .font(AppFont.bold(18, relativeTo: .headline))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
 
                     Text(detail.relativeCreatedAt)
                         .font(AppFont.medium(14, relativeTo: .subheadline))
-                        .foregroundStyle(Color(red: 0.52, green: 0.58, blue: 0.68))
+                        .foregroundStyle(AppTheme.textSecondary)
                 }
 
                 Spacer()
@@ -965,7 +965,7 @@ private struct PostDetailView: View {
                 } label: {
                     Label("\(detail.likeCount)", systemImage: detail.isLikedByMe ? "heart.fill" : "heart")
                         .font(AppFont.semibold(17, relativeTo: .body))
-                        .foregroundStyle(detail.isLikedByMe ? Color.red : Color(red: 0.35, green: 0.42, blue: 0.54))
+                        .foregroundStyle(detail.isLikedByMe ? Color.red : AppTheme.textSecondary)
                 }
                 .buttonStyle(.plain)
 
@@ -991,7 +991,7 @@ private struct PostDetailView: View {
                         replyTarget = nil
                     }
                     .font(AppFont.medium(13, relativeTo: .caption))
-                    .foregroundStyle(Color(red: 0.50, green: 0.57, blue: 0.67))
+                    .foregroundStyle(AppTheme.textSecondary)
                 }
                 .padding(.horizontal, 18)
             }
@@ -1002,12 +1002,12 @@ private struct PostDetailView: View {
                 } label: {
                     Text(isAnonymous ? "ANON" : "NAME")
                         .font(AppFont.bold(13, relativeTo: .caption))
-                        .foregroundStyle(isAnonymous ? AuthPalette.primaryStart : Color(red: 0.47, green: 0.55, blue: 0.66))
+                        .foregroundStyle(isAnonymous ? AuthPalette.primaryStart : AppTheme.textSecondary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
                         .background(
                             Capsule(style: .continuous)
-                                .fill(isAnonymous ? AuthPalette.primaryStart.opacity(0.12) : Color(red: 0.94, green: 0.95, blue: 0.98))
+                                .fill(isAnonymous ? AuthPalette.primaryStart.opacity(0.12) : AppTheme.surfaceSecondary)
                         )
                 }
                 .buttonStyle(.plain)
@@ -1035,7 +1035,7 @@ private struct PostDetailView: View {
                         .frame(width: 42, height: 42)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color(red: 0.82, green: 0.85, blue: 0.91) : AuthPalette.primaryStart)
+                                .fill(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? AppTheme.inactiveControl : AuthPalette.primaryStart)
                         )
                 }
                 .buttonStyle(.plain)
@@ -1045,7 +1045,7 @@ private struct PostDetailView: View {
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(Color.white)
+                    .fill(AppTheme.surfacePrimary)
                     .shadow(color: Color.black.opacity(0.05), radius: 12, y: 2)
             )
             .padding(.horizontal, 14)
@@ -1157,13 +1157,13 @@ private struct WritePostView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         Text("SELECT BOARD")
                             .font(AppFont.bold(13, relativeTo: .caption))
-                            .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.65))
+                            .foregroundStyle(AppTheme.textSecondary)
                             .tracking(1.6)
 
                         HStack {
                             Text(board.name)
                                 .font(AppFont.medium(18, relativeTo: .body))
-                                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                                .foregroundStyle(AppTheme.textPrimary)
 
                             Spacer()
 
@@ -1175,20 +1175,20 @@ private struct WritePostView: View {
                         .frame(height: 72)
                         .background(
                             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                .fill(Color(red: 0.96, green: 0.97, blue: 0.99))
+                                .fill(AppTheme.surfaceSecondary)
                         )
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
                         TextField("Title", text: $viewModel.title)
                             .font(AppFont.extraBold(26, relativeTo: .title))
-                            .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                            .foregroundStyle(AppTheme.textPrimary)
 
                         Divider()
 
                         TextField("Share your thoughts with the community...", text: $viewModel.content, axis: .vertical)
                             .font(AppFont.medium(20, relativeTo: .body))
-                            .foregroundStyle(Color(red: 0.19, green: 0.24, blue: 0.33))
+                            .foregroundStyle(AppTheme.textPrimary)
                             .lineLimit(10...20)
                             .frame(minHeight: 260, alignment: .topLeading)
                     }
@@ -1202,12 +1202,12 @@ private struct WritePostView: View {
                             Text("Coming soon")
                                 .font(AppFont.medium(12, relativeTo: .caption))
                         }
-                        .foregroundStyle(Color(red: 0.63, green: 0.69, blue: 0.78))
+                        .foregroundStyle(AppTheme.textTertiary)
                         .frame(width: 138, height: 138)
                         .background(
                             RoundedRectangle(cornerRadius: 24, style: .continuous)
                                 .stroke(style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
-                                .foregroundStyle(Color(red: 0.87, green: 0.90, blue: 0.96))
+                                .foregroundStyle(AppTheme.divider)
                         )
                     }
                     .buttonStyle(.plain)
@@ -1227,11 +1227,11 @@ private struct WritePostView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Post Anonymously")
                                     .font(AppFont.bold(18, relativeTo: .headline))
-                                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                                    .foregroundStyle(AppTheme.textPrimary)
 
                                 Text("Your identity will be hidden")
                                     .font(AppFont.medium(15, relativeTo: .subheadline))
-                                    .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                                    .foregroundStyle(AppTheme.textSecondary)
                             }
 
                             Spacer()
@@ -1245,13 +1245,13 @@ private struct WritePostView: View {
                         if board.isAnonymousAllowed == false {
                             Text("Anonymous posting isn't available in this board.")
                                 .font(AppFont.medium(13, relativeTo: .caption))
-                                .foregroundStyle(Color(red: 0.55, green: 0.60, blue: 0.69))
+                                .foregroundStyle(AppTheme.textTertiary)
                         }
                     }
                     .padding(18)
                     .background(
                         RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .fill(Color(red: 0.97, green: 0.98, blue: 1.0))
+                            .fill(AppTheme.surfaceSecondary)
                     )
                 }
                 .padding(.horizontal, 20)
@@ -1266,7 +1266,7 @@ private struct WritePostView: View {
                     Button(action: onClose) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 20, weight: .semibold))
-                            .foregroundStyle(Color(red: 0.31, green: 0.38, blue: 0.50))
+                            .foregroundStyle(AppTheme.textSecondary)
                     }
                 }
 
@@ -1318,13 +1318,13 @@ private struct BoardsSearchField: View {
 
             TextField("Search topics or posts...", text: $text)
                 .font(AppFont.medium(17, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.19, green: 0.24, blue: 0.33))
+                .foregroundStyle(AppTheme.textPrimary)
         }
         .padding(.horizontal, 18)
         .frame(height: 52)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(red: 0.96, green: 0.97, blue: 0.99))
+                .fill(AppTheme.surfaceSecondary)
         )
     }
 }
@@ -1339,7 +1339,7 @@ private struct TrendingPostsSection: View {
                 Label {
                     Text("Trending Posts")
                         .font(AppFont.extraBold(20, relativeTo: .title3))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
                 } icon: {
                     Image(systemName: "flame.fill")
                         .foregroundStyle(Color(red: 0.98, green: 0.32, blue: 0.26))
@@ -1390,7 +1390,7 @@ private struct TrendingPostCard: View {
 
             Text(post.title)
                 .font(AppFont.bold(18, relativeTo: .headline))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
                 .lineLimit(3)
                 .multilineTextAlignment(.leading)
 
@@ -1399,7 +1399,7 @@ private struct TrendingPostCard: View {
             HStack {
                 Text(post.relativeCreatedAt)
                     .font(AppFont.medium(14, relativeTo: .caption))
-                    .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                    .foregroundStyle(AppTheme.textSecondary)
 
                 Spacer()
 
@@ -1416,7 +1416,7 @@ private struct TrendingPostCard: View {
         .frame(width: 318, height: 182, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.05), radius: 14, y: 6)
         )
     }
@@ -1430,7 +1430,7 @@ private struct BoardsSectionCard: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(section.kind.title)
                 .font(AppFont.bold(13, relativeTo: .caption))
-                .foregroundStyle(Color(red: 0.53, green: 0.60, blue: 0.71))
+                .foregroundStyle(AppTheme.textTertiary)
                 .tracking(1.6)
 
             VStack(spacing: 0) {
@@ -1451,12 +1451,12 @@ private struct BoardsSectionCard: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(item.board.name)
                                     .font(AppFont.bold(18, relativeTo: .headline))
-                                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                                    .foregroundStyle(AppTheme.textPrimary)
                                     .multilineTextAlignment(.leading)
 
                                 Text(item.subtitle)
                                     .font(AppFont.medium(15, relativeTo: .subheadline))
-                                    .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                                    .foregroundStyle(AppTheme.textSecondary)
                                     .multilineTextAlignment(.leading)
                             }
 
@@ -1476,7 +1476,7 @@ private struct BoardsSectionCard: View {
 
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 14, weight: .bold))
-                                .foregroundStyle(Color(red: 0.76, green: 0.80, blue: 0.87))
+                                .foregroundStyle(AppTheme.textTertiary)
                         }
                         .padding(.horizontal, 18)
                         .padding(.vertical, 18)
@@ -1491,7 +1491,7 @@ private struct BoardsSectionCard: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.white)
+                    .fill(AppTheme.surfacePrimary)
                     .shadow(color: Color.black.opacity(0.04), radius: 12, y: 4)
             )
         }
@@ -1551,7 +1551,7 @@ private struct BoardPostCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
                 Circle()
-                    .fill(Color(red: 0.95, green: 0.96, blue: 0.98))
+                    .fill(AppTheme.surfaceSecondary)
                     .frame(width: 40, height: 40)
                     .overlay {
                         Image(systemName: "person.fill")
@@ -1562,11 +1562,11 @@ private struct BoardPostCard: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(post.authorDisplayName)
                         .font(AppFont.bold(16, relativeTo: .headline))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
 
                     Text(post.relativeCreatedAt)
                         .font(AppFont.medium(13, relativeTo: .caption))
-                        .foregroundStyle(Color(red: 0.52, green: 0.58, blue: 0.68))
+                        .foregroundStyle(AppTheme.textSecondary)
                 }
 
                 Spacer()
@@ -1574,7 +1574,7 @@ private struct BoardPostCard: View {
 
             Text(post.title)
                 .font(AppFont.extraBold(22, relativeTo: .title3))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 16) {
@@ -1590,7 +1590,7 @@ private struct BoardPostCard: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.05), radius: 12, y: 5)
         )
     }
@@ -1612,7 +1612,7 @@ private struct RemotePostImageView: View {
                 ProgressView()
                     .tint(AuthPalette.primaryStart)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(red: 0.97, green: 0.97, blue: 0.98))
+                    .background(AppTheme.surfaceSecondary)
             @unknown default:
                 placeholder
             }
@@ -1625,16 +1625,16 @@ private struct RemotePostImageView: View {
     private var placeholder: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(red: 0.97, green: 0.97, blue: 0.98))
+                .fill(AppTheme.surfaceSecondary)
 
             VStack(spacing: 12) {
                 Image(systemName: "photo")
                     .font(.system(size: 28, weight: .semibold))
-                    .foregroundStyle(Color(red: 0.72, green: 0.76, blue: 0.84))
+                    .foregroundStyle(AppTheme.textTertiary)
 
                 Text("Image unavailable")
                     .font(AppFont.medium(15, relativeTo: .subheadline))
-                    .foregroundStyle(Color(red: 0.57, green: 0.62, blue: 0.71))
+                    .foregroundStyle(AppTheme.textTertiary)
             }
         }
     }
@@ -1693,7 +1693,7 @@ private struct CommentBubbleView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 10) {
                 Circle()
-                    .fill(Color(red: 0.95, green: 0.96, blue: 0.98))
+                    .fill(AppTheme.surfaceSecondary)
                     .frame(width: 34, height: 34)
                     .overlay {
                         Text(comment.isDeleted ? "?" : String(comment.authorDisplayName.prefix(1)))
@@ -1704,11 +1704,11 @@ private struct CommentBubbleView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(comment.authorDisplayName)
                         .font(AppFont.bold(15, relativeTo: .subheadline))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
 
                     Text(comment.relativeCreatedAt)
                         .font(AppFont.medium(12, relativeTo: .caption))
-                        .foregroundStyle(Color(red: 0.57, green: 0.62, blue: 0.71))
+                        .foregroundStyle(AppTheme.textTertiary)
                 }
 
                 Spacer()
@@ -1743,11 +1743,11 @@ private struct CommentBubbleView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(comment.children.isEmpty ? Color.white : Color(red: 0.97, green: 0.98, blue: 1.0))
+                .fill(comment.children.isEmpty ? AppTheme.surfacePrimary : AppTheme.surfaceSecondary)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color(red: 0.93, green: 0.95, blue: 0.98), lineWidth: 1)
+                .stroke(AppTheme.divider, lineWidth: 1)
         )
     }
 }
@@ -1781,52 +1781,52 @@ private struct StartChatSheet: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Start Conversation")
                         .font(AppFont.extraBold(28, relativeTo: .title2))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
 
                     Text("This conversation will be linked to the post below.")
                         .font(AppFont.medium(16, relativeTo: .body))
-                        .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                        .foregroundStyle(AppTheme.textSecondary)
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("TO")
                         .font(AppFont.bold(13, relativeTo: .caption))
-                        .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.65))
+                        .foregroundStyle(AppTheme.textSecondary)
                         .tracking(1.6)
 
                     Text(targetDisplayName)
                         .font(AppFont.bold(18, relativeTo: .headline))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
 
                     if targetIsAnonymous {
                         Text("This person appears anonymous in the post thread.")
                             .font(AppFont.medium(14, relativeTo: .caption))
-                            .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                            .foregroundStyle(AppTheme.textSecondary)
                     }
                 }
                 .padding(18)
                 .background(
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(Color.white)
+                        .fill(AppTheme.surfacePrimary)
                         .shadow(color: Color.black.opacity(0.05), radius: 12, y: 3)
                 )
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("POST")
                         .font(AppFont.bold(13, relativeTo: .caption))
-                        .foregroundStyle(Color(red: 0.45, green: 0.53, blue: 0.65))
+                        .foregroundStyle(AppTheme.textSecondary)
                         .tracking(1.6)
 
                     Text(postTitle)
                         .font(AppFont.bold(18, relativeTo: .headline))
-                        .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                        .foregroundStyle(AppTheme.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(18)
                 .background(
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(Color.white)
+                        .fill(AppTheme.surfacePrimary)
                         .shadow(color: Color.black.opacity(0.05), radius: 12, y: 3)
                 )
 
@@ -1834,11 +1834,11 @@ private struct StartChatSheet: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Send as Anonymous")
                             .font(AppFont.bold(17, relativeTo: .headline))
-                            .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                            .foregroundStyle(AppTheme.textPrimary)
 
                         Text("Your identity will stay hidden in this conversation.")
                             .font(AppFont.medium(14, relativeTo: .caption))
-                            .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                            .foregroundStyle(AppTheme.textSecondary)
                     }
                 }
                 .tint(AuthPalette.primaryStart)
@@ -1862,7 +1862,7 @@ private struct StartChatSheet: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Close", action: onClose)
                         .font(AppFont.medium(16, relativeTo: .body))
-                        .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                        .foregroundStyle(AppTheme.textSecondary)
                 }
             }
         }
@@ -1889,7 +1889,7 @@ private struct BoardsMessageBanner: View {
             Button(action: onDismiss) {
                 Image(systemName: "xmark")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(Color(red: 0.57, green: 0.62, blue: 0.71))
+                    .foregroundStyle(AppTheme.textTertiary)
                     .frame(width: 28, height: 28)
             }
             .buttonStyle(.plain)
@@ -1911,12 +1911,12 @@ private struct BoardsLoadingView: View {
                 .tint(AuthPalette.primaryStart)
 
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .frame(height: 180)
                 .shadow(color: Color.black.opacity(0.04), radius: 12, y: 4)
 
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .frame(height: 220)
                 .shadow(color: Color.black.opacity(0.04), radius: 12, y: 4)
         }
@@ -1933,11 +1933,11 @@ private struct BoardsFailureCard: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(title)
                 .font(AppFont.bold(22, relativeTo: .title3))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             Text(message)
                 .font(AppFont.medium(16, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.44, green: 0.52, blue: 0.64))
+                .foregroundStyle(AppTheme.textSecondary)
 
             PrimaryActionButton(
                 title: buttonTitle,
@@ -1951,7 +1951,7 @@ private struct BoardsFailureCard: View {
         .padding(22)
         .background(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.05), radius: 14, y: 5)
         )
     }
@@ -1965,18 +1965,18 @@ private struct BoardsEmptyView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(AppFont.bold(20, relativeTo: .title3))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             Text(message)
                 .font(AppFont.medium(16, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                .foregroundStyle(AppTheme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(22)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.04), radius: 10, y: 4)
         )
     }
@@ -1984,15 +1984,7 @@ private struct BoardsEmptyView: View {
 
 private struct BoardsBackgroundView: View {
     var body: some View {
-        LinearGradient(
-            colors: [
-                Color.white,
-                Color(red: 0.97, green: 0.98, blue: 1.0)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
+        AppTheme.pageBackground.ignoresSafeArea()
     }
 }
 
@@ -2005,6 +1997,14 @@ struct BoardsRootView_Previews: PreviewProvider {
                 syncStore: BoardsSyncStore()
             )
             .previewDisplayName("Boards Home - Loaded")
+
+            BoardsRootView(
+                session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewBoardsClient(scenario: .loaded),
+                syncStore: BoardsSyncStore()
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Boards Home - Dark")
 
             BoardsRootView(
                 session: PreviewFactory.makeSession(state: .authenticated),
@@ -2030,6 +2030,15 @@ struct BoardsRootView_Previews: PreviewProvider {
             )
             .previewDisplayName("Post Detail - Loaded")
 
+            PostDetailView(
+                session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewBoardsClient(scenario: .loaded),
+                syncStore: BoardsSyncStore(),
+                postId: 2001
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Post Detail - Dark")
+
             WritePostView(
                 session: PreviewFactory.makeSession(state: .authenticated),
                 client: PreviewBoardsClient(scenario: .loaded),
@@ -2038,6 +2047,16 @@ struct BoardsRootView_Previews: PreviewProvider {
                 onCreated: {}
             )
             .previewDisplayName("Write Post")
+
+            WritePostView(
+                session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewBoardsClient(scenario: .loaded),
+                board: PreviewBoardsData.freeBoard,
+                onClose: {},
+                onCreated: {}
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Write Post - Dark")
         }
     }
 }

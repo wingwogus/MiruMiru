@@ -1585,7 +1585,7 @@ private struct MessagesInboxView: View {
                                 .buttonStyle(.plain)
                             }
                         }
-                        .background(Color.white)
+                        .background(AppTheme.surfacePrimary)
                         .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
                     }
                 }
@@ -1600,13 +1600,13 @@ private struct MessagesInboxView: View {
         HStack {
             Text("Messages")
                 .font(AppFont.extraBold(30, relativeTo: .largeTitle))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             Spacer()
 
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 24, weight: .medium))
-                .foregroundStyle(Color(red: 0.35, green: 0.42, blue: 0.54))
+                .foregroundStyle(AppTheme.textSecondary)
         }
     }
 }
@@ -1618,17 +1618,17 @@ private struct MessagesSearchField: View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(Color(red: 0.58, green: 0.65, blue: 0.74))
+                .foregroundStyle(AppTheme.textTertiary)
 
             TextField("Search conversations...", text: $text)
                 .font(AppFont.medium(18, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.16, green: 0.21, blue: 0.30))
+                .foregroundStyle(AppTheme.textPrimary)
         }
         .padding(.horizontal, 18)
         .frame(height: 56)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(red: 0.96, green: 0.97, blue: 0.99))
+                .fill(AppTheme.surfaceSecondary)
         )
     }
 }
@@ -1643,23 +1643,23 @@ private struct MessageRoomRow: View {
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
             Circle()
-                .fill(Color(red: 0.92, green: 0.94, blue: 0.97))
+                .fill(AppTheme.surfaceSecondary)
                 .frame(width: 62, height: 62)
                 .overlay {
                     Image(systemName: usesAnonymousCounterpartLabel ? "questionmark" : "person.fill")
                         .font(.system(size: 21, weight: .medium))
-                        .foregroundStyle(Color(red: 0.62, green: 0.67, blue: 0.76))
+                        .foregroundStyle(AppTheme.textTertiary)
                 }
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(room.displayTitle)
                     .font(AppFont.bold(18, relativeTo: .headline))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
                     .lineLimit(1)
 
                 Text(room.previewText)
                     .font(AppFont.medium(15, relativeTo: .body))
-                    .foregroundStyle(Color(red: 0.39, green: 0.45, blue: 0.56))
+                    .foregroundStyle(AppTheme.textSecondary)
                     .lineLimit(1)
             }
 
@@ -1668,7 +1668,7 @@ private struct MessageRoomRow: View {
             VStack(alignment: .trailing, spacing: 12) {
                 Text(room.timestampText)
                     .font(AppFont.medium(13, relativeTo: .caption))
-                    .foregroundStyle(Color(red: 0.62, green: 0.67, blue: 0.76))
+                    .foregroundStyle(AppTheme.textTertiary)
 
                 if let unreadBadgeText = room.unreadBadgeText {
                     Text(unreadBadgeText)
@@ -1690,7 +1690,7 @@ private struct MessageRoomRow: View {
         .padding(.vertical, 15)
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color(red: 0.93, green: 0.95, blue: 0.98))
+                .fill(AppTheme.divider)
                 .frame(height: 1)
                 .padding(.leading, 84)
         }
@@ -1738,7 +1738,7 @@ private struct ChatRoomView: View {
                                 .padding(.vertical, 10)
                                 .background(
                                     Capsule(style: .continuous)
-                                        .fill(Color.white)
+                                        .fill(AppTheme.surfacePrimary)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -1750,12 +1750,12 @@ private struct ChatRoomView: View {
                         case let .day(label):
                             Text(label)
                                 .font(AppFont.semibold(15, relativeTo: .caption))
-                                .foregroundStyle(Color(red: 0.58, green: 0.64, blue: 0.73))
+                                .foregroundStyle(AppTheme.textTertiary)
                                 .padding(.horizontal, 18)
                                 .padding(.vertical, 8)
                                 .background(
                                     Capsule(style: .continuous)
-                                        .fill(Color.white)
+                                        .fill(AppTheme.surfacePrimary)
                                         .shadow(color: Color.black.opacity(0.06), radius: 12, y: 2)
                                 )
                         case let .message(message, showTimestamp):
@@ -1779,11 +1779,11 @@ private struct ChatRoomView: View {
                     VStack(spacing: 2) {
                         Text(viewModel.roomContext.displayTitle)
                             .font(AppFont.bold(19, relativeTo: .headline))
-                            .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                            .foregroundStyle(AppTheme.textPrimary)
 
                         Text(viewModel.roomContext.subtitle)
                             .font(AppFont.medium(12, relativeTo: .caption))
-                            .foregroundStyle(Color(red: 0.58, green: 0.64, blue: 0.73))
+                            .foregroundStyle(AppTheme.textTertiary)
                     }
                 }
 
@@ -1806,7 +1806,7 @@ private struct ChatRoomView: View {
                     } label: {
                         Image(systemName: "ellipsis.circle")
                             .font(.system(size: 19, weight: .semibold))
-                            .foregroundStyle(Color(red: 0.35, green: 0.42, blue: 0.54))
+                            .foregroundStyle(AppTheme.textSecondary)
                     }
                 }
             }
@@ -1925,7 +1925,7 @@ private struct ChatRoomView: View {
             HStack(spacing: 14) {
                 Image(systemName: "plus")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(Color(red: 0.60, green: 0.66, blue: 0.75))
+                    .foregroundStyle(AppTheme.textTertiary)
 
                 TextField("Write a message...", text: $viewModel.composerText, axis: .vertical)
                     .font(AppFont.medium(17, relativeTo: .body))
@@ -1943,7 +1943,7 @@ private struct ChatRoomView: View {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(
                                     viewModel.composerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                    ? Color(red: 0.82, green: 0.85, blue: 0.91)
+                                    ? AppTheme.inactiveControl
                                     : AuthPalette.primaryStart
                                 )
                         )
@@ -1959,7 +1959,7 @@ private struct ChatRoomView: View {
             .padding(.vertical, 13)
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(Color.white)
+                    .fill(AppTheme.surfacePrimary)
                     .shadow(color: Color.black.opacity(0.06), radius: 14, y: 2)
             )
             .padding(.horizontal, 14)
@@ -1982,7 +1982,7 @@ private struct ReportConversationSheet: View {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Report \(counterpartName)")
                     .font(AppFont.extraBold(26, relativeTo: .title2))
-                    .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                    .foregroundStyle(AppTheme.textPrimary)
 
                 TextField("Reason", text: $reason)
                     .textInputAutocapitalization(.sentences)
@@ -1991,7 +1991,7 @@ private struct ReportConversationSheet: View {
                     .frame(height: 52)
                     .background(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color.white)
+                            .fill(AppTheme.surfacePrimary)
                     )
 
                 TextEditor(text: $detail)
@@ -2000,7 +2000,7 @@ private struct ReportConversationSheet: View {
                     .padding(12)
                     .background(
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(Color.white)
+                            .fill(AppTheme.surfacePrimary)
                     )
 
                 Spacer()
@@ -2026,7 +2026,7 @@ private struct ReportConversationSheet: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Close", action: onClose)
                         .font(AppFont.medium(16, relativeTo: .body))
-                        .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                        .foregroundStyle(AppTheme.textSecondary)
                 }
             }
         }
@@ -2059,13 +2059,13 @@ private struct MessageBubbleRow: View {
 
                 Text(message.content)
                     .font(AppFont.medium(17, relativeTo: .body))
-                    .foregroundStyle(isMine ? Color.white : Color(red: 0.13, green: 0.16, blue: 0.24))
+                    .foregroundStyle(isMine ? Color.white : AppTheme.textPrimary)
                     .lineSpacing(3)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .fill(isMine ? AuthPalette.primaryStart : Color.white)
+                            .fill(isMine ? AuthPalette.primaryStart : AppTheme.surfacePrimary)
                             .shadow(color: Color.black.opacity(0.05), radius: 14, y: 2)
                     )
                     .opacity(message.isPending ? 0.75 : 1)
@@ -2076,7 +2076,7 @@ private struct MessageBubbleRow: View {
             if showTimestamp {
                 Text(message.timeText)
                     .font(AppFont.medium(12, relativeTo: .caption))
-                    .foregroundStyle(Color(red: 0.62, green: 0.67, blue: 0.76))
+                    .foregroundStyle(AppTheme.textTertiary)
                     .padding(.horizontal, 6)
             }
         }
@@ -2304,6 +2304,15 @@ struct MessagesRootView_Previews: PreviewProvider {
             )
             .previewDisplayName("Messages Inbox")
 
+            MessagesRootView(
+                session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewMessagesClient.loaded(),
+                realtimeClient: PreviewMessagesRealtimeClient(),
+                isActive: true
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Messages Inbox - Dark")
+
             NavigationStack {
                 ChatRoomView(
                     session: PreviewFactory.makeSession(state: .authenticated),
@@ -2314,7 +2323,33 @@ struct MessagesRootView_Previews: PreviewProvider {
                 )
             }
             .previewDisplayName("Messages Room")
+
+            NavigationStack {
+                ChatRoomView(
+                    session: PreviewFactory.makeSession(state: .authenticated),
+                    context: PreviewMessagesData.rooms[0].asRoomContext,
+                    client: PreviewMessagesClient.loaded(),
+                    realtimeClient: PreviewMessagesRealtimeClient(),
+                    viewerId: 1
+                )
+            }
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Messages Room - Dark")
+
+            ReportConversationSheetPreview()
+                .preferredColorScheme(.dark)
+                .previewDisplayName("Report Conversation - Dark")
         }
+    }
+}
+
+private struct ReportConversationSheetPreview: View {
+    var body: some View {
+        ReportConversationSheet(
+            counterpartName: "Anonymous 1",
+            onClose: {},
+            onSubmit: { _, _ in }
+        )
     }
 }
 
@@ -2340,7 +2375,7 @@ private struct MessagesInlineBanner: View {
             Button(action: onDismiss) {
                 Image(systemName: "xmark")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(Color(red: 0.57, green: 0.62, blue: 0.71))
+                    .foregroundStyle(AppTheme.textTertiary)
                     .frame(width: 28, height: 28)
             }
             .buttonStyle(.plain)
@@ -2364,11 +2399,11 @@ private struct MessagesFailureCard: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(title)
                 .font(AppFont.bold(22, relativeTo: .title3))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             Text(message)
                 .font(AppFont.medium(16, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.44, green: 0.52, blue: 0.64))
+                .foregroundStyle(AppTheme.textSecondary)
 
             PrimaryActionButton(
                 title: buttonTitle,
@@ -2382,7 +2417,7 @@ private struct MessagesFailureCard: View {
         .padding(22)
         .background(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.05), radius: 14, y: 5)
         )
     }
@@ -2396,18 +2431,18 @@ private struct MessagesEmptyCard: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(AppFont.bold(20, relativeTo: .title3))
-                .foregroundStyle(Color(red: 0.06, green: 0.10, blue: 0.21))
+                .foregroundStyle(AppTheme.textPrimary)
 
             Text(message)
                 .font(AppFont.medium(16, relativeTo: .body))
-                .foregroundStyle(Color(red: 0.46, green: 0.54, blue: 0.66))
+                .foregroundStyle(AppTheme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(22)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white)
+                .fill(AppTheme.surfacePrimary)
                 .shadow(color: Color.black.opacity(0.04), radius: 10, y: 4)
         )
     }
@@ -2415,14 +2450,6 @@ private struct MessagesEmptyCard: View {
 
 private struct MessagesBackgroundView: View {
     var body: some View {
-        LinearGradient(
-            colors: [
-                Color.white,
-                Color(red: 0.97, green: 0.98, blue: 1.0)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
+        AppTheme.pageBackground.ignoresSafeArea()
     }
 }

@@ -40,7 +40,7 @@ struct TimetableView: View {
                 }
                 .padding(.horizontal, 10)
                 .padding(.top, 18)
-                .padding(.bottom, 116)
+                .padding(.bottom, AuthenticatedLayoutMetrics.rootContentBottomSpacing)
             }
             .background(background)
             .task(id: isActive) {
@@ -1266,6 +1266,13 @@ struct TimetableView_Previews: PreviewProvider {
                 client: PreviewTimetableClient(scenario: .empty)
             )
             .previewDisplayName("Timetable Empty")
+
+            TimetableView(
+                session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewTimetableClient.loaded()
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Timetable Loaded - Dark")
 
             TimetableCatalogSheetPreview()
                 .previewDisplayName("Add Course Sheet")

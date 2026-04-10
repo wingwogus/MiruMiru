@@ -1534,66 +1534,99 @@ private struct MessagesInboxView: View {
     let onRoomTap: (MessageRoomSummary) -> Void
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
-                header
-
-                MessagesSearchField(text: $query)
-
-                if let actionMessage = viewModel.actionMessage {
-                    MessagesInlineBanner(message: actionMessage) {
-                        viewModel.actionMessage = nil
-                    }
-                }
-
-                switch viewModel.state {
-                case .loading:
-                    ProgressView("Loading messages...")
-                        .font(AppFont.medium(15, relativeTo: .subheadline))
-                        .tint(AuthPalette.primaryStart)
-                        .frame(maxWidth: .infinity, minHeight: 180)
-                case .empty:
-                    MessagesEmptyCard(
-                        title: "No conversations yet",
-                        message: "Start a conversation from a post to see it here."
-                    )
-                    .padding(.top, 24)
-                case let .failed(failure):
-                    MessagesFailureCard(
-                        title: "We couldn't load Messages",
-                        message: failure.message,
-                        buttonTitle: "Try Again",
-                        action: {
-                            Task { await viewModel.reload() }
-                        }
-                    )
-                case .loaded:
-                    let rooms = viewModel.displayedRooms(query: query)
-                    if rooms.isEmpty {
-                        MessagesEmptyCard(
-                            title: "No matching conversations",
-                            message: "Try a different keyword."
-                        )
-                    } else {
-                        LazyVStack(spacing: 0) {
-                            ForEach(rooms) { room in
-                                Button {
-                                    onRoomTap(room)
-                                } label: {
-                                    MessageRoomRow(room: room)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-                    }
+        GeometryReader { geometry in
+            switch viewModel.state {
+            case .empty:
+                emptyInboxLayout(in: geometry.size)
+            default:
+                ScrollView(showsIndicators: false) {
+                    scrollContent
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 22)
-            .padding(.bottom, 120)
         }
+    }
+
+    @ViewBuilder
+    private var inboxChrome: some View {
+        header
+
+        MessagesSearchField(text: $query)
+
+        if let actionMessage = viewModel.actionMessage {
+            MessagesInlineBanner(message: actionMessage) {
+                viewModel.actionMessage = nil
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var scrollContent: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            inboxChrome
+
+            switch viewModel.state {
+            case .loading:
+                ProgressView("Loading messages...")
+                    .font(AppFont.medium(15, relativeTo: .subheadline))
+                    .tint(AuthPalette.primaryStart)
+                    .frame(maxWidth: .infinity, minHeight: 180)
+            case let .failed(failure):
+                MessagesFailureCard(
+                    title: "We couldn't load Messages",
+                    message: failure.message,
+                    buttonTitle: "Try Again",
+                    action: {
+                        Task { await viewModel.reload() }
+                    }
+                )
+            case .loaded:
+                let rooms = viewModel.displayedRooms(query: query)
+                if rooms.isEmpty {
+                    MessagesEmptyCard(
+                        title: "No matching conversations",
+                        message: "Try a different keyword."
+                    )
+                } else {
+                    LazyVStack(spacing: 0) {
+                        ForEach(rooms) { room in
+                            Button {
+                                onRoomTap(room)
+                            } label: {
+                                MessageRoomRow(room: room)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .background(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                }
+            case .empty:
+                EmptyView()
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 22)
+        .padding(.bottom, AuthenticatedLayoutMetrics.rootContentBottomSpacing)
+    }
+
+    private func emptyInboxLayout(in size: CGSize) -> some View {
+        VStack(alignment: .leading, spacing: 20) {
+            inboxChrome
+
+            Spacer(minLength: 20)
+
+            MessagesEmptyCard(
+                title: "No conversations yet",
+                message: "Start a conversation from a post to see it here."
+            )
+            .frame(maxWidth: .infinity)
+
+            Spacer(minLength: AuthenticatedLayoutMetrics.rootContentBottomSpacing)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 22)
+        .padding(.bottom, AuthenticatedLayoutMetrics.rootContentBottomSpacing)
+        .frame(width: size.width, height: size.height, alignment: .topLeading)
     }
 
     private var header: some View {
@@ -1770,7 +1803,7 @@ private struct ChatRoomView: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 18)
-                .padding(.bottom, 130)
+                .padding(.bottom, AuthenticatedLayoutMetrics.accessoryContentBottomSpacing)
             }
             .background(MessagesBackgroundView())
             .navigationBarTitleDisplayMode(.inline)
@@ -2304,6 +2337,14 @@ struct MessagesRootView_Previews: PreviewProvider {
             )
             .previewDisplayName("Messages Inbox")
 
+            MessagesRootView(
+                session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewMessagesClient(scenario: .empty),
+                realtimeClient: PreviewMessagesRealtimeClient(),
+                isActive: true
+            )
+            .previewDisplayName("Messages Inbox - Empty")
+
             NavigationStack {
                 ChatRoomView(
                     session: PreviewFactory.makeSession(state: .authenticated),
@@ -2314,6 +2355,15 @@ struct MessagesRootView_Previews: PreviewProvider {
                 )
             }
             .previewDisplayName("Messages Room")
+
+            MessagesRootView(
+                session: PreviewFactory.makeSession(state: .authenticated),
+                client: PreviewMessagesClient.loaded(),
+                realtimeClient: PreviewMessagesRealtimeClient(),
+                isActive: true
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Messages Inbox - Dark")
         }
     }
 }

@@ -66,6 +66,7 @@
 		B0000000000000000000007D /* BoardsSyncStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000007E /* BoardsSyncStoreTests.swift */; };
 		B0000000000000000000007F /* PostDetailViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000080 /* PostDetailViewModelTests.swift */; };
 		B00000000000000000000081 /* Messages/MessagesFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000082 /* Messages/MessagesFeature.swift */; };
+		B00000000000000000000083 /* UI/AuthenticatedLayoutMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000084 /* UI/AuthenticatedLayoutMetrics.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -151,6 +152,7 @@
 		B0000000000000000000007E /* BoardsSyncStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardsSyncStoreTests.swift; sourceTree = "<group>"; };
 		B00000000000000000000080 /* PostDetailViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailViewModelTests.swift; sourceTree = "<group>"; };
 		B00000000000000000000082 /* Messages/MessagesFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Messages/MessagesFeature.swift; sourceTree = "<group>"; };
+		B00000000000000000000084 /* UI/AuthenticatedLayoutMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/AuthenticatedLayoutMetrics.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -251,6 +253,7 @@
 				B00000000000000000000040 /* UI/AuthPalette.swift */,
 				B00000000000000000000041 /* UI/AuthRoute.swift */,
 				B00000000000000000000051 /* UI/PreviewSupport.swift */,
+				B00000000000000000000084 /* UI/AuthenticatedLayoutMetrics.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -482,6 +485,7 @@
 				B0000000000000000000001E /* UI/AuthPalette.swift in Sources */,
 				B0000000000000000000001F /* UI/AuthRoute.swift in Sources */,
 				B0000000000000000000004B /* UI/PreviewSupport.swift in Sources */,
+				B00000000000000000000083 /* UI/AuthenticatedLayoutMetrics.swift in Sources */,
 				B00000000000000000000054 /* AuthenticatedAppShell.swift in Sources */,
 				B00000000000000000000055 /* Timetable/TimetableModels.swift in Sources */,
 				B00000000000000000000056 /* Timetable/TimetableAPIClient.swift in Sources */,

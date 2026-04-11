@@ -4,6 +4,7 @@ import com.example.domain.board.Board
 import com.example.domain.chat.ChatMessageRepository
 import com.example.domain.chat.MessageRoom
 import com.example.domain.chat.MessageRoomRepository
+import com.example.domain.chat.MessageRoomSummaryRepository
 import com.example.domain.major.Major
 import com.example.domain.member.Member
 import com.example.domain.post.Post
@@ -21,6 +22,7 @@ import java.time.LocalDateTime
 class ChatRoomCleanupServiceTest {
     private lateinit var messageRoomRepository: MessageRoomRepository
     private lateinit var chatMessageRepository: ChatMessageRepository
+    private lateinit var messageRoomSummaryRepository: MessageRoomSummaryRepository
     private lateinit var chatRoomCleanupService: ChatRoomCleanupService
     private lateinit var fixedNow: LocalDateTime
 
@@ -28,10 +30,12 @@ class ChatRoomCleanupServiceTest {
     fun setUp() {
         messageRoomRepository = mock(MessageRoomRepository::class.java)
         chatMessageRepository = mock(ChatMessageRepository::class.java)
+        messageRoomSummaryRepository = mock(MessageRoomSummaryRepository::class.java)
         fixedNow = LocalDateTime.of(2026, 3, 29, 0, 0, 0)
         chatRoomCleanupService = ChatRoomCleanupService(
             messageRoomRepository = messageRoomRepository,
             chatMessageRepository = chatMessageRepository,
+            messageRoomSummaryRepository = messageRoomSummaryRepository,
             nowProvider = { fixedNow },
         )
     }
@@ -46,6 +50,7 @@ class ChatRoomCleanupServiceTest {
 
         assertEquals(2L, deleted)
         verify(chatMessageRepository).deleteByRoomIdIn(listOf(1L, 2L))
+        verify(messageRoomSummaryRepository).deleteByRoomIdIn(listOf(1L, 2L))
         verify(messageRoomRepository).deleteAllByIdInBatch(listOf(1L, 2L))
     }
 
@@ -58,6 +63,7 @@ class ChatRoomCleanupServiceTest {
 
         assertEquals(0L, deleted)
         verifyNoInteractions(chatMessageRepository)
+        verifyNoInteractions(messageRoomSummaryRepository)
         verify(messageRoomRepository, never()).deleteAllByIdInBatch(listOf(1L))
     }
 

@@ -18,6 +18,9 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import java.time.LocalDateTime
 import java.util.Optional
@@ -27,6 +30,7 @@ class ChatQueryServiceTest {
     private lateinit var chatRoomReadRepository: ChatRoomReadRepository
     private lateinit var chatMessageReadRepository: ChatMessageReadRepository
     private lateinit var postAnonymousService: PostAnonymousService
+    private lateinit var chatRoomSummaryService: ChatRoomSummaryService
     private lateinit var chatQueryService: ChatQueryService
 
     @BeforeEach
@@ -35,11 +39,13 @@ class ChatQueryServiceTest {
         chatRoomReadRepository = mock(ChatRoomReadRepository::class.java)
         chatMessageReadRepository = mock(ChatMessageReadRepository::class.java)
         postAnonymousService = mock(PostAnonymousService::class.java)
+        chatRoomSummaryService = mock(ChatRoomSummaryService::class.java)
         chatQueryService = ChatQueryService(
             messageRoomRepository = messageRoomRepository,
             chatRoomReadRepository = chatRoomReadRepository,
             chatMessageReadRepository = chatMessageReadRepository,
             postAnonymousService = postAnonymousService,
+            chatRoomSummaryService = chatRoomSummaryService,
         )
     }
 
@@ -61,6 +67,7 @@ class ChatQueryServiceTest {
                     otherLastReadMessageId = 55L,
                     isAnonMe = true,
                     isAnonOther = false,
+                    hasSummary = true,
                 )
             )
         )
@@ -80,6 +87,100 @@ class ChatQueryServiceTest {
         assertEquals("user-2", result.rooms.first().counterpartDisplayName)
         assertEquals(null, result.rooms.first().myLastReadMessageId)
         assertEquals(55L, result.rooms.first().otherLastReadMessageId)
+    }
+
+    @Test
+    fun `get my rooms reconciles missing summaries and retries read`() {
+        val room = room(member1Id = 1L, member2Id = 2L)
+        val firstRows = listOf(
+            ChatQueryResult.RoomSummaryRow(
+                roomId = room.id,
+                postId = room.post.id,
+                postTitle = room.post.title,
+                otherMemberId = room.member2.id,
+                otherMemberNickname = room.member2.nickname,
+                lastMessageId = null,
+                lastMessageContent = null,
+                lastMessageCreatedAt = null,
+                unreadCount = 0L,
+                myLastReadMessageId = 0L,
+                otherLastReadMessageId = 0L,
+                isAnonMe = false,
+                isAnonOther = false,
+                hasSummary = false,
+            )
+        )
+        val secondRows = listOf(
+            ChatQueryResult.RoomSummaryRow(
+                roomId = room.id,
+                postId = room.post.id,
+                postTitle = room.post.title,
+                otherMemberId = room.member2.id,
+                otherMemberNickname = room.member2.nickname,
+                lastMessageId = 200L,
+                lastMessageContent = "synced",
+                lastMessageCreatedAt = LocalDateTime.of(2026, 3, 29, 0, 0),
+                unreadCount = 2L,
+                myLastReadMessageId = 100L,
+                otherLastReadMessageId = 150L,
+                isAnonMe = false,
+                isAnonOther = false,
+                hasSummary = true,
+            )
+        )
+
+        `when`(chatRoomReadRepository.findMyRooms(1L, 30)).thenReturn(firstRows, secondRows)
+        `when`(messageRoomRepository.findAllById(listOf(room.id))).thenReturn(listOf(room))
+        `when`(postAnonymousService.getAnonNumbersByPostIds(listOf(room.post.id))).thenReturn(emptyMap())
+
+        val result = chatQueryService.getMyRooms(
+            ChatQuery.GetMyRooms(
+                requesterId = 1L,
+                limit = 30,
+            )
+        )
+
+        assertEquals(200L, result.rooms.first().lastMessageId)
+        assertEquals("synced", result.rooms.first().lastMessageContent)
+        verify(chatRoomSummaryService).reconcileFromReadPointers(room)
+        verify(chatRoomReadRepository, times(2)).findMyRooms(1L, 30)
+    }
+
+    @Test
+    fun `get my rooms does not reconcile when summary exists but room has no messages`() {
+        `when`(chatRoomReadRepository.findMyRooms(1L, 30)).thenReturn(
+            listOf(
+                ChatQueryResult.RoomSummaryRow(
+                    roomId = 10L,
+                    postId = 20L,
+                    postTitle = "seed post",
+                    otherMemberId = 2L,
+                    otherMemberNickname = "user-2",
+                    lastMessageId = null,
+                    lastMessageContent = null,
+                    lastMessageCreatedAt = null,
+                    unreadCount = 0L,
+                    myLastReadMessageId = 0L,
+                    otherLastReadMessageId = 0L,
+                    isAnonMe = false,
+                    isAnonOther = false,
+                    hasSummary = true,
+                )
+            )
+        )
+        `when`(postAnonymousService.getAnonNumbersByPostIds(listOf(20L))).thenReturn(emptyMap())
+
+        val result = chatQueryService.getMyRooms(
+            ChatQuery.GetMyRooms(
+                requesterId = 1L,
+                limit = 30,
+            )
+        )
+
+        assertEquals(1, result.rooms.size)
+        assertEquals(null, result.rooms.first().lastMessageId)
+        verifyNoInteractions(chatRoomSummaryService)
+        verify(chatRoomReadRepository, times(1)).findMyRooms(1L, 30)
     }
 
     @Test

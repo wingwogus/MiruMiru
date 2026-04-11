@@ -55,3 +55,18 @@ CREATE TABLE IF NOT EXISTS chat_report (
     INDEX idx_chat_report_reporter_created (reporter_id, created_at),
     INDEX idx_chat_report_target_created (target_id, created_at)
 );
+
+CREATE TABLE IF NOT EXISTS message_room_summary (
+    room_id BIGINT NOT NULL,
+    last_message_id BIGINT NULL,
+    last_message_content TEXT NULL,
+    last_message_created_at DATETIME(6) NULL,
+    member_1_unread_count BIGINT NOT NULL DEFAULT 0,
+    member_2_unread_count BIGINT NOT NULL DEFAULT 0,
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (room_id),
+    CONSTRAINT fk_room_summary_room FOREIGN KEY (room_id) REFERENCES message_room (id),
+    INDEX idx_room_summary_last_message_id (last_message_id),
+    INDEX idx_room_summary_last_message_created_at (last_message_created_at)
+);

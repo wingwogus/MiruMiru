@@ -17,6 +17,7 @@ class ChatQueryResult {
         val otherLastReadMessageId: Long?,
         val isAnonMe: Boolean,
         val isAnonOther: Boolean,
+        val hasSummary: Boolean,
     )
 
     data class RoomSummary(

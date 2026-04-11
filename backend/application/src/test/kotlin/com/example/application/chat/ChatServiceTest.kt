@@ -43,6 +43,7 @@ class ChatServiceTest {
     private lateinit var chatBlockRepository: ChatBlockRepository
     private lateinit var chatMessageRepository: ChatMessageRepository
     private lateinit var chatMessageReadRepository: ChatMessageReadRepository
+    private lateinit var chatRoomSummaryService: ChatRoomSummaryService
     private lateinit var chatEventPublisher: RecordingChatEventPublisher
     private lateinit var postAnonymousService: PostAnonymousService
     private lateinit var chatService: ChatService
@@ -57,6 +58,7 @@ class ChatServiceTest {
         chatBlockRepository = mock(ChatBlockRepository::class.java)
         chatMessageRepository = mock(ChatMessageRepository::class.java)
         chatMessageReadRepository = mock(ChatMessageReadRepository::class.java)
+        chatRoomSummaryService = mock(ChatRoomSummaryService::class.java)
         chatEventPublisher = RecordingChatEventPublisher()
         postAnonymousService = mock(PostAnonymousService::class.java)
         chatService = ChatService(
@@ -67,6 +69,7 @@ class ChatServiceTest {
             chatRoomRecoveryService = chatRoomRecoveryService,
             chatMessageRepository = chatMessageRepository,
             chatMessageReadRepository = chatMessageReadRepository,
+            chatRoomSummaryService = chatRoomSummaryService,
             chatEventPublisher = chatEventPublisher,
             postAnonymousService = postAnonymousService,
             chatAccessPolicy = ChatAccessPolicy(
@@ -526,7 +529,7 @@ class ChatServiceTest {
         val room = MessageRoom(id = 30L, post = post, member1 = member1, member2 = member2)
 
         `when`(memberRepository.findById(sender.id)).thenReturn(Optional.of(sender))
-        `when`(messageRoomRepository.findById(room.id)).thenReturn(Optional.of(room))
+        `when`(messageRoomRepository.findByIdForUpdate(room.id)).thenReturn(room)
 
         val exception = assertThrows(BusinessException::class.java) {
             chatService.sendMessage(
@@ -555,7 +558,7 @@ class ChatServiceTest {
         val savedMessage = ChatMessage(id = 40L, room = room, sender = sender, content = "hi")
 
         `when`(memberRepository.findById(sender.id)).thenReturn(Optional.of(sender))
-        `when`(messageRoomRepository.findById(room.id)).thenReturn(Optional.of(room))
+        `when`(messageRoomRepository.findByIdForUpdate(room.id)).thenReturn(room)
         `when`(chatMessageRepository.save(any(ChatMessage::class.java))).thenReturn(savedMessage)
         `when`(chatMessageReadRepository.countUnread(room.id, receiver.id, null)).thenReturn(1L)
 
@@ -586,7 +589,7 @@ class ChatServiceTest {
         val post = post(id = 20L, board = board, member = other, isAnonymous = false)
         val room = MessageRoom(id = 30L, post = post, member1 = reader, member2 = other)
 
-        `when`(messageRoomRepository.findById(room.id)).thenReturn(Optional.of(room))
+        `when`(messageRoomRepository.findByIdForUpdate(room.id)).thenReturn(room)
         `when`(chatMessageRepository.existsByIdAndRoomId(55L, room.id)).thenReturn(true)
         `when`(messageRoomRepository.save(any(MessageRoom::class.java))).thenAnswer { it.getArgument(0) }
         `when`(chatMessageReadRepository.countUnread(room.id, reader.id, 55L)).thenReturn(0L)
@@ -616,7 +619,7 @@ class ChatServiceTest {
         val post = post(id = 20L, board = board, member = other, isAnonymous = false)
         val room = MessageRoom(id = 30L, post = post, member1 = reader, member2 = other)
 
-        `when`(messageRoomRepository.findById(room.id)).thenReturn(Optional.of(room))
+        `when`(messageRoomRepository.findByIdForUpdate(room.id)).thenReturn(room)
         `when`(chatMessageRepository.existsByIdAndRoomId(999L, room.id)).thenReturn(false)
 
         val exception = assertThrows(BusinessException::class.java) {

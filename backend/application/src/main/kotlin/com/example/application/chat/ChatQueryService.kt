@@ -17,11 +17,23 @@ class ChatQueryService(
     private val chatRoomReadRepository: ChatRoomReadRepository,
     private val chatMessageReadRepository: ChatMessageReadRepository,
     private val postAnonymousService: PostAnonymousService,
+    private val chatRoomSummaryService: ChatRoomSummaryService,
 ) {
 
     fun getMyRooms(query: ChatQuery.GetMyRooms): ChatQueryResult.Rooms {
         val limit = query.limit.coerceIn(1, 100)
-        val rows = chatRoomReadRepository.findMyRooms(query.requesterId, limit)
+        var rows = chatRoomReadRepository.findMyRooms(query.requesterId, limit)
+        val missingSummaryRoomIds = rows
+            .filter { !it.hasSummary }
+            .map { it.roomId }
+
+        if (missingSummaryRoomIds.isNotEmpty()) {
+            messageRoomRepository.findAllById(missingSummaryRoomIds).forEach { room ->
+                chatRoomSummaryService.reconcileFromReadPointers(room)
+            }
+            rows = chatRoomReadRepository.findMyRooms(query.requesterId, limit)
+        }
+
         val anonNumbersByPostAndMember = postAnonymousService.getAnonNumbersByPostIds(rows.map { it.postId })
 
         return ChatQueryResult.Rooms(

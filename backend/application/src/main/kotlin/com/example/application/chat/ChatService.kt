@@ -32,6 +32,7 @@ class ChatService(
     private val chatRoomRecoveryService: ChatRoomRecoveryService,
     private val chatMessageRepository: ChatMessageRepository,
     private val chatMessageReadRepository: ChatMessageReadRepository,
+    private val chatRoomSummaryService: ChatRoomSummaryService,
     private val chatEventPublisher: ChatEventPublisher,
     private val postAnonymousService: PostAnonymousService,
     private val chatAccessPolicy: ChatAccessPolicy,
@@ -67,6 +68,7 @@ class ChatService(
         )
 
         if (existingRoom != null) {
+            chatRoomSummaryService.reconcileFromReadPointers(existingRoom)
             val anonNumbersByMemberId = ensureChatAnonNumbers(existingRoom, post)
             return toRoomCreatedResult(
                 room = existingRoom,
@@ -96,6 +98,7 @@ class ChatService(
                     isAnon2 = normalizedPair.isAnon2,
                 )
             )
+            chatRoomSummaryService.initializeForNewRoom(saved)
             toRoomCreatedResult(
                 room = saved,
                 requester = requester,
@@ -109,6 +112,7 @@ class ChatService(
                 member1Id = normalizedPair.member1.id,
                 member2Id = normalizedPair.member2.id,
             )
+            chatRoomSummaryService.reconcileFromReadPointers(concurrentRoom)
             toRoomCreatedResult(
                 room = concurrentRoom,
                 requester = requester,
@@ -123,9 +127,9 @@ class ChatService(
         val sender = memberRepository.findById(command.senderId).orElseThrow {
             BusinessException(ErrorCode.USER_NOT_FOUND)
         }
-        val room = messageRoomRepository.findById(command.roomId).orElseThrow {
-            BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND)
-        }
+        val room = messageRoomRepository.findByIdForUpdate(command.roomId) ?: throw BusinessException(
+            ErrorCode.CHAT_ROOM_NOT_FOUND
+        )
 
         if (!room.isParticipant(sender.id)) {
             throw BusinessException(ErrorCode.UNAUTHORIZED)
@@ -144,6 +148,12 @@ class ChatService(
 
         val receiverLastReadId = room.getLastReadMessageId(receiverId)
         val unreadCount = chatMessageReadRepository.countUnread(room.id, receiverId, receiverLastReadId)
+        chatRoomSummaryService.onMessageSent(
+            room = room,
+            message = message,
+            receiverId = receiverId,
+            receiverUnreadCount = unreadCount,
+        )
 
         chatEventPublisher.publish(
             ChatEvent(
@@ -180,9 +190,9 @@ class ChatService(
     }
 
     fun markRead(command: ChatCommand.MarkRead): ChatResult.ReadMarked {
-        val room = messageRoomRepository.findById(command.roomId).orElseThrow {
-            BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND)
-        }
+        val room = messageRoomRepository.findByIdForUpdate(command.roomId) ?: throw BusinessException(
+            ErrorCode.CHAT_ROOM_NOT_FOUND
+        )
 
         if (!room.isParticipant(command.readerId)) {
             throw BusinessException(ErrorCode.UNAUTHORIZED)
@@ -199,6 +209,11 @@ class ChatService(
             roomId = savedRoom.id,
             memberId = command.readerId,
             lastReadMessageId = savedRoom.getLastReadMessageId(command.readerId),
+        )
+        chatRoomSummaryService.onReadMarked(
+            room = savedRoom,
+            readerId = command.readerId,
+            readerUnreadCount = unreadCount,
         )
 
         chatEventPublisher.publish(

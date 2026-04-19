@@ -1,0 +1,78 @@
+name: MiruMiru Backend CI/CD
+
+on:
+  push:
+    branches: [ "main" ]  # main 브랜치에 Push 될 때만 실행
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci.yml'
+      - '!backend/charts/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mirumiru-backend-cicd-main
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEFAULT_IMAGE_REPOSITORY: vantagac/mirumiru-api
+
+    steps:
+    # 1. 최신 코드 가져오기
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - name: Resolve Docker Image Repository
+      id: image
+      run: |
+        IMAGE_REPOSITORY="${DOCKER_IMAGE_REPOSITORY:-$DEFAULT_IMAGE_REPOSITORY}"
+        echo "repository=${IMAGE_REPOSITORY}" >> "$GITHUB_OUTPUT"
+      env:
+        DOCKER_IMAGE_REPOSITORY: ${{ vars.DOCKER_IMAGE_REPOSITORY }}
+
+    # 2. 빌드 공장에 Java 21 세팅
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: 'gradle'
+
+    # 3. API 실행 jar 생성
+    - name: Package API
+      working-directory: ./backend
+      run: |
+        chmod +x gradlew
+        ./gradlew --no-daemon clean :api:bootJar
+
+    # 4. 도커 허브에 로그인 (깃허브 Secrets에 등록한 정보 사용)
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # 5. Docker 이미지 굽고 도커 허브 전송
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        file: ./backend/Dockerfile
+        platforms: linux/arm64
+        push: true
+        # 태그명: 깃허브 커밋 해시(고유번호)와 latest 두 가지로 저장
+        tags: |
+          ${{ steps.image.outputs.repository }}:${{ github.sha }}
+          ${{ steps.image.outputs.repository }}:latest

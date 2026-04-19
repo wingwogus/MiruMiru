@@ -14,7 +14,8 @@ object AuthCommand {
     data class SignUp(
         val email: String,
         val password: String,
-        val nickname: String
+        val nickname: String,
+        val majorId: Long
     )
 
     data class VerifyEmailCode(

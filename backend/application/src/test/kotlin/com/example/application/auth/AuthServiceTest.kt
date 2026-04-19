@@ -2,8 +2,12 @@ package com.example.application.auth
 
 import com.example.application.exception.ErrorCode
 import com.example.application.exception.business.BusinessException
+import com.example.application.redis.EmailVerificationRepository
+import com.example.application.redis.NicknameVerificationRepository
 import com.example.application.redis.RefreshTokenRepository
 import com.example.application.security.TokenProvider
+import com.example.domain.major.Major
+import com.example.domain.major.MajorRepository
 import com.example.domain.member.Member
 import com.example.domain.member.MemberRepository
 import com.example.domain.university.University
@@ -27,6 +31,7 @@ class AuthServiceTest {
     private lateinit var nicknameVerificationRepository: FakeNicknameVerificationRepository
     private lateinit var refreshTokenRepository: FakeRefreshTokenRepository
     private lateinit var memberRepository: MemberRepository
+    private lateinit var majorRepository: MajorRepository
     private lateinit var universityRepository: UniversityRepository
     private lateinit var passwordEncoder: PasswordEncoder
     private lateinit var authService: AuthService
@@ -39,6 +44,7 @@ class AuthServiceTest {
         nicknameVerificationRepository = FakeNicknameVerificationRepository()
         refreshTokenRepository = FakeRefreshTokenRepository()
         memberRepository = mock(MemberRepository::class.java)
+        majorRepository = mock(MajorRepository::class.java)
         universityRepository = mock(UniversityRepository::class.java)
         passwordEncoder = FakePasswordEncoder()
         authService = AuthService(
@@ -48,6 +54,7 @@ class AuthServiceTest {
             nicknameVerificationRepository = nicknameVerificationRepository,
             refreshTokenRepository = refreshTokenRepository,
             memberRepository = memberRepository,
+            majorRepository = majorRepository,
             universityRepository = universityRepository,
             passwordEncoder = passwordEncoder,
             authCodeExpirationMillis = 1_800_000L,
@@ -138,10 +145,12 @@ class AuthServiceTest {
 
     @Test
     fun `signup requires nickname verification and clears verification state on success`() {
+        val major = major()
         val request = AuthCommand.SignUp(
             email = "user@tokyo.ac.jp",
             password = "raw-password",
-            nickname = "maru"
+            nickname = "maru",
+            majorId = major.id
         )
         emailVerificationRepository.saveCode(request.email, "123456", Duration.ofMillis(1_800_000L))
         emailVerificationRepository.markVerified(request.email, Duration.ofMillis(1_800_000L))
@@ -149,6 +158,7 @@ class AuthServiceTest {
         `when`(memberRepository.existsByEmail(request.email)).thenReturn(false)
         `when`(memberRepository.existsByNickname(request.nickname)).thenReturn(false)
         `when`(universityRepository.findByEmailDomain("tokyo.ac.jp")).thenReturn(university())
+        `when`(majorRepository.findByIdAndUniversityId(major.id, 1L)).thenReturn(major)
         `when`(memberRepository.save(org.mockito.ArgumentMatchers.any(Member::class.java)))
             .thenAnswer { it.arguments.first() }
 
@@ -157,6 +167,7 @@ class AuthServiceTest {
         val memberCaptor = ArgumentCaptor.forClass(Member::class.java)
         verify(memberRepository).save(memberCaptor.capture())
         assertEquals("tokyo.ac.jp", memberCaptor.value.university.emailDomain)
+        assertEquals(major.id, memberCaptor.value.major.id)
         assertEquals(false, emailVerificationRepository.isVerified(request.email))
         assertEquals(null, emailVerificationRepository.getCode(request.email))
         assertEquals(false, nicknameVerificationRepository.isVerified(request.nickname))
@@ -167,7 +178,8 @@ class AuthServiceTest {
         val request = AuthCommand.SignUp(
             email = "user@tokyo.ac.jp",
             password = "raw-password",
-            nickname = "maru"
+            nickname = "maru",
+            majorId = 10L
         )
         emailVerificationRepository.markVerified(request.email, Duration.ofMillis(1_800_000L))
 
@@ -183,7 +195,8 @@ class AuthServiceTest {
         val request = AuthCommand.SignUp(
             email = "user@kyoto.ac.jp",
             password = "raw-password",
-            nickname = "maru"
+            nickname = "maru",
+            majorId = 10L
         )
         emailVerificationRepository.markVerified(request.email, Duration.ofMillis(1_800_000L))
         nicknameVerificationRepository.markVerified(request.nickname, Duration.ofMillis(1_800_000L))
@@ -196,6 +209,43 @@ class AuthServiceTest {
         }
 
         assertEquals(ErrorCode.UNREGISTERED_UNIVERSITY, exception.errorCode)
+    }
+
+    @Test
+    fun `signup fails when major does not belong to resolved university`() {
+        val request = AuthCommand.SignUp(
+            email = "user@tokyo.ac.jp",
+            password = "raw-password",
+            nickname = "maru",
+            majorId = 99L
+        )
+        emailVerificationRepository.markVerified(request.email, Duration.ofMillis(1_800_000L))
+        nicknameVerificationRepository.markVerified(request.nickname, Duration.ofMillis(1_800_000L))
+        `when`(memberRepository.existsByEmail(request.email)).thenReturn(false)
+        `when`(memberRepository.existsByNickname(request.nickname)).thenReturn(false)
+        `when`(universityRepository.findByEmailDomain("tokyo.ac.jp")).thenReturn(university())
+        `when`(majorRepository.findByIdAndUniversityId(request.majorId, 1L)).thenReturn(null)
+
+        val exception = assertThrows(BusinessException::class.java) {
+            authService.signUp(request)
+        }
+
+        assertEquals(ErrorCode.INVALID_MAJOR_SELECTION, exception.errorCode)
+    }
+
+    @Test
+    fun `get available majors returns university scoped options sorted by name`() {
+        val university = university()
+        val computerScience = major(id = 10L, university = university, code = "CS", name = "Computer Science")
+        val mathematics = major(id = 11L, university = university, code = "MATH", name = "Mathematics")
+        `when`(universityRepository.findByEmailDomain("tokyo.ac.jp")).thenReturn(university)
+        `when`(majorRepository.findAllByUniversityIdOrderByNameAsc(university.id))
+            .thenReturn(listOf(computerScience, mathematics))
+
+        val result = authService.getAvailableMajors("user@tokyo.ac.jp")
+
+        assertEquals(listOf(10L, 11L), result.map { it.majorId })
+        assertEquals(listOf("CS", "MATH"), result.map { it.code })
     }
 
     companion object {
@@ -212,10 +262,25 @@ class AuthServiceTest {
             return Member(
                 id = id,
                 university = university(),
+                major = major(university = university()),
                 email = email,
                 password = password,
                 nickname = nickname,
                 role = role
+            )
+        }
+
+        private fun major(
+            id: Long = 10L,
+            university: University = university(),
+            code: String = "CS",
+            name: String = "Computer Science"
+        ): Major {
+            return Major(
+                id = id,
+                university = university,
+                code = code,
+                name = name
             )
         }
 

@@ -1,0 +1,769 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 71;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A00000000000000000000021 /* MiruMiruApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001B /* MiruMiruApp.swift */; };
+		A00000000000000000000023 /* MiruMiruUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001D /* MiruMiruUITests.swift */; };
+		B00000000000000000000001 /* AppRoot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000021 /* AppRoot.swift */; };
+		B00000000000000000000002 /* AppSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000022 /* AppSession.swift */; };
+		B00000000000000000000003 /* Config/AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000023 /* Config/AppEnvironment.swift */; };
+		B00000000000000000000004 /* Networking/APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000024 /* Networking/APIClient.swift */; };
+		B00000000000000000000005 /* Auth/AuthModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000025 /* Auth/AuthModels.swift */; };
+		B00000000000000000000006 /* Auth/AuthErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000026 /* Auth/AuthErrors.swift */; };
+		B00000000000000000000007 /* Auth/AuthErrorMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000027 /* Auth/AuthErrorMapper.swift */; };
+		B00000000000000000000008 /* Auth/AuthAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000028 /* Auth/AuthAPIClient.swift */; };
+		B00000000000000000000009 /* Security/TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000029 /* Security/TokenStore.swift */; };
+		B0000000000000000000000A /* Security/KeychainTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000002A /* Security/KeychainTokenStore.swift */; };
+		B0000000000000000000000B /* Auth/Login/LoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000002B /* Auth/Login/LoginViewModel.swift */; };
+		B0000000000000000000000C /* Auth/Login/LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000002C /* Auth/Login/LoginView.swift */; };
+		B0000000000000000000000D /* Auth/Signup/SignupPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000002D /* Auth/Signup/SignupPlaceholderView.swift */; };
+		B0000000000000000000000E /* Auth/ForgotPassword/ForgotPasswordPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000002E /* Auth/ForgotPassword/ForgotPasswordPlaceholderView.swift */; };
+		B0000000000000000000000F /* Home/HomePlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000002F /* Home/HomePlaceholderView.swift */; };
+		B00000000000000000000010 /* UI/AuthTextFieldRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000030 /* UI/AuthTextFieldRow.swift */; };
+		B00000000000000000000011 /* UI/PrimaryActionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000031 /* UI/PrimaryActionButton.swift */; };
+		B00000000000000000000012 /* TestDoubles.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000032 /* TestDoubles.swift */; };
+		B00000000000000000000013 /* AuthErrorMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000033 /* AuthErrorMapperTests.swift */; };
+		B00000000000000000000014 /* LoginViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000034 /* LoginViewModelTests.swift */; };
+		B00000000000000000000015 /* AppSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000035 /* AppSessionTests.swift */; };
+		B00000000000000000000016 /* UI/AppTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000036 /* UI/AppTypography.swift */; };
+		B00000000000000000000017 /* AuthAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000042 /* AuthAPIClientTests.swift */; };
+		B00000000000000000000018 /* Fonts/Pretendard-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000038 /* Fonts/Pretendard-Regular.otf */; };
+		B00000000000000000000019 /* Fonts/Pretendard-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000039 /* Fonts/Pretendard-Medium.otf */; };
+		B0000000000000000000001A /* Fonts/Pretendard-SemiBold.otf in Resources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000003A /* Fonts/Pretendard-SemiBold.otf */; };
+		B0000000000000000000001B /* Fonts/Pretendard-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000003B /* Fonts/Pretendard-Bold.otf */; };
+		B0000000000000000000001C /* Fonts/Pretendard-ExtraBold.otf in Resources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000003C /* Fonts/Pretendard-ExtraBold.otf */; };
+		B0000000000000000000001D /* Fonts/Pretendard-Black.otf in Resources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000003D /* Fonts/Pretendard-Black.otf */; };
+		B0000000000000000000001E /* UI/AuthPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000040 /* UI/AuthPalette.swift */; };
+		B0000000000000000000001F /* UI/AuthRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000041 /* UI/AuthRoute.swift */; };
+		B00000000000000000000020 /* Auth/Signup/SignupModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000043 /* Auth/Signup/SignupModels.swift */; };
+		B00000000000000000000083 /* UI/AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000084 /* UI/AppTheme.swift */; };
+		B00000000000000000000046 /* Auth/Signup/SignupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000044 /* Auth/Signup/SignupViewModel.swift */; };
+		B00000000000000000000047 /* SignupViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000045 /* SignupViewModelTests.swift */; };
+		B00000000000000000000048 /* Home/HomeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000004E /* Home/HomeModels.swift */; };
+		B00000000000000000000049 /* Home/HomeAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000004F /* Home/HomeAPIClient.swift */; };
+		B0000000000000000000004A /* Home/HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000050 /* Home/HomeViewModel.swift */; };
+		B0000000000000000000004B /* UI/PreviewSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000051 /* UI/PreviewSupport.swift */; };
+		B0000000000000000000004C /* HomeAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000052 /* HomeAPIClientTests.swift */; };
+		B0000000000000000000004D /* HomeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000053 /* HomeViewModelTests.swift */; };
+		B00000000000000000000054 /* AuthenticatedAppShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000062 /* AuthenticatedAppShell.swift */; };
+		B00000000000000000000055 /* Timetable/TimetableModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000063 /* Timetable/TimetableModels.swift */; };
+		B00000000000000000000056 /* Timetable/TimetableAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000064 /* Timetable/TimetableAPIClient.swift */; };
+		B00000000000000000000057 /* Timetable/TimetableViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000065 /* Timetable/TimetableViewModel.swift */; };
+		B00000000000000000000058 /* Timetable/TimetableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000066 /* Timetable/TimetableView.swift */; };
+		B00000000000000000000059 /* TimetableAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000067 /* TimetableAPIClientTests.swift */; };
+		B0000000000000000000005A /* TimetableViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000068 /* TimetableViewModelTests.swift */; };
+		B00000000000000000000069 /* CourseReviews/CourseReviewsFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000006A /* CourseReviews/CourseReviewsFeature.swift */; };
+		B00000000000000000000071 /* CourseReviewsAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000072 /* CourseReviewsAPIClientTests.swift */; };
+		B00000000000000000000073 /* CourseReviewsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000074 /* CourseReviewsViewModelTests.swift */; };
+		B00000000000000000000075 /* Boards/BoardsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000078 /* Boards/BoardsModels.swift */; };
+		B00000000000000000000076 /* Boards/BoardsAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000079 /* Boards/BoardsAPIClient.swift */; };
+		B00000000000000000000077 /* Boards/BoardsFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000007A /* Boards/BoardsFeature.swift */; };
+		B0000000000000000000007B /* Boards/BoardsSyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000007C /* Boards/BoardsSyncStore.swift */; };
+		B0000000000000000000007D /* BoardsSyncStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000007E /* BoardsSyncStoreTests.swift */; };
+		B0000000000000000000007F /* PostDetailViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000080 /* PostDetailViewModelTests.swift */; };
+		B00000000000000000000081 /* Messages/MessagesFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000082 /* Messages/MessagesFeature.swift */; };
+		B00000000000000000000083 /* Networking/RequestCacheStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000084 /* Networking/RequestCacheStore.swift */; };
+		B00000000000000000000085 /* UI/AuthenticatedLayoutMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000086 /* UI/AuthenticatedLayoutMetrics.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A00000000000000000000025 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A00000000000000000000002;
+			remoteInfo = MiruMiru;
+		};
+		A00000000000000000000027 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A00000000000000000000002;
+			remoteInfo = MiruMiru;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		A0000000000000000000001B /* MiruMiruApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiruMiruApp.swift; sourceTree = "<group>"; };
+		A0000000000000000000001D /* MiruMiruUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiruMiruUITests.swift; sourceTree = "<group>"; };
+		A0000000000000000000001E /* MiruMiru.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MiruMiru.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0000000000000000000001F /* MiruMiruTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MiruMiruTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000000000000000000020 /* MiruMiruUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MiruMiruUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B00000000000000000000021 /* AppRoot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRoot.swift; sourceTree = "<group>"; };
+		B00000000000000000000022 /* AppSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSession.swift; sourceTree = "<group>"; };
+		B00000000000000000000023 /* Config/AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config/AppEnvironment.swift; sourceTree = "<group>"; };
+		B00000000000000000000024 /* Networking/APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Networking/APIClient.swift; sourceTree = "<group>"; };
+		B00000000000000000000025 /* Auth/AuthModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth/AuthModels.swift; sourceTree = "<group>"; };
+		B00000000000000000000026 /* Auth/AuthErrors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth/AuthErrors.swift; sourceTree = "<group>"; };
+		B00000000000000000000027 /* Auth/AuthErrorMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth/AuthErrorMapper.swift; sourceTree = "<group>"; };
+		B00000000000000000000028 /* Auth/AuthAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth/AuthAPIClient.swift; sourceTree = "<group>"; };
+		B00000000000000000000029 /* Security/TokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Security/TokenStore.swift; sourceTree = "<group>"; };
+		B0000000000000000000002A /* Security/KeychainTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Security/KeychainTokenStore.swift; sourceTree = "<group>"; };
+		B0000000000000000000002B /* Auth/Login/LoginViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth/Login/LoginViewModel.swift; sourceTree = "<group>"; };
+		B0000000000000000000002C /* Auth/Login/LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth/Login/LoginView.swift; sourceTree = "<group>"; };
+		B0000000000000000000002D /* Auth/Signup/SignupPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth/Signup/SignupPlaceholderView.swift; sourceTree = "<group>"; };
+		B0000000000000000000002E /* Auth/ForgotPassword/ForgotPasswordPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth/ForgotPassword/ForgotPasswordPlaceholderView.swift; sourceTree = "<group>"; };
+		B0000000000000000000002F /* Home/HomePlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Home/HomePlaceholderView.swift; sourceTree = "<group>"; };
+		B00000000000000000000030 /* UI/AuthTextFieldRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/AuthTextFieldRow.swift; sourceTree = "<group>"; };
+		B00000000000000000000031 /* UI/PrimaryActionButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/PrimaryActionButton.swift; sourceTree = "<group>"; };
+		B00000000000000000000032 /* TestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDoubles.swift; sourceTree = "<group>"; };
+		B00000000000000000000033 /* AuthErrorMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthErrorMapperTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000034 /* LoginViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewModelTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000035 /* AppSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000036 /* UI/AppTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/AppTypography.swift; sourceTree = "<group>"; };
+		B00000000000000000000037 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B00000000000000000000038 /* Fonts/Pretendard-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/Pretendard-Regular.otf"; sourceTree = "<group>"; };
+		B00000000000000000000039 /* Fonts/Pretendard-Medium.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/Pretendard-Medium.otf"; sourceTree = "<group>"; };
+		B0000000000000000000003A /* Fonts/Pretendard-SemiBold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/Pretendard-SemiBold.otf"; sourceTree = "<group>"; };
+		B0000000000000000000003B /* Fonts/Pretendard-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/Pretendard-Bold.otf"; sourceTree = "<group>"; };
+		B0000000000000000000003C /* Fonts/Pretendard-ExtraBold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/Pretendard-ExtraBold.otf"; sourceTree = "<group>"; };
+		B0000000000000000000003D /* Fonts/Pretendard-Black.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/Pretendard-Black.otf"; sourceTree = "<group>"; };
+		B0000000000000000000003E /* Info-Debug.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-Debug.plist"; sourceTree = "<group>"; };
+		B0000000000000000000003F /* Info-Release.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-Release.plist"; sourceTree = "<group>"; };
+		B00000000000000000000040 /* UI/AuthPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/AuthPalette.swift; sourceTree = "<group>"; };
+		B00000000000000000000041 /* UI/AuthRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/AuthRoute.swift; sourceTree = "<group>"; };
+		B00000000000000000000042 /* AuthAPIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthAPIClientTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000043 /* Auth/Signup/SignupModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth/Signup/SignupModels.swift; sourceTree = "<group>"; };
+		B00000000000000000000044 /* Auth/Signup/SignupViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth/Signup/SignupViewModel.swift; sourceTree = "<group>"; };
+		B00000000000000000000045 /* SignupViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupViewModelTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000084 /* UI/AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/AppTheme.swift; sourceTree = "<group>"; };
+		B0000000000000000000004E /* Home/HomeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Home/HomeModels.swift; sourceTree = "<group>"; };
+		B0000000000000000000004F /* Home/HomeAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Home/HomeAPIClient.swift; sourceTree = "<group>"; };
+		B00000000000000000000050 /* Home/HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Home/HomeViewModel.swift; sourceTree = "<group>"; };
+		B00000000000000000000051 /* UI/PreviewSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/PreviewSupport.swift; sourceTree = "<group>"; };
+		B00000000000000000000052 /* HomeAPIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeAPIClientTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000053 /* HomeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000062 /* AuthenticatedAppShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedAppShell.swift; sourceTree = "<group>"; };
+		B00000000000000000000063 /* Timetable/TimetableModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Timetable/TimetableModels.swift; sourceTree = "<group>"; };
+		B00000000000000000000064 /* Timetable/TimetableAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Timetable/TimetableAPIClient.swift; sourceTree = "<group>"; };
+		B00000000000000000000065 /* Timetable/TimetableViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Timetable/TimetableViewModel.swift; sourceTree = "<group>"; };
+		B00000000000000000000066 /* Timetable/TimetableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Timetable/TimetableView.swift; sourceTree = "<group>"; };
+		B00000000000000000000067 /* TimetableAPIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimetableAPIClientTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000068 /* TimetableViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimetableViewModelTests.swift; sourceTree = "<group>"; };
+		B0000000000000000000006A /* CourseReviews/CourseReviewsFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseReviews/CourseReviewsFeature.swift; sourceTree = "<group>"; };
+		B00000000000000000000072 /* CourseReviewsAPIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseReviewsAPIClientTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000074 /* CourseReviewsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseReviewsViewModelTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000078 /* Boards/BoardsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boards/BoardsModels.swift; sourceTree = "<group>"; };
+		B00000000000000000000079 /* Boards/BoardsAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boards/BoardsAPIClient.swift; sourceTree = "<group>"; };
+		B0000000000000000000007A /* Boards/BoardsFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boards/BoardsFeature.swift; sourceTree = "<group>"; };
+		B0000000000000000000007C /* Boards/BoardsSyncStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boards/BoardsSyncStore.swift; sourceTree = "<group>"; };
+		B0000000000000000000007E /* BoardsSyncStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardsSyncStoreTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000080 /* PostDetailViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailViewModelTests.swift; sourceTree = "<group>"; };
+		B00000000000000000000082 /* Messages/MessagesFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Messages/MessagesFeature.swift; sourceTree = "<group>"; };
+		B00000000000000000000084 /* Networking/RequestCacheStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Networking/RequestCacheStore.swift; sourceTree = "<group>"; };
+		B00000000000000000000086 /* UI/AuthenticatedLayoutMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/AuthenticatedLayoutMetrics.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A0000000000000000000000A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A0000000000000000000000D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000010 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A00000000000000000000012 /* MiruMiru */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000030 /* MiruMiru */,
+				A00000000000000000000018 /* MiruMiruTests */,
+				A00000000000000000000019 /* MiruMiruUITests */,
+				A0000000000000000000001A /* Products */,
+			);
+			name = MiruMiru;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000013 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000001B /* MiruMiruApp.swift */,
+				B00000000000000000000021 /* AppRoot.swift */,
+				B00000000000000000000022 /* AppSession.swift */,
+				B00000000000000000000062 /* AuthenticatedAppShell.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000014 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				B00000000000000000000023 /* Config/AppEnvironment.swift */,
+				B00000000000000000000024 /* Networking/APIClient.swift */,
+				B00000000000000000000025 /* Auth/AuthModels.swift */,
+				B00000000000000000000026 /* Auth/AuthErrors.swift */,
+				B00000000000000000000027 /* Auth/AuthErrorMapper.swift */,
+				B00000000000000000000028 /* Auth/AuthAPIClient.swift */,
+				B00000000000000000000084 /* Networking/RequestCacheStore.swift */,
+				B00000000000000000000029 /* Security/TokenStore.swift */,
+				B0000000000000000000002A /* Security/KeychainTokenStore.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000015 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				B0000000000000000000002B /* Auth/Login/LoginViewModel.swift */,
+				B0000000000000000000002C /* Auth/Login/LoginView.swift */,
+				B0000000000000000000002D /* Auth/Signup/SignupPlaceholderView.swift */,
+				B00000000000000000000043 /* Auth/Signup/SignupModels.swift */,
+				B00000000000000000000044 /* Auth/Signup/SignupViewModel.swift */,
+				B0000000000000000000002E /* Auth/ForgotPassword/ForgotPasswordPlaceholderView.swift */,
+				B0000000000000000000002F /* Home/HomePlaceholderView.swift */,
+				B0000000000000000000004E /* Home/HomeModels.swift */,
+				B0000000000000000000004F /* Home/HomeAPIClient.swift */,
+				B00000000000000000000050 /* Home/HomeViewModel.swift */,
+				B00000000000000000000063 /* Timetable/TimetableModels.swift */,
+				B00000000000000000000064 /* Timetable/TimetableAPIClient.swift */,
+				B00000000000000000000065 /* Timetable/TimetableViewModel.swift */,
+				B00000000000000000000066 /* Timetable/TimetableView.swift */,
+				B00000000000000000000078 /* Boards/BoardsModels.swift */,
+				B00000000000000000000079 /* Boards/BoardsAPIClient.swift */,
+				B0000000000000000000007A /* Boards/BoardsFeature.swift */,
+				B0000000000000000000007C /* Boards/BoardsSyncStore.swift */,
+				B0000000000000000000006A /* CourseReviews/CourseReviewsFeature.swift */,
+				B00000000000000000000082 /* Messages/MessagesFeature.swift */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000016 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				B00000000000000000000030 /* UI/AuthTextFieldRow.swift */,
+				B00000000000000000000031 /* UI/PrimaryActionButton.swift */,
+				B00000000000000000000036 /* UI/AppTypography.swift */,
+				B00000000000000000000040 /* UI/AuthPalette.swift */,
+				B00000000000000000000084 /* UI/AppTheme.swift */,
+				B00000000000000000000041 /* UI/AuthRoute.swift */,
+				B00000000000000000000051 /* UI/PreviewSupport.swift */,
+				B00000000000000000000086 /* UI/AuthenticatedLayoutMetrics.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000017 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				B00000000000000000000037 /* Assets.xcassets */,
+				B0000000000000000000003E /* Info-Debug.plist */,
+				B0000000000000000000003F /* Info-Release.plist */,
+				B00000000000000000000038 /* Fonts/Pretendard-Regular.otf */,
+				B00000000000000000000039 /* Fonts/Pretendard-Medium.otf */,
+				B0000000000000000000003A /* Fonts/Pretendard-SemiBold.otf */,
+				B0000000000000000000003B /* Fonts/Pretendard-Bold.otf */,
+				B0000000000000000000003C /* Fonts/Pretendard-ExtraBold.otf */,
+				B0000000000000000000003D /* Fonts/Pretendard-Black.otf */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000018 /* MiruMiruTests */ = {
+			isa = PBXGroup;
+			children = (
+				B00000000000000000000032 /* TestDoubles.swift */,
+				B00000000000000000000033 /* AuthErrorMapperTests.swift */,
+				B00000000000000000000034 /* LoginViewModelTests.swift */,
+				B00000000000000000000045 /* SignupViewModelTests.swift */,
+				B00000000000000000000035 /* AppSessionTests.swift */,
+				B00000000000000000000042 /* AuthAPIClientTests.swift */,
+				B00000000000000000000052 /* HomeAPIClientTests.swift */,
+				B00000000000000000000053 /* HomeViewModelTests.swift */,
+				B00000000000000000000067 /* TimetableAPIClientTests.swift */,
+				B00000000000000000000068 /* TimetableViewModelTests.swift */,
+				B00000000000000000000072 /* CourseReviewsAPIClientTests.swift */,
+				B00000000000000000000074 /* CourseReviewsViewModelTests.swift */,
+				B0000000000000000000007E /* BoardsSyncStoreTests.swift */,
+				B00000000000000000000080 /* PostDetailViewModelTests.swift */,
+			);
+			path = MiruMiruTests;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000019 /* MiruMiruUITests */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000001D /* MiruMiruUITests.swift */,
+			);
+			path = MiruMiruUITests;
+			sourceTree = "<group>";
+		};
+		A0000000000000000000001A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000001E /* MiruMiru.app */,
+				A0000000000000000000001F /* MiruMiruTests.xctest */,
+				A00000000000000000000020 /* MiruMiruUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000030 /* MiruMiru */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000013 /* App */,
+				A00000000000000000000014 /* Core */,
+				A00000000000000000000015 /* Features */,
+				A00000000000000000000016 /* Shared */,
+				A00000000000000000000017 /* Resources */,
+			);
+			path = MiruMiru;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A00000000000000000000002 /* MiruMiru */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000006 /* Build configuration list for PBXNativeTarget "MiruMiru" */;
+			buildPhases = (
+				A00000000000000000000009 /* Sources */,
+				A0000000000000000000000A /* Frameworks */,
+				A0000000000000000000000B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MiruMiru;
+			productName = MiruMiru;
+			productReference = A0000000000000000000001E /* MiruMiru.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A00000000000000000000003 /* MiruMiruTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000007 /* Build configuration list for PBXNativeTarget "MiruMiruTests" */;
+			buildPhases = (
+				A0000000000000000000000C /* Sources */,
+				A0000000000000000000000D /* Frameworks */,
+				A0000000000000000000000E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A00000000000000000000024 /* PBXTargetDependency */,
+			);
+			name = MiruMiruTests;
+			productName = MiruMiruTests;
+			productReference = A0000000000000000000001F /* MiruMiruTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		A00000000000000000000004 /* MiruMiruUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000008 /* Build configuration list for PBXNativeTarget "MiruMiruUITests" */;
+			buildPhases = (
+				A0000000000000000000000F /* Sources */,
+				A00000000000000000000010 /* Frameworks */,
+				A00000000000000000000011 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A00000000000000000000026 /* PBXTargetDependency */,
+			);
+			name = MiruMiruUITests;
+			productName = MiruMiruUITests;
+			productReference = A00000000000000000000020 /* MiruMiruUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A00000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					A00000000000000000000002 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					A00000000000000000000003 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					A00000000000000000000004 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+				};
+			};
+			buildConfigurationList = A00000000000000000000005 /* Build configuration list for PBXProject "MiruMiru" */;
+			compatibilityVersion = "Xcode 16.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A00000000000000000000012 /* MiruMiru */;
+			minimizedProjectReferenceProxies = 1;
+			productRefGroup = A0000000000000000000001A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A00000000000000000000002 /* MiruMiru */,
+				A00000000000000000000003 /* MiruMiruTests */,
+				A00000000000000000000004 /* MiruMiruUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A0000000000000000000000B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B00000000000000000000018 /* Fonts/Pretendard-Regular.otf in Resources */,
+				B00000000000000000000019 /* Fonts/Pretendard-Medium.otf in Resources */,
+				B0000000000000000000001A /* Fonts/Pretendard-SemiBold.otf in Resources */,
+				B0000000000000000000001B /* Fonts/Pretendard-Bold.otf in Resources */,
+				B0000000000000000000001C /* Fonts/Pretendard-ExtraBold.otf in Resources */,
+				B0000000000000000000001D /* Fonts/Pretendard-Black.otf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A0000000000000000000000E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000011 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A00000000000000000000009 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000021 /* MiruMiruApp.swift in Sources */,
+				B00000000000000000000001 /* AppRoot.swift in Sources */,
+				B00000000000000000000002 /* AppSession.swift in Sources */,
+				B00000000000000000000003 /* Config/AppEnvironment.swift in Sources */,
+				B00000000000000000000004 /* Networking/APIClient.swift in Sources */,
+				B00000000000000000000005 /* Auth/AuthModels.swift in Sources */,
+				B00000000000000000000006 /* Auth/AuthErrors.swift in Sources */,
+				B00000000000000000000007 /* Auth/AuthErrorMapper.swift in Sources */,
+				B00000000000000000000008 /* Auth/AuthAPIClient.swift in Sources */,
+				B00000000000000000000009 /* Security/TokenStore.swift in Sources */,
+				B0000000000000000000000A /* Security/KeychainTokenStore.swift in Sources */,
+				B0000000000000000000000B /* Auth/Login/LoginViewModel.swift in Sources */,
+				B0000000000000000000000C /* Auth/Login/LoginView.swift in Sources */,
+				B0000000000000000000000D /* Auth/Signup/SignupPlaceholderView.swift in Sources */,
+				B00000000000000000000020 /* Auth/Signup/SignupModels.swift in Sources */,
+				B00000000000000000000046 /* Auth/Signup/SignupViewModel.swift in Sources */,
+				B0000000000000000000000E /* Auth/ForgotPassword/ForgotPasswordPlaceholderView.swift in Sources */,
+				B0000000000000000000000F /* Home/HomePlaceholderView.swift in Sources */,
+				B00000000000000000000048 /* Home/HomeModels.swift in Sources */,
+				B00000000000000000000049 /* Home/HomeAPIClient.swift in Sources */,
+				B0000000000000000000004A /* Home/HomeViewModel.swift in Sources */,
+				B00000000000000000000010 /* UI/AuthTextFieldRow.swift in Sources */,
+				B00000000000000000000011 /* UI/PrimaryActionButton.swift in Sources */,
+				B00000000000000000000016 /* UI/AppTypography.swift in Sources */,
+				B0000000000000000000001E /* UI/AuthPalette.swift in Sources */,
+				B00000000000000000000083 /* UI/AppTheme.swift in Sources */,
+				B0000000000000000000001F /* UI/AuthRoute.swift in Sources */,
+				B0000000000000000000004B /* UI/PreviewSupport.swift in Sources */,
+				B00000000000000000000085 /* UI/AuthenticatedLayoutMetrics.swift in Sources */,
+				B00000000000000000000054 /* AuthenticatedAppShell.swift in Sources */,
+				B00000000000000000000055 /* Timetable/TimetableModels.swift in Sources */,
+				B00000000000000000000056 /* Timetable/TimetableAPIClient.swift in Sources */,
+				B00000000000000000000057 /* Timetable/TimetableViewModel.swift in Sources */,
+				B00000000000000000000058 /* Timetable/TimetableView.swift in Sources */,
+				B00000000000000000000083 /* Networking/RequestCacheStore.swift in Sources */,
+				B00000000000000000000075 /* Boards/BoardsModels.swift in Sources */,
+				B00000000000000000000076 /* Boards/BoardsAPIClient.swift in Sources */,
+				B00000000000000000000077 /* Boards/BoardsFeature.swift in Sources */,
+				B0000000000000000000007B /* Boards/BoardsSyncStore.swift in Sources */,
+				B00000000000000000000069 /* CourseReviews/CourseReviewsFeature.swift in Sources */,
+				B00000000000000000000081 /* Messages/MessagesFeature.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A0000000000000000000000C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B00000000000000000000012 /* TestDoubles.swift in Sources */,
+				B00000000000000000000013 /* AuthErrorMapperTests.swift in Sources */,
+				B00000000000000000000014 /* LoginViewModelTests.swift in Sources */,
+				B00000000000000000000047 /* SignupViewModelTests.swift in Sources */,
+				B00000000000000000000015 /* AppSessionTests.swift in Sources */,
+				B00000000000000000000017 /* AuthAPIClientTests.swift in Sources */,
+				B0000000000000000000004C /* HomeAPIClientTests.swift in Sources */,
+				B0000000000000000000004D /* HomeViewModelTests.swift in Sources */,
+				B00000000000000000000059 /* TimetableAPIClientTests.swift in Sources */,
+				B0000000000000000000005A /* TimetableViewModelTests.swift in Sources */,
+				B00000000000000000000071 /* CourseReviewsAPIClientTests.swift in Sources */,
+				B00000000000000000000073 /* CourseReviewsViewModelTests.swift in Sources */,
+				B0000000000000000000007D /* BoardsSyncStoreTests.swift in Sources */,
+				B0000000000000000000007F /* PostDetailViewModelTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A0000000000000000000000F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000023 /* MiruMiruUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A00000000000000000000024 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A00000000000000000000002 /* MiruMiru */;
+			targetProxy = A00000000000000000000025 /* PBXContainerItemProxy */;
+		};
+		A00000000000000000000026 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A00000000000000000000002 /* MiruMiru */;
+			targetProxy = A00000000000000000000027 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A00000000000000000000028 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				API_BASE_URL = "https://mirumiru.jaehyuns.com";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = M2CPG9V47M;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "MiruMiru/Resources/Info-Debug.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mirumiru.ios;
+				PRODUCT_NAME = MiruMiru;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A00000000000000000000029 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				API_BASE_URL = "https://mirumiru.jaehyuns.com";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = M2CPG9V47M;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "MiruMiru/Resources/Info-Release.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mirumiru.ios;
+				PRODUCT_NAME = MiruMiru;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		A0000000000000000000002A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				INFOPLIST_KEY_CFBundleDisplayName = MiruMiruTests;
+				INFOPLIST_KEY_CFBundleName = MiruMiruTests;
+				INFOPLIST_KEY_CFBundleShortVersionString = 1.0;
+				INFOPLIST_KEY_CFBundleVersion = 1;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mirumiru.iosTests;
+				PRODUCT_NAME = MiruMiruTests;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MiruMiru.app/MiruMiru";
+			};
+			name = Debug;
+		};
+		A0000000000000000000002B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				INFOPLIST_KEY_CFBundleDisplayName = MiruMiruTests;
+				INFOPLIST_KEY_CFBundleName = MiruMiruTests;
+				INFOPLIST_KEY_CFBundleShortVersionString = 1.0;
+				INFOPLIST_KEY_CFBundleVersion = 1;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mirumiru.iosTests;
+				PRODUCT_NAME = MiruMiruTests;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MiruMiru.app/MiruMiru";
+			};
+			name = Release;
+		};
+		A0000000000000000000002C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				INFOPLIST_KEY_CFBundleDisplayName = MiruMiruUITests;
+				INFOPLIST_KEY_CFBundleName = MiruMiruUITests;
+				INFOPLIST_KEY_CFBundleShortVersionString = 1.0;
+				INFOPLIST_KEY_CFBundleVersion = 1;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mirumiru.iosUITests;
+				PRODUCT_NAME = MiruMiruUITests;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A0000000000000000000002D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				INFOPLIST_KEY_CFBundleDisplayName = MiruMiruUITests;
+				INFOPLIST_KEY_CFBundleName = MiruMiruUITests;
+				INFOPLIST_KEY_CFBundleShortVersionString = 1.0;
+				INFOPLIST_KEY_CFBundleVersion = 1;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mirumiru.iosUITests;
+				PRODUCT_NAME = MiruMiruUITests;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A00000000000000000000005 /* Build configuration list for PBXProject "MiruMiru" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000028 /* Debug */,
+				A00000000000000000000029 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A00000000000000000000006 /* Build configuration list for PBXNativeTarget "MiruMiru" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000028 /* Debug */,
+				A00000000000000000000029 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A00000000000000000000007 /* Build configuration list for PBXNativeTarget "MiruMiruTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0000000000000000000002A /* Debug */,
+				A0000000000000000000002B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A00000000000000000000008 /* Build configuration list for PBXNativeTarget "MiruMiruUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0000000000000000000002C /* Debug */,
+				A0000000000000000000002D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A00000000000000000000001 /* Project object */;
+}

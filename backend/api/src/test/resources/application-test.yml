@@ -1,0 +1,6 @@
+chat:
+  redis:
+    enabled: false
+  room:
+    cleanup:
+      enabled: false

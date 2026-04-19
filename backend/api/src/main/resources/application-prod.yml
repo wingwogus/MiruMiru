@@ -3,13 +3,18 @@ spring:
     activate:
       on-profile: prod
 
+  sql:
+    init:
+      mode: never
+
   datasource:
     url: ${PROD_DB_URL}
     username: ${PROD_DB_USERNAME}
     password: ${PROD_DB_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: org.postgresql.Driver
 
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: none
     properties:
@@ -17,9 +22,48 @@ spring:
         format_sql: false
     open-in-view: false
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+    auth-code-expiration-millis: 1800000
+    verified-state-expiration-millis: 1800000
+
 jwt:
   secret: ${PROD_JWT_SECRET}
 
 redis:
   host: ${REDIS_HOST}
   port: ${REDIS_PORT}
+  db : ${REDIS_DB}
+
+chat:
+  redis:
+    enabled: true
+  room:
+    cleanup:
+      enabled: true
+      cron: 0 0 4 * * *
+
+management:
+  server:
+    port: 9090
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true

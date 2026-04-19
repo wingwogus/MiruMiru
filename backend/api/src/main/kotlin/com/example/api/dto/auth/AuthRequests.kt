@@ -3,6 +3,7 @@ package com.example.api.dto.auth
 import com.example.api.validation.annotation.JapaneseUniversityEmail
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
 object AuthRequests {
@@ -37,7 +38,16 @@ object AuthRequests {
         val password: String,
         @field:NotBlank(message = "닉네임을 입력해주세요")
         val nickname: String,
+        @field:NotNull(message = "전공을 선택해주세요")
+        val majorId: Long?,
         val avatar: String? = null
+    )
+
+    data class MajorListRequest(
+        @field:NotBlank(message = "이메일을 입력해주세요")
+        @field:Email(message = "이메일 형식이 올바르지 않습니다")
+        @field:JapaneseUniversityEmail
+        val email: String
     )
 
     data class LoginRequest(
